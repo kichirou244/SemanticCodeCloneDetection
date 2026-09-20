@@ -1,0 +1,27 @@
+# Core — tái lập được (ghim phiên bản sau khi chốt môi trường ở INIT)
+torch>=2.2.0
+transformers>=4.38.0
+datasets>=2.18.0
+tokenizers>=0.15.0
+
+# Graph (cho M4 CPG-GNN / M5 Hybrid)
+torch-geometric>=2.4.0
+
+# Dữ liệu & xử lý
+numpy>=1.26.0
+pandas>=2.2.0
+scikit-learn>=1.4.0
+pyyaml>=6.0.0
+tqdm>=4.66.0
+
+# Parser AST / CPG
+tree-sitter>=0.21.0
+# Ghi chú: cần thêm language grammar riêng:
+#   tree-sitter-cpp, tree-sitter-python (cài ở Step 4 sau khi kiểm tra tương thích)
+# Joern (cho CPG C/C++) được gọi qua CLI ngoài Python, không nằm trong requirements.
+
+# Đánh giá & tracking
+scipy>=1.12.0
+
+# Test
+pytest>=8.0.0

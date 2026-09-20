@@ -1,0 +1,42 @@
+experiment:
+  id: EXP-001
+  name: tfidf_cosine_baseline
+  status: PLANNED
+  seed: 42
+
+dataset:
+  name: poj104
+  language: cpp
+  manifest: data/manifests/poj104.json
+  pairs_dir: data/pairs/poj104
+  processed: data/processed/poj104/samples.jsonl
+
+pair_generation:
+  seed: 42
+  positive_negative_ratio: 1:1
+
+model:
+  name: tfidf_cosine
+  id: B1
+  max_features: 20000
+  # Tokenization (DEC-014): regex [A-Za-z_][A-Za-z0-9_]*|\S, giữ case,
+  # không xử lý comment, không rename identifier.
+
+training:
+  seed: 42
+
+inference:
+  pair_batch_size: 4096
+
+threshold:
+  method: validation_f1
+  grid_step: 0.01
+
+evaluation:
+  metrics: [accuracy, precision, recall, f1, roc_auc, pr_auc]
+
+error_analysis:
+  top_k: 100
+
+output:
+  directory: results/exp001_tfidf_poj104

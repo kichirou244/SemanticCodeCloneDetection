@@ -1,0 +1,15 @@
+{
+  "vocabulary_size": 11495,
+  "n_train_docs": 41491,
+  "doc_len_chars": {
+    "mean": 624.8222265069534,
+    "median": 524.0,
+    "max": 15005
+  },
+  "sparsity": 0.9964628585422265,
+  "fit_time_s": 10.14740299999903,
+  "transform_time_s": 21.915463599998475,
+  "scoring_time_s": 6.516567900001974,
+  "total_time_s": 44.58492710000064,
+  "peak_python_alloc_mb": 88.537382
+}

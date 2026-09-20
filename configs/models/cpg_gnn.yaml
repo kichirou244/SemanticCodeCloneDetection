@@ -1,0 +1,18 @@
+model:
+  name: cpg_gnn
+  id: M4
+  backbone: gat   # cấu hình chính; đổi backbone phải ghi decision log
+  hidden_dim: 128
+  num_layers: 3
+
+training:
+  seed: 42
+  batch_size: 32
+  learning_rate: 0.001
+  epochs: 20
+
+evaluation:
+  metrics: [precision, recall, f1, roc_auc, pr_auc]
+
+output:
+  directory: results/cpg_gnn

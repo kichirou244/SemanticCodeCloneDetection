@@ -1,0 +1,14 @@
+dataset:
+  name: poj104
+  language: cpp
+  hf_id: google/code_x_glue_cc_clone_detection_poj104
+
+splitting:
+  strategy: problem_split   # ưu tiên split chính thức nếu phù hợp, fallback problem split
+  train_ratio: 0.8
+  val_ratio: 0.1
+  seed: 42
+
+task:
+  type: classification      # classification | retrieval
+  metrics: [precision, recall, f1, roc_auc, pr_auc]

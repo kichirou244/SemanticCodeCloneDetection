@@ -1,0 +1,14 @@
+dataset:
+  name: codenet_python
+  language: python
+  hf_id: windchimeran/codenet_python
+
+splitting:
+  strategy: problem_split   # split theo problem/task identity, chống leakage
+  train_ratio: 0.8
+  val_ratio: 0.1
+  seed: 42
+
+task:
+  type: classification
+  metrics: [precision, recall, f1, roc_auc, pr_auc]

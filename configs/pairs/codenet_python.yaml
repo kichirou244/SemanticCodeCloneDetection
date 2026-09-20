@@ -1,0 +1,30 @@
+dataset:
+  name: codenet_python
+  language: python
+  split: small        # pilot phase 1: chỉ split small
+  streaming: true
+  max_samples: 200000 # pilot; full dataset ở phase sau
+
+cleaning:
+  min_code_chars: 10
+  expected_language: python
+  status_allowlist: ["Accepted"]  # DEC-012: big lẫn ~40% non-accepted
+
+splitting:
+  strategy: problem
+  train_ratio: 0.8
+  val_ratio: 0.1
+  seed: 42
+  min_samples_per_problem: 5  # tail long-tail: loại problems quá nhỏ (ghi reason)
+
+pair_generation:
+  seed: 42
+  negative_ratio: 1
+  max_positive_pairs_per_problem: 500
+  max_positive_pairs_per_problem_val_test: 200
+
+output:
+  splits_dir: data/splits/codenet_python
+  pairs_dir: data/pairs/codenet_python
+  processed: data/processed/codenet_python/samples.jsonl
+  manifest: data/manifests/codenet_python.json

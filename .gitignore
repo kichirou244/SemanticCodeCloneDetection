@@ -1,0 +1,23 @@
+# Dữ liệu thô / đã xử lý (không commit dataset lớn)
+data/raw/
+data/processed/
+data/splits/
+data/artifacts/
+
+# Kết quả chạy (giữ reports/, bỏ checkpoints nặng)
+results/*/checkpoints/
+*.pt
+*.bin
+*.onnx
+
+# Môi trường
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# HuggingFace / torch cache
+.cache/
+.pytest_cache/
+tmp/
+.agents/

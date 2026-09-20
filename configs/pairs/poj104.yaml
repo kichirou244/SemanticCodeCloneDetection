@@ -1,0 +1,27 @@
+dataset:
+  name: poj104
+  language: cpp
+
+cleaning:
+  min_code_chars: 10
+  expected_language: cpp
+  status_allowlist: null
+
+splitting:
+  strategy: problem
+  train_ratio: 0.8
+  val_ratio: 0.1
+  seed: 42
+  min_samples_per_problem: 2
+
+pair_generation:
+  seed: 42
+  negative_ratio: 1
+  max_positive_pairs_per_problem: 2000
+  max_positive_pairs_per_problem_val_test: 500
+
+output:
+  splits_dir: data/splits/poj104
+  pairs_dir: data/pairs/poj104
+  processed: data/processed/poj104/samples.jsonl
+  manifest: data/manifests/poj104.json

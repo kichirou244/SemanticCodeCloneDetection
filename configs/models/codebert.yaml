@@ -1,0 +1,17 @@
+model:
+  name: codebert
+  id: M1
+  hf_id: microsoft/codebert-base
+  max_length: 512
+
+training:
+  seed: 42
+  batch_size: 16
+  learning_rate: 0.00002
+  epochs: 5
+
+evaluation:
+  metrics: [precision, recall, f1, roc_auc, pr_auc]
+
+output:
+  directory: results/codebert

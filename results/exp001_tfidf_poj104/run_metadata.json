@@ -1,0 +1,15 @@
+{
+  "python": "3.12.10",
+  "os": "Windows-11-10.0.26200-SP0",
+  "cpu": "AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD",
+  "device": "cpu",
+  "config_sha256": "c10c5459ee60bbdf485605a0deb856027f821e5ed6d8fbaebbe97e9a7351e37b",
+  "manifest_sha256": "4fd83fecbd023f659314a966d933af1425cfb4c1db74d580908c0c5d018ddbf2",
+  "versions": {
+    "sklearn": "1.9.1",
+    "numpy": "2.5.3",
+    "torch": "2.14.0+cpu",
+    "transformers": "5.17.0"
+  },
+  "git": "HEAD"
+}
