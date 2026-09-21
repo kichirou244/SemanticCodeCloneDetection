@@ -230,6 +230,24 @@
 
 ---
 
+## DEC-017 — EXP-002 scheduler + device audit fix
+
+- Quyết định: scheduler warmup-linear phải `step()` mỗi optimizer update
+  (không phải mỗi epoch); `steps_per_epoch` tính bằng ceil; thêm FAIL-FAST
+  device asserts (`assert_device_setup`, assert input/label/logit device) và
+  metadata runtime thực (`device_requested/device_actual/model_device/cuda +
+  gpu mem`); thêm `--mode diagnostic`; run cũ archive thành
+  `results/exp002_codebert_poj104_invalid_run/` (INVALID, không phải M1 result).
+- Lý do: audit 2026-09-21 (reports/010_codebert_audit.md) phát hiện F-01 scheduler
+  per-epoch khiến lr thực ~1e-8 (thay vì 2e-5) → classifier collapse
+  (test TN=0, ROC-AUC 0.52); F-02 metadata hardcode `device=cpu` gây hiểu lầm.
+  Pair protocol (sample_id prefix shard) xác minh không leakage.
+- Không đổi: architecture DEC-016, max_length 256, threshold-trên-val, dataset.
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
 ## Lịch sử thay đổi
 
 | No. | Phiên bản | Ngày thay đổi | Nội dung thay đổi |

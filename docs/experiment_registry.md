@@ -23,7 +23,7 @@
 | Experiment | Dataset | Model | Status | Result | Report |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | EXP-001 | POJ-104 | B1 TF-IDF | COMPLETED | Test P/R/F1 0.552/0.860/0.673, thr 0.24 | reports/009_baseline_results.md |
-| EXP-002 | POJ-104 | M1 CodeBERT | READY_FOR_GPU | impl + tests xong, chờ user chạy preflight/train | - |
+| EXP-002 | POJ-104 | M1 CodeBERT | READY_FOR_FULL_RETRAIN | audit 010 xong (F-01 scheduler + F-02 device fixed, diagnostic CPU PASS); run cũ INVALID archived; chờ user chạy diagnostic GPU rồi full train | reports/010_codebert_audit.md |
 | EXP-003 | POJ-104 | M2 GraphCodeBERT | PLANNED | - | - |
 | EXP-004 | POJ-104 | M3 ASTNN | PLANNED | - | - |
 | EXP-005 | POJ-104 | M4 CPG-GNN | PLANNED | - | - |

@@ -86,40 +86,72 @@ def truncation_analysis(tokenizer, codes: dict[str, str], max_length: int) -> di
 
 
 # ---------------------------------------------------------------- train
+def _optimizer_step(model, optimizer, scaler, scheduler, max_grad_norm):
+    """Một optimizer step duy nhất + scheduler step (per-update, DEC-017)."""
+    if max_grad_norm:
+        scaler.unscale_(optimizer)
+        nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+    scaler.step(optimizer)
+    scaler.update()
+    optimizer.zero_grad()
+    if scheduler is not None:
+        scheduler.step()  # FIX DEC-017: step mỗi optimizer update, không phải mỗi epoch
+    return 1
+
+
+def _assert_device_match(device: torch.device, *tensors, name: str = "") -> None:
+    """Fail-fast: mọi tensor phải nằm đúng device yêu cầu."""
+    for t in tensors:
+        if t.device.type != device.type:
+            raise RuntimeError(
+                f"FAIL FAST: tensor {name} trên {t.device}, kỳ vọng {device} (§7)"
+            )
+
+
 def run_batches(model, tokenizer, refs, codes, max_length, batch_size, device, optimizer=None,
-                accum_steps: int = 1, max_grad_norm: float | None = None):
-    """Một pass: train (optimizer khác None) hoặc eval. Trả về loss/s/scores/labels/n_trunc."""
+                accum_steps: int = 1, max_grad_norm: float | None = None,
+                scheduler=None):
+    """Một pass: train (optimizer khác None) hoặc eval. Trả về loss/s/scores/labels/n_trunc/opt_steps."""
     train = optimizer is not None
     model.train(train)
-    total_loss, n_trunc = 0.0, 0
+    total_loss, n_trunc, opt_steps = 0.0, 0, 0
     all_s, all_y = [], []
     criterion = nn.BCEWithLogitsLoss()
     use_amp = train and device.type == "cuda" and _amp_enabled()
     scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
     if train:
         optimizer.zero_grad()
+    import sys as _sys
+    import time as _time
     n_micro = 0
-    for i in range(0, len(refs), batch_size):
+    _t_start = _time.perf_counter()
+    total_chunks = max(1, (len(refs) + batch_size - 1) // batch_size)
+    log_every = max(1, total_chunks // 20)  # ~5% mỗi dòng log
+    for ci, i in enumerate(range(0, len(refs), batch_size)):
         chunk = refs[i : i + batch_size]
         ba, bb, y, t = collate_pair_batch(
             tokenizer, [codes[r["a"]] for r in chunk], [codes[r["b"]] for r in chunk],
             [r["label"] for r in chunk], max_length, device,
         )
+        if device.type == "cuda":
+            for d in (ba, bb):
+                for v in d.values():
+                    _assert_device_match(device, v, name="input")
+            _assert_device_match(device, y, name="labels")
         n_trunc += t
         if train:
             with torch.amp.autocast("cuda", enabled=use_amp):
                 logits = model(ba, bb)
+                if logits.device.type != device.type:
+                    raise RuntimeError(
+                        f"FAIL FAST: logits trên {logits.device}, kỳ vọng {device} (§7)"
+                    )
                 loss = criterion(logits, y) / accum_steps
             scaler.scale(loss).backward()
             n_micro += 1
             total_loss += loss.item() * accum_steps * len(chunk)
             if n_micro % accum_steps == 0:
-                if max_grad_norm:
-                    scaler.unscale_(optimizer)
-                    nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
-                scaler.step(optimizer)
-                scaler.update()
-                optimizer.zero_grad()
+                opt_steps += _optimizer_step(model, optimizer, scaler, scheduler, max_grad_norm)
         else:
             with torch.no_grad():
                 logits = model(ba, bb)
@@ -127,14 +159,27 @@ def run_batches(model, tokenizer, refs, codes, max_length, batch_size, device, o
             total_loss += loss.item() * len(chunk)
         all_s.append(torch.sigmoid(logits).detach().cpu().numpy())
         all_y.append(np.array([r["label"] for r in chunk]))
+        if (ci + 1) % log_every == 0 or (ci + 1) == total_chunks:
+            phase = "train" if train else "eval"
+            _el = _time.perf_counter() - _t_start
+            _rate = (ci + 1) / max(1e-9, _el)
+            _eta = (total_chunks - (ci + 1)) / max(1e-9, _rate)
+
+
+            def _fmt(s: float) -> str:
+                s = int(s)
+                h, s = divmod(s, 3600)
+                m, s = divmod(s, 60)
+                return f"{h:d}h{m:02d}m{s:02d}s" if h else f"{m:d}m{s:02d}s"
+
+            print(f"[{phase}] {(ci + 1) / total_chunks * 100:5.1f}% "
+                  f"({ci + 1}/{total_chunks}) loss_so_far={total_loss / max(1, i + len(chunk)):.4f} "
+                  f"elapsed={_fmt(_el)} eta={_fmt(_eta)}",
+                  flush=True)
+            _sys.stdout.flush()
     if train and n_micro % accum_steps != 0:  # phần dư cuối epoch
-        if max_grad_norm:
-            scaler.unscale_(optimizer)
-            nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
-        scaler.step(optimizer)
-        scaler.update()
-        optimizer.zero_grad()
-    return total_loss / max(1, len(refs)), np.concatenate(all_s), np.concatenate(all_y), n_trunc
+        opt_steps += _optimizer_step(model, optimizer, scaler, scheduler, max_grad_norm)
+    return total_loss / max(1, len(refs)), np.concatenate(all_s), np.concatenate(all_y), n_trunc, opt_steps
 
 
 _AMP = {"enabled": False}
@@ -157,6 +202,7 @@ def train_model(cfg, out_dir: Path, device: torch.device, max_pairs: int = 0, ep
 
     tokenizer = load_tokenizer(cfg["model"]["hf_id"])
     model = CodeBERTPairClassifier(cfg["model"]["hf_id"], tr.get("dropout", 0.1)).to(device)
+    assert_device_setup(device, model)  # FAIL FAST nếu CPU fallback (§7)
     max_len = cfg["tokenizer"]["max_length"]
 
     train_codes = load_code_map(processed, ["train"])
@@ -177,7 +223,9 @@ def train_model(cfg, out_dir: Path, device: torch.device, max_pairs: int = 0, ep
         "validation": truncation_analysis(tokenizer, val_codes, max_len),
     }
 
-    steps_per_epoch = max(1, len(train_refs) // (tr["batch_size"] * tr["gradient_accumulation_steps"]))
+    import math
+    # Số optimizer updates thực tế mỗi epoch (ceil: tính cả batch dư cuối).
+    steps_per_epoch = max(1, math.ceil(len(train_refs) / tr["batch_size"] / tr["gradient_accumulation_steps"]))
     optimizer = AdamW(model.parameters(), lr=tr["learning_rate"], weight_decay=tr.get("weight_decay", 0.0))
     total_steps = steps_per_epoch * epochs
     scheduler = get_linear_schedule_with_warmup(
@@ -192,14 +240,14 @@ def train_model(cfg, out_dir: Path, device: torch.device, max_pairs: int = 0, ep
     for epoch in range(epochs):
         rng = random.Random(f"{tr['seed']}/{epoch}")
         rng.shuffle(train_refs)
-        loss, _, _, n_tr = run_batches(
+        loss, _, _, n_tr, opt_steps = run_batches(
             model, tokenizer, train_refs, train_codes, max_len, tr["batch_size"], device, optimizer,
             accum_steps=tr["gradient_accumulation_steps"],
             max_grad_norm=tr.get("max_grad_norm"),
+            scheduler=scheduler,  # DEC-017: scheduler step mỗi update trong run_batches
         )
-        scheduler.step()
-        global_step += steps_per_epoch
-        v_loss, v_s, v_y, _ = run_batches(
+        global_step += opt_steps
+        v_loss, v_s, v_y, _, _ = run_batches(
             model, tokenizer, val_refs, val_codes, max_len, tr["batch_size"] * 2, device
         )
         vm = split_metrics(v_s, v_y, threshold=0.5)
@@ -229,8 +277,11 @@ def train_model(cfg, out_dir: Path, device: torch.device, max_pairs: int = 0, ep
         w.writerows(history)
     (out_dir / "truncation.json").write_text(json.dumps(trunc, indent=2), encoding="utf-8")
     meta = run_metadata(Path(cfg["_config_path"]), manifest_path)
+    meta.update(collect_device_metadata(device, model))
     meta.update({"training_time_s": train_time, "best_epoch": best_epoch,
-                 "best_val_f1": best_f1, "device_requested": str(device)})
+                 "best_val_f1": best_f1,
+                 "scheduler": "linear_warmup_per_update_step (DEC-017)",
+                 "total_optimizer_steps": global_step})
     (out_dir / "run_metadata.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     return {"best_epoch": best_epoch, "best_val_f1": best_f1, "history": history,
             "truncation": trunc, "train_time_s": train_time}
@@ -248,6 +299,7 @@ def evaluate_model(cfg, out_dir: Path, device: torch.device) -> dict:
         raise FileNotFoundError(f"Thiếu best checkpoint: {ckpt_path} (§23)")
     tokenizer = load_tokenizer(cfg["model"]["hf_id"])
     model = CodeBERTPairClassifier(cfg["model"]["hf_id"]).to(device)
+    assert_device_setup(device, model)
     model.load_state_dict(torch.load(ckpt_path, map_location=device)["model_state"])
     model.eval()
     max_len, bs = cfg["tokenizer"]["max_length"], cfg["inference"]["pair_batch_size"]
@@ -256,7 +308,7 @@ def evaluate_model(cfg, out_dir: Path, device: torch.device) -> dict:
     for split in ("validation", "test"):
         codes = load_code_map(processed, [split])
         refs = load_pair_refs(pairs_dir / f"{split}.jsonl")
-        _, s, y, _ = run_batches(model, tokenizer, refs, codes, max_len, bs, device)
+        _, s, y, _, _ = run_batches(model, tokenizer, refs, codes, max_len, bs, device)
         scored[split] = (s, y, refs)
     thr = select_threshold(*scored["validation"][:2], step=cfg["threshold"]["grid_step"])
     threshold = thr["threshold"]
@@ -319,6 +371,144 @@ def evaluate_model(cfg, out_dir: Path, device: torch.device) -> dict:
     return summary
 
 
+# ---------------------------------------------------------------- device
+def assert_device_setup(device: torch.device, model: nn.Module) -> None:
+    """FAIL FAST nếu --device cuda nhưng GPU không thực sự dùng (§6–§7)."""
+    if device.type == "cuda":
+        if not torch.cuda.is_available():
+            raise RuntimeError("FAIL FAST: --device cuda nhưng torch.cuda.is_available() == False (§7)")
+        mdev = next(model.parameters()).device
+        if mdev.type != "cuda":
+            raise RuntimeError(f"FAIL FAST: model trên {mdev}, kỳ vọng cuda (§7)")
+
+
+def collect_device_metadata(device: torch.device, model: nn.Module) -> dict:
+    """Metadata runtime thực tế (§8) — thay thế device='cpu' hardcode."""
+    mdev = str(next(model.parameters()).device)
+    meta = {
+        "device_requested": str(device),
+        "device_actual": mdev,
+        "model_device": mdev,
+        "cuda_available": torch.cuda.is_available(),
+    }
+    if torch.cuda.is_available():
+        meta.update({
+            "cuda_device_name": torch.cuda.get_device_name(0),
+            "cuda_device_count": torch.cuda.device_count(),
+            "gpu_memory_allocated": torch.cuda.memory_allocated(0),
+            "gpu_memory_reserved": torch.cuda.memory_reserved(0),
+        })
+    return meta
+
+
+# ---------------------------------------------------------------- diagnostic
+DIAG_TRAIN_PAIRS = 64
+DIAG_VAL_PAIRS = 32
+
+
+def diagnostic(cfg, device: torch.device) -> dict:
+    """Diagnostic nhỏ trên GPU: verify device/gradients/param-update/logit variance (§9–§10, §33–§34).
+
+    KHÔNG phải kết quả paper. PASS = implementation đúng, không yêu cầu F1 cụ thể.
+    """
+    from torch.optim import AdamW
+
+    print(json.dumps({
+        "CUDA available": torch.cuda.is_available(),
+        "GPU": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+    }))
+    if device.type == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("FAIL FAST: diagnostic yêu cầu cuda nhưng không có GPU (§10)")
+
+    set_global_seed(cfg["training"]["seed"])
+    tr = cfg["training"]
+    pairs_dir = Path(cfg["dataset"]["pairs_dir"])
+    processed = Path(cfg["dataset"]["processed"])
+    max_len = cfg["tokenizer"]["max_length"]
+
+    tokenizer = load_tokenizer(cfg["model"]["hf_id"])
+    model = CodeBERTPairClassifier(cfg["model"]["hf_id"]).to(device)
+    assert_device_setup(device, model)
+    mdev = str(next(model.parameters()).device)
+    print(json.dumps({"Model device": mdev}))
+
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    enc_train = sum(p.numel() for p in model.encoder.parameters() if p.requires_grad)
+    head_train = sum(p.numel() for p in model.head.parameters() if p.requires_grad)
+    print(json.dumps({"trainable_params": trainable, "encoder_trainable": enc_train,
+                      "classifier_trainable": head_train}))
+    assert enc_train > 0 and head_train > 0, "FAIL: encoder hoặc classifier bị freeze toàn bộ"
+
+    codes = load_code_map(processed, ["train"])
+    refs = load_pair_refs(pairs_dir / "train.jsonl")
+    pos = [r for r in refs if r["label"] == 1][: DIAG_TRAIN_PAIRS // 2]
+    neg = [r for r in refs if r["label"] == 0][: DIAG_TRAIN_PAIRS // 2]
+    diag_refs = pos + neg
+    assert len(pos) and len(neg), "FAIL: diagnostic subset thiếu pos/neg"
+
+    before = {n: p.detach().clone() for n, p in model.named_parameters() if p.requires_grad}
+    optimizer = AdamW(model.parameters(), lr=tr["learning_rate"])
+    _AMP["enabled"] = False  # diagnostic: tắt AMP cho rõ ràng (§29)
+    losses = []
+    for epoch in range(2):
+        loss, s, y, _, _ = run_batches(
+            model, tokenizer, diag_refs, codes, max_len, 8, device, optimizer,
+            accum_steps=1, max_grad_norm=tr.get("max_grad_norm"),
+        )
+        losses.append(loss)
+        uniq = sorted(set(int(v) for v in y))
+        print(json.dumps({
+            "epoch": epoch, "loss": loss, "labels_unique": uniq,
+            "score_min": float(s.min()), "score_max": float(s.max()),
+            "score_mean": float(s.mean()), "score_std": float(s.std()),
+            "input_device": "cuda" if device.type == "cuda" else "cpu",
+        }))
+
+    # Gradient check trên một micro-batch riêng (run_batches đã zero_grad cuối epoch).
+    import torch.nn as _nn
+    model.train(True)
+    optimizer.zero_grad()
+    _chunk = diag_refs[:8]
+    _ba, _bb, _y, _ = collate_pair_batch(
+        tokenizer, [codes[r["a"]] for r in _chunk], [codes[r["b"]] for r in _chunk],
+        [r["label"] for r in _chunk], max_len, device)
+    _loss = _nn.BCEWithLogitsLoss()(model(_ba, _bb), _y)
+    _loss.backward()
+    grads_ok, grad_norm, n_with_grad = True, 0.0, 0
+    for p in model.parameters():
+        if p.requires_grad and p.grad is not None:
+            n_with_grad += 1
+            if not torch.isfinite(p.grad).all():
+                grads_ok = False
+            grad_norm += float(p.grad.norm())
+    if n_with_grad == 0:
+        grads_ok = False
+    optimizer.zero_grad()
+    changed = sum(1 for n, p in model.named_parameters()
+                  if p.requires_grad and not torch.equal(before[n].cpu(), p.detach().cpu()))
+    score_std = float(s.std())
+    checks = {
+        "cuda_confirmed": device.type != "cuda" or torch.cuda.is_available(),
+        "model_on_cuda": mdev.startswith("cuda") if device.type == "cuda" else True,
+        "pretrained_encoder": enc_train > 0,
+        "gradients_finite": grads_ok and grad_norm > 0,
+        "params_updated": changed > 0,
+        "logits_vary": score_std > 0,
+        "probs_not_constant": not (float(s.min()) == float(s.max()) == 0.5),
+        "loss_finite": all(np.isfinite(losses)),
+    }
+    checks["grad_norm"] = grad_norm
+    checks["params_changed"] = changed
+    checks["losses"] = losses
+    print(json.dumps({"DIAGNOSTIC": "PASS" if all(v for k, v in checks.items()
+                    if isinstance(v, bool)) else "FAIL", **{k: v for k, v in checks.items()
+                    if isinstance(v, bool)}}))
+    if torch.cuda.is_available():
+        print(json.dumps({"gpu_memory_allocated": torch.cuda.memory_allocated(0),
+                          "gpu_memory_reserved": torch.cuda.memory_reserved(0)}))
+    return checks
+
+
 # ---------------------------------------------------------------- preflight
 def preflight(cfg, device: torch.device) -> dict:
     import transformers
@@ -360,7 +550,7 @@ def preflight(cfg, device: torch.device) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True)
-    ap.add_argument("--mode", choices=["preflight", "smoke", "train", "evaluate"], required=True)
+    ap.add_argument("--mode", choices=["preflight", "smoke", "train", "evaluate", "diagnostic"], required=True)
     ap.add_argument("--device", default="cuda", choices=["cuda", "cpu"])
     args = ap.parse_args()
     cfg = load_config(args.config)
@@ -370,6 +560,8 @@ def main() -> None:
 
     if args.mode == "preflight":
         preflight(cfg, device)
+    elif args.mode == "diagnostic":
+        diagnostic(cfg, device)
     elif args.mode == "smoke":
         # Smoke CPU/GPU: 1 epoch, subset nhỏ — verify forward/backward/loss/checkpoint (§22).
         res = train_model(cfg, out_dir / "smoke", device, max_pairs=SMOKE_TRAIN_PAIRS, epochs=1)
