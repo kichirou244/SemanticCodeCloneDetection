@@ -1,8 +1,5 @@
 # Dữ liệu thô / đã xử lý (không commit dataset lớn)
-data/raw/
-data/processed/
-data/splits/
-data/artifacts/
+data/
 
 # Kết quả chạy (giữ reports/, bỏ checkpoints nặng)
 results/*/checkpoints/

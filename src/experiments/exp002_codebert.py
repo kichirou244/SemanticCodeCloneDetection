@@ -1,13 +1,21 @@
 """EXP-002 — M1 CodeBERT fine-tuning trên POJ-104.
 
 Chạy (trên máy GPU của user):
-  preflight: python -m src.experiments.exp002_codebert --config configs/exp002_codebert.yaml --mode preflight --device cuda
-  smoke:     ... --mode smoke --device cpu
-  train:     ... --mode train --device cuda
-  evaluate:  ... --mode evaluate --device cuda
+  preflight:  python -m src.experiments.exp002_codebert --config configs/exp002_codebert.yaml --mode preflight --device cuda
+  diagnostic: ... --mode diagnostic --device cuda
+  smoke:      ... --mode smoke --device cuda
+  train:      ... --mode train --device cuda [--time-budget-s 32400]
+  evaluate:   ... --mode evaluate --device cuda
+  resume:     ... --mode resume --device cuda   (nạp last_checkpoint.pt, train tiếp)
 
 Protocol (§35): train chỉ update trên train; val chỉ eval; test untouched tới
 final evaluation; threshold trên val (F1); best checkpoint theo val F1.
+
+Chạy trên Kaggle (DEC-018): phiên GPU có giới hạn 12h và bị kill không báo
+trước. Vì vậy mọi artifact (training_history.csv, run_metadata.json,
+last/best_checkpoint.pt) được flush ngay sau TỪNG epoch, `--time-budget-s`
+dừng train graceful để kịp chạy evaluate, và `--mode resume` cho phép
+train tiếp thay vì chạy lại từ đầu.
 """
 
 import argparse
@@ -17,6 +25,7 @@ import random
 import shutil
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -46,6 +55,10 @@ from src.models.codebert_pair import (
 SMOKE_TRAIN_PAIRS = 256
 SMOKE_VAL_PAIRS = 128
 
+# Ngân sách thời gian mặc định cho 1 phiên Kaggle (12h). Reserve ~2.5h cho
+# setup + eval + tar + margin để notebook không bị kill giữa chừng.
+DEFAULT_TIME_BUDGET_S = 9 * 3600
+
 
 # ---------------------------------------------------------------- data
 def load_code_map(processed: Path, splits: list[str]) -> dict[str, str]:
@@ -68,6 +81,12 @@ def load_pair_refs(pairs_path: Path) -> list[dict]:
         }
         for r in stream_jsonl(pairs_path)
     ]
+
+
+def _restrict_codes(codes: dict[str, str], refs: list[dict]) -> dict[str, str]:
+    """Chỉ giữ code mà `refs` thực sự tham chiếu (dùng cho smoke/diagnostic)."""
+    need = {r["a"] for r in refs} | {r["b"] for r in refs}
+    return {k: v for k, v in codes.items() if k in need}
 
 
 def truncation_analysis(tokenizer, codes: dict[str, str], max_length: int) -> dict:
@@ -189,7 +208,86 @@ def _amp_enabled() -> bool:
     return _AMP["enabled"]
 
 
-def train_model(cfg, out_dir: Path, device: torch.device, max_pairs: int = 0, epochs: int = 0) -> dict:
+# ---------------------------------------------------------------- durable artifacts
+# Kaggle kill phiên không báo trước. Mọi artifact phải flush ngay sau mỗi epoch
+# (ghi atomic qua file.tmp + replace) để không mất sạch khi session chết.
+def _atomic_write_text(path: Path, text: str) -> None:
+    # newline="" để không dịch \n -> \r\n trên Windows; nếu không, output của
+    # csv.writer (\r\n) sẽ thành \r\r\n và sinh dòng rỗng lẫn giữa file.
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(text, encoding="utf-8", newline="")
+    tmp.replace(path)
+
+
+def write_history(out_dir: Path, history: list[dict]) -> None:
+    if not history:
+        return
+    import io
+
+    buf = io.StringIO()
+    w = csv.DictWriter(buf, fieldnames=list(history[0].keys()))
+    w.writeheader()
+    w.writerows(history)
+    _atomic_write_text(out_dir / "training_history.csv", buf.getvalue())
+
+
+def write_run_metadata(out_dir: Path, cfg: dict, manifest_path: Path, device, model) -> dict:
+    meta = run_metadata(Path(cfg["_config_path"]), manifest_path)
+    meta.update(collect_device_metadata(device, model))
+    meta.update({
+        "scheduler": "linear_warmup_per_update_step (DEC-017)",
+        "wall_clock": datetime.now().astimezone().isoformat(timespec="seconds"),
+    })
+    _atomic_write_text(out_dir / "run_metadata.json", json.dumps(meta, indent=2))
+    return meta
+
+
+def save_training_state(out_dir: Path, model, optimizer, scheduler, epoch: int,
+                        global_step: int, best_f1: float, best_epoch: int,
+                        is_best: bool, val_f1: float) -> None:
+    """Chỉ giữ `last` + `best` — bỏ checkpoint từng epoch để tiết kiệm ~3GB
+    trong /kaggle/working (giới hạn 20GB)."""
+    ckpt = {"model_state": model.state_dict(), "optimizer_state": optimizer.state_dict(),
+            "scheduler_state": scheduler.state_dict(), "epoch": epoch,
+            "global_step": global_step, "best_f1": best_f1, "best_epoch": best_epoch,
+            "val_f1": val_f1,
+            "rng": {"python": random.getstate(),
+                    "numpy": np.random.get_state(),
+                    "torch": torch.get_rng_state(),
+                    "cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None}}
+    tmp = out_dir / "last_checkpoint.pt.tmp"
+    torch.save(ckpt, tmp)
+    tmp.replace(out_dir / "last_checkpoint.pt")
+    if is_best:
+        tmp2 = out_dir / "best_checkpoint.pt.tmp"
+        torch.save(ckpt, tmp2)
+        tmp2.replace(out_dir / "best_checkpoint.pt")
+
+
+def load_training_state(out_dir: Path, model, optimizer, scheduler) -> dict:
+    """Nạp `last_checkpoint.pt` để resume. Raise nếu không tồn tại (fail-fast)."""
+    path = out_dir / "last_checkpoint.pt"
+    if not path.exists():
+        raise FileNotFoundError(f"Không có checkpoint để resume: {path}")
+    ckpt = torch.load(path, map_location="cpu", weights_only=False)
+    model.load_state_dict(ckpt["model_state"])
+    optimizer.load_state_dict(ckpt["optimizer_state"])
+    if scheduler is not None and ckpt.get("scheduler_state"):
+        scheduler.load_state_dict(ckpt["scheduler_state"])
+    rng = ckpt.get("rng") or {}
+    if "python" in rng:
+        random.setstate(rng["python"])
+    if "numpy" in rng:
+        np.random.set_state(rng["numpy"])
+    if "torch" in rng:
+        torch.set_rng_state(rng["torch"])
+    if rng.get("cuda") is not None and torch.cuda.is_available():
+        torch.cuda.set_rng_state_all(rng["cuda"])
+    return ckpt
+
+
+def train_model(cfg, out_dir: Path, device: torch.device, max_pairs: int = 0, epochs: int = 0,
+                time_budget_s: int = 0, resume: bool = False) -> dict:
     set_global_seed(cfg["training"]["seed"])
     tr = cfg["training"]
     epochs = epochs or tr["epochs"]
@@ -218,10 +316,22 @@ def train_model(cfg, out_dir: Path, device: torch.device, max_pairs: int = 0, ep
         val_refs = balanced(val_refs, max_pairs // 2)
     val_codes = load_code_map(processed, ["validation"])
 
-    trunc = {
-        "train": truncation_analysis(tokenizer, train_codes, max_len),
-        "validation": truncation_analysis(tokenizer, val_codes, max_len),
-    }
+    if max_pairs:
+        # Smoke chỉ cần đúng các code nó dùng. Giữ toàn bộ 41k codes sẽ tốn
+        # ~4 phút cho truncation_analysis dù chỉ forward 256 pairs.
+        train_codes = _restrict_codes(train_codes, train_refs)
+        val_codes = _restrict_codes(val_codes, val_refs)
+
+    trunc_path = out_dir / "truncation.json"
+    if resume and trunc_path.exists():
+        trunc = json.loads(trunc_path.read_text(encoding="utf-8"))  # ~4 phút, bỏ lại khi resume
+        print("resume: dùng lại truncation.json")
+    else:
+        trunc = {
+            "train": truncation_analysis(tokenizer, train_codes, max_len),
+            "validation": truncation_analysis(tokenizer, val_codes, max_len),
+        }
+        _atomic_write_text(trunc_path, json.dumps(trunc, indent=2))
 
     import math
     # Số optimizer updates thực tế mỗi epoch (ceil: tính cả batch dư cuối).
@@ -236,8 +346,26 @@ def train_model(cfg, out_dir: Path, device: torch.device, max_pairs: int = 0, ep
     es = cfg.get("early_stopping", {})
     best_f1, best_epoch, patience_left = -1.0, -1, int(es.get("patience", 2))
     history, global_step = [], 0
+    start_epoch = 0
+
+    if resume:
+        ckpt = load_training_state(out_dir, model, optimizer, scheduler)
+        start_epoch = int(ckpt["epoch"]) + 1
+        best_f1, best_epoch = float(ckpt["best_f1"]), int(ckpt["best_epoch"])
+        global_step = int(ckpt["global_step"])
+        hist_path = out_dir / "training_history.csv"
+        if hist_path.exists():
+            with open(hist_path, newline="", encoding="utf-8") as f:
+                history = [r for r in csv.DictReader(f)]
+        print(json.dumps({"RESUME": True, "from_epoch": start_epoch, "best_f1": best_f1,
+                          "best_epoch": best_epoch, "global_step": global_step}))
+        if start_epoch >= epochs:
+            print(json.dumps({"WARNING": "đã train đủ epoch, chỉ cần evaluate"}))
+
     t0 = time.perf_counter()
-    for epoch in range(epochs):
+    prev_elapsed = 0.0
+    stopped_reason = "epochs_exhausted"
+    for epoch in range(start_epoch, epochs):
         rng = random.Random(f"{tr['seed']}/{epoch}")
         rng.shuffle(train_refs)
         loss, _, _, n_tr, opt_steps = run_batches(
@@ -252,39 +380,51 @@ def train_model(cfg, out_dir: Path, device: torch.device, max_pairs: int = 0, ep
         )
         vm = split_metrics(v_s, v_y, threshold=0.5)
         lr = optimizer.param_groups[0]["lr"]
+        elapsed = time.perf_counter() - t0
         history.append({"epoch": epoch, "train_loss": loss, "val_loss": v_loss,
-                        "val_f1": vm["f1"], "val_roc_auc": vm["roc_auc"], "lr": lr})
-        ckpt = {"model_state": model.state_dict(), "optimizer_state": optimizer.state_dict(),
-                "scheduler_state": scheduler.state_dict(), "epoch": epoch,
-                "global_step": global_step, "val_f1": vm["f1"]}
-        torch.save(ckpt, out_dir / f"checkpoint_epoch{epoch}.pt")
+                        "val_f1": vm["f1"], "val_roc_auc": vm["roc_auc"], "lr": lr,
+                        "epoch_time_s": round(elapsed - prev_elapsed, 1),
+                        "elapsed_s": round(elapsed, 1),
+                        "global_step": global_step})
+        prev_elapsed = elapsed
+
         improved = vm["f1"] > best_f1
         if improved:
             best_f1, best_epoch = vm["f1"], epoch
-            torch.save(ckpt, out_dir / "best_checkpoint.pt")
             patience_left = int(es.get("patience", 2))
         else:
             patience_left -= 1
+        save_training_state(out_dir, model, optimizer, scheduler, epoch, global_step,
+                            best_f1, best_epoch, improved, vm["f1"])
+        write_history(out_dir, history)  # flush ngay — không đợi hết epoch
+        write_run_metadata(out_dir, cfg, manifest_path, device, model)
         print(json.dumps({"epoch": epoch, "train_loss": round(loss, 4),
-                          "val_f1": round(vm["f1"], 4), "best_f1": round(best_f1, 4)}))
+                          "val_f1": round(vm["f1"], 4), "best_f1": round(best_f1, 4),
+                          "epoch_time_s": history[-1]["epoch_time_s"],
+                          "elapsed_s": history[-1]["elapsed_s"]}))
+
         if es.get("enabled", False) and patience_left < 0:
+            stopped_reason = "early_stopping"
             print(f"early stopping tại epoch {epoch}")
             break
+        if time_budget_s and elapsed > time_budget_s:
+            stopped_reason = "time_budget"
+            print(json.dumps({"WARNING": "time budget reached — dừng train, chuyển sang evaluate",
+                              "elapsed_s": round(elapsed, 1), "budget_s": time_budget_s}))
+            break
+
     train_time = time.perf_counter() - t0
-    with open(out_dir / "training_history.csv", "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=list(history[0].keys()))
-        w.writeheader()
-        w.writerows(history)
-    (out_dir / "truncation.json").write_text(json.dumps(trunc, indent=2), encoding="utf-8")
-    meta = run_metadata(Path(cfg["_config_path"]), manifest_path)
-    meta.update(collect_device_metadata(device, model))
+    write_history(out_dir, history)
+    trunc = json.loads(trunc_path.read_text(encoding="utf-8"))
+    meta = write_run_metadata(out_dir, cfg, manifest_path, device, model)
     meta.update({"training_time_s": train_time, "best_epoch": best_epoch,
-                 "best_val_f1": best_f1,
-                 "scheduler": "linear_warmup_per_update_step (DEC-017)",
-                 "total_optimizer_steps": global_step})
-    (out_dir / "run_metadata.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+                 "best_val_f1": best_f1, "total_optimizer_steps": global_step,
+                 "stopped_reason": stopped_reason, "epochs_completed": len(history),
+                 "time_budget_s": time_budget_s or None})
+    _atomic_write_text(out_dir / "run_metadata.json", json.dumps(meta, indent=2))
     return {"best_epoch": best_epoch, "best_val_f1": best_f1, "history": history,
-            "truncation": trunc, "train_time_s": train_time}
+            "truncation": trunc, "train_time_s": train_time,
+            "stopped_reason": stopped_reason, "epochs_completed": len(history)}
 
 
 # ---------------------------------------------------------------- evaluate
@@ -338,17 +478,16 @@ def evaluate_model(cfg, out_dir: Path, device: torch.device) -> dict:
                         "error_type": "false_positive"})
 
     t0 = time.perf_counter()
-    (out_dir / "threshold.json").write_text(json.dumps(thr, indent=2), encoding="utf-8")
-    (out_dir / "metrics.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
+    _atomic_write_text(out_dir / "threshold.json", json.dumps(thr, indent=2))
+    _atomic_write_text(out_dir / "metrics.json", json.dumps(results, indent=2))
     with open(out_dir / "metrics.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         keys = ["accuracy", "precision", "recall", "f1", "roc_auc", "pr_auc", "TP", "TN", "FP", "FN"]
         w.writerow(["split"] + keys)
         for sp, m in results.items():
             w.writerow([sp] + [m[k] for k in keys])
-    (out_dir / "confusion_matrix.json").write_text(
-        json.dumps({sp: {k: m[k] for k in ("TP", "TN", "FP", "FN")} for sp, m in results.items()}, indent=2),
-        encoding="utf-8")
+    _atomic_write_text(out_dir / "confusion_matrix.json", json.dumps(
+        {sp: {k: m[k] for k in ("TP", "TN", "FP", "FN")} for sp, m in results.items()}, indent=2))
     with open(out_dir / "error_cases.jsonl", "w", encoding="utf-8") as f:
         for e in err:
             f.write(json.dumps(e) + "\n")
@@ -358,17 +497,21 @@ def evaluate_model(cfg, out_dir: Path, device: torch.device) -> dict:
         with open(pred_dir / f"{sp}_scores.jsonl", "w", encoding="utf-8") as f:
             for r, v, t in zip(refs, s, y):
                 f.write(json.dumps({"pair_id": r["pair_id"], "label": int(t), "score": float(v)}) + "\n")
-    (out_dir / "model_stats.json").write_text(json.dumps({
+    _atomic_write_text(out_dir / "model_stats.json", json.dumps({
         "hf_id": cfg["model"]["hf_id"], "hidden_size": model.hidden_size,
         "param_count": model.param_count(),
         "pair_architecture": "[hA; hB; |hA-hB|] + MLP(Tanh) — DEC-016",
         "max_length": max_len,
-    }, indent=2), encoding="utf-8")
+    }, indent=2))
     eval_time = time.perf_counter() - t0
     summary = {"threshold": threshold, "validation_f1_at_thr": thr["f1"],
                "test": results["test"], "eval_time_s": eval_time, "out_dir": str(out_dir)}
+    # Marker: notebook dùng để biết chắc eval đã xong trước khi tar.
+    _atomic_write_text(out_dir / "EVAL_COMPLETE.json",
+                       json.dumps({"completed": True, "summary": summary}, indent=2))
     print(json.dumps(summary, indent=2))
     return summary
+
 
 
 # ---------------------------------------------------------------- device
@@ -550,8 +693,14 @@ def preflight(cfg, device: torch.device) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True)
-    ap.add_argument("--mode", choices=["preflight", "smoke", "train", "evaluate", "diagnostic"], required=True)
+    ap.add_argument("--mode", choices=["preflight", "smoke", "train", "evaluate",
+                                       "diagnostic", "resume"], required=True)
     ap.add_argument("--device", default="cuda", choices=["cuda", "cpu"])
+    ap.add_argument("--time-budget-s", type=int, default=DEFAULT_TIME_BUDGET_S,
+                    help="Dừng train gracefully sau N giây rồi chạy evaluate "
+                         "(bảo vệ giới hạn phiên Kaggle 12h). 0 = tắt.")
+    ap.add_argument("--resume", action="store_true",
+                    help="Nạp last_checkpoint.pt và train tiếp các epoch còn lại.")
     args = ap.parse_args()
     cfg = load_config(args.config)
     cfg["_config_path"] = str(args.config)
@@ -564,17 +713,20 @@ def main() -> None:
         diagnostic(cfg, device)
     elif args.mode == "smoke":
         # Smoke CPU/GPU: 1 epoch, subset nhỏ — verify forward/backward/loss/checkpoint (§22).
-        res = train_model(cfg, out_dir / "smoke", device, max_pairs=SMOKE_TRAIN_PAIRS, epochs=1)
+        res = train_model(cfg, out_dir / "smoke", device, max_pairs=SMOKE_TRAIN_PAIRS, epochs=1,
+                          time_budget_s=0)
         assert res["history"][0]["train_loss"] < float("inf")
         assert (out_dir / "smoke" / "best_checkpoint.pt").exists()
         print("SMOKE PASS")
-    elif args.mode == "train":
-        res = train_model(cfg, out_dir, device)
-        (out_dir / "config.yaml").write_text(
-            Path(args.config).read_text(encoding="utf-8"), encoding="utf-8")
+    elif args.mode in ("train", "resume"):
+        resume = args.resume or args.mode == "resume"
+        res = train_model(cfg, out_dir, device, time_budget_s=args.time_budget_s, resume=resume)
+        _atomic_write_text(out_dir / "config.yaml", Path(args.config).read_text(encoding="utf-8"))
         shutil.copy(Path(cfg["dataset"]["manifest"]), out_dir / "manifest.json")
         evaluate_model(cfg, out_dir, device)
-        print(json.dumps({"best_epoch": res["best_epoch"], "best_val_f1": res["best_val_f1"]}))
+        print(json.dumps({"best_epoch": res["best_epoch"], "best_val_f1": res["best_val_f1"],
+                          "stopped_reason": res["stopped_reason"],
+                          "epochs_completed": res["epochs_completed"]}))
     elif args.mode == "evaluate":
         evaluate_model(cfg, out_dir, device)
 

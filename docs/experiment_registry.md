@@ -4,8 +4,8 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.4.0 |
-| **Ngày cập nhật** | 2026-09-20 |
+| **Phiên bản** | 1.5.0 |
+| **Ngày cập nhật** | 2026-09-27 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
 
@@ -23,7 +23,7 @@
 | Experiment | Dataset | Model | Status | Result | Report |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | EXP-001 | POJ-104 | B1 TF-IDF | COMPLETED | Test P/R/F1 0.552/0.860/0.673, thr 0.24 | reports/009_baseline_results.md |
-| EXP-002 | POJ-104 | M1 CodeBERT | READY_FOR_FULL_RETRAIN | audit 010 xong (F-01 scheduler + F-02 device fixed, diagnostic CPU PASS); run cũ INVALID archived; chờ user chạy diagnostic GPU rồi full train | reports/010_codebert_audit.md |
+| EXP-002 | POJ-104 | M1 CodeBERT | READY_FOR_KAGGLE_TRAIN | audit 010 xong (F-01 + F-02 fixed); diagnostic GPU PASS (RTX 5060, loss 1.009→0.885); Kaggle protocol xong (DEC-018: flush mỗi epoch, time budget, resume); **chờ user train trên Kaggle** | reports/010_codebert_audit.md |
 | EXP-003 | POJ-104 | M2 GraphCodeBERT | PLANNED | - | - |
 | EXP-004 | POJ-104 | M3 ASTNN | PLANNED | - | - |
 | EXP-005 | POJ-104 | M4 CPG-GNN | PLANNED | - | - |
@@ -44,6 +44,12 @@ Ghi chú Phase 1 (2026-09-20): pipeline dataset chung đã implement
 CodeNet pilot finalized (547k pairs, accepted-allowlist, passed).**
 EXP-001/EXP-007 vẫn PLANNED cho tới khi chạy model thật.
 
+Ghi chú EXP-002 (2026-09-27): training diễn ra trên **Kaggle** (local chỉ smoke
+test, ~7.8h/run vượt giới hạn 12h/phiên Kaggle). Xem DEC-018 cho run protocol.
+Sau khi có kết quả: viết `reports/011_codebert_results.md`, đổi status →
+`COMPLETED`, và kiểm tra `run_metadata.json` có `device_actual: cuda:0` +
+`cuda_device_name` (bằng chứng fix F-02 của DEC-017 trong run thật).
+
 [🔝 Quay lại mục lục](#top)
 
 ---
@@ -55,5 +61,7 @@ EXP-001/EXP-007 vẫn PLANNED cho tới khi chạy model thật.
 | 1 | 1.0.0 | 2026-09-20 | Khởi tạo 12 experiment core (6 POJ-104 + 6 CodeNet Python). |
 | 2 | 1.1.0 | 2026-09-20 | Ghi chú Phase 1: pipeline dataset + config EXP-001 sẵn, status giữ PLANNED. |
 | 3 | 1.2.0 | 2026-09-20 | POJ-104 pairs built + passed (sẵn sàng EXP-001); CodeNet pilot chờ rebuild. |
+| 4 | 1.3.0 | 2026-09-20 | EXP-001 COMPLETED (test F1 0.673); EXP-002 → READY_FOR_FULL_RETRAIN. |
+| 5 | 1.5.0 | 2026-09-27 | EXP-002 → READY_FOR_KAGGLE_TRAIN (DEC-018 Kaggle run protocol + diagnostic GPU PASS). |
 | 4 | 1.3.0 | 2026-09-20 | EXP-001 COMPLETED (test F1 0.673); report 009. |
 | 5 | 1.4.0 | 2026-09-20 | EXP-002 READY_FOR_GPU (config + runner + tests xong). |

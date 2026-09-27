@@ -4,8 +4,8 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.7.0 |
-| **Ngày cập nhật** | 2026-09-20 |
+| **Phiên bản** | 1.9.0 |
+| **Ngày cập nhật** | 2026-09-27 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
 
@@ -29,6 +29,8 @@
 - [DEC-014 — EXP-001 tokenization và threshold](#dec-014--exp-001-tokenization-va-threshold)
 - [DEC-015 — EXP-002 CodeBERT checkpoint](#dec-015--exp-002-codebert-checkpoint)
 - [DEC-016 — EXP-002 pair architecture và max_length](#dec-016--exp-002-pair-architecture-va-max-length)
+- [DEC-017 — Sửa bug scheduler và device metadata của EXP-002](#dec-017--sua-bug-scheduler-va-device-metadata-cua-exp-002)
+- [DEC-018 — Kaggle run protocol cho EXP-002](#dec-018--kaggle-run-protocol-cho-exp-002)
 - [Lịch sử thay đổi](#lich-su-thay-doi)
 
 ---
@@ -248,6 +250,59 @@
 
 ---
 
+## DEC-017 — Sửa bug scheduler và device metadata của EXP-002
+
+- Quyết định: `get_linear_schedule_with_warmup` step theo **từng optimizer update**
+  (không theo epoch); metadata runtime lấy từ `torch.cuda` thật
+  (`collect_device_metadata` + `assert_device_setup` + assert device mỗi batch);
+  thêm mode `diagnostic`; bỏ `device=cpu` hardcode.
+- Lý do: audit 2026-09-21 (reports/010_codebert_audit.md) phát hiện F-01 scheduler
+  per-epoch khiến lr thực ~1e-8 (thay vì 2e-5) → classifier collapse
+  (test TN=0, ROC-AUC 0.52); F-02 metadata hardcode `device=cpu` gây hiểu lầm.
+  Pair protocol (sample_id prefix shard) xác minh không leakage.
+- Không đổi: architecture DEC-016, max_length 256, threshold-trên-val, dataset.
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
+## DEC-018 — Kaggle run protocol cho EXP-002
+
+- Bối cảnh: EXP-002 cần ~7.8h train (đo được ở run invalid: 27,965s) trên khi
+  máy local chỉ phù hợp smoke test. Kaggle giới hạn **12h/phiên** và kill không báo
+  trước. Trước DEC-018, `training_history.csv` + `run_metadata.json` chỉ ghi
+  **sau khi hết cả 3 epoch** → session chết ở giờ thứ 10 là mất sạch 8h.
+- Quyết định:
+  1. **Flush artifact mỗi epoch** (atomic write qua `.tmp` + `replace`):
+     `training_history.csv`, `run_metadata.json`, `last_checkpoint.pt`,
+     `best_checkpoint.pt`.
+  2. **`--time-budget-s`** (mặc định 9h) dừng train graceful rồi vẫn chạy
+     evaluate, thay vì bị Kaggle kill giữa chừng.
+  3. **`--mode resume`** nạp `last_checkpoint.pt` (model + optimizer + scheduler +
+     RNG state) để train tiếp epoch còn lại thay vì chạy lại từ đầu.
+  4. **Bỏ checkpoint từng epoch**, chỉ giữ `best` + `last` (6GB → 3GB trong
+     `/kaggle/working`).
+  5. `EVAL_COMPLETE.json` làm marker để notebook biết chắc eval xong trước khi tar.
+  6. Notebook dùng `subprocess` thay vì `!cmd $var` — IPython **không** nội suy
+     biến Python trong `!`, `$url` bị bash expand thành rỗng nên `git clone` chết
+     ngay cell 2. Cell 2 idempotent (pull nếu đã clone) để restart-resume được.
+  7. Không `pip install` torch/transformers mặc định (Kaggle đã có bản CUDA tương
+     thích); chỉ cài module còn thiếu.
+  8. Smoke/diagnostic giới hạn `codes` theo refs thực dùng, bỏ phân tích
+     truncation trên toàn bộ 41k codes (nhanh 56s thay vì >5 phút).
+- Lý do: biến "1 lần chạy 8h không thể cứu" thành "chạy được nhiều lần, mỗi lần
+  đều tạo ra artifact có giá trị". Bắt buộc cho mọi EXP sau (EXP-003…012) vì
+  cùng bài toán thời gian dài.
+- Xác minh: 39/39 test pass (5 test mới cho flush/resume/time-budget/marker/atomic);
+  `--mode diagnostic --device cuda` → `DIAGNOSTIC: PASS` trên RTX 5060
+  (loss 1.009 → 0.885, `model_on_cuda=true`, 126,416,641 params).
+- Không đổi: hyperparameter (`configs/exp002_codebert.yaml` giữ nguyên), dataset,
+  architecture, protocol train/val/test.
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
 ## Lịch sử thay đổi
 
 | No. | Phiên bản | Ngày thay đổi | Nội dung thay đổi |
@@ -260,3 +315,5 @@
 | 6 | 1.5.0 | 2026-09-20 | Thêm DEC-012 (CodeNet status: pilot nguyên trạng, big/full audit trước). |
 | 7 | 1.6.0 | 2026-09-20 | Thêm DEC-014 (EXP-001 tokenization + threshold validation-F1). |
 | 8 | 1.7.0 | 2026-09-20 | Thêm DEC-015 (CodeBERT checkpoint), DEC-016 (pair arch + max_length 256). |
+| 9 | 1.8.0 | 2026-09-21 | Thêm DEC-017 (fix scheduler per-update + device metadata thật). |
+| 10 | 1.9.0 | 2026-09-27 | Thêm DEC-018 (Kaggle run protocol: flush mỗi epoch, time budget, resume). |
