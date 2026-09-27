@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.2.0 |
+| **Phiên bản** | 1.3.0 |
 | **Ngày cập nhật** | 2026-09-27 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -82,15 +82,22 @@ Kết quả dán lại cho agent để chốt vào reports 002/003/004 và feasi
      (~7.8h), tải `exp002_results.tar.gz` về, rồi agent viết
      `reports/011_codebert_results.md` + đổi registry → COMPLETED.
 6. EXP-003 (M2 GraphCodeBERT) — clone runner EXP-002, tái dùng toàn bộ máy móc.
-   Rẻ nhất trong các bước còn lại và cần cho RQ1.
-7. Implement M3/M4/M5 (hiện cả 3 còn là stub `NotImplementedError`) → EXP-004–006.
-   Cần AST extractor thật + CPG-Python trước (DEC-009).
-8. EXP-007–012 trên CodeNet Python.
-9. Transformation engine (RQ4) → ablation → error analysis → báo cáo final.
+   Rẻ nhất trong các bước còn lại và cần cho RQ1. **~7.8h GPU**
+7. **Implement M3 (ASTNN)** — cần AST extractor thật (`src/representations/ast/`
+   hiện mới chỉ có `check_toolchain()`; `src/models/astnn/model.py` còn là stub).
+   Kèm EXP-004. **~2h GPU** (RNN nhỏ, rẻ hơn transformer nhiều)
+8. **Implement M4 (CPG-GNN)** — cần CPG-Python hoặc Joern (DEC-009), dùng
+   `torch-geometric`. Kèm EXP-005. **~2h GPU**
+9. **Implement M5 (Hybrid `concat_mlp`)** — cần M2 + M4 hoàn chỉnh. Kèm EXP-006.
+   **~8h GPU**
+10. Transformation engine cho RQ4 (8 tên đã khóa trong
+    `src/transformations/registry.py`) → ablation → error analysis → báo cáo.
+
+**Tổng GPU còn lại: ~20h** → vừa quota 30h/tuần của Kaggle. Early stopping
+(patience 2) có thể cắt ngắn thêm.
 
 **Ràng buộc vận hành:** local chỉ dùng smoke test (<5 phút). Mọi EXP cần >5 phút
-đều chạy trên Kaggle theo DEC-018. Ước lượng 7.8h/run × 7 EXP còn lại — cần cân
-nhắc giảm `max_length`/số epoch hoặc dùng GPU mạnh hơn nếu gặp trần 12h/phiên.
+đều chạy trên Kaggle theo DEC-018.
 
 [🔝 Quay lại mục lục](#top)
 
@@ -103,3 +110,4 @@ nhắc giảm `max_length`/số epoch hoặc dùng GPU mạnh hơn nếu gặp t
 | 1 | 1.0.0 | 2026-09-20 | Khởi tạo ở phase INIT. |
 | 2 | 1.1.0 | 2026-09-20 | Cập nhật Phase 1: pipeline dataset + lệnh user chạy. |
 | 3 | 1.2.0 | 2026-09-27 | Phase 1 đã khép; EXP-001 COMPLETED; EXP-002 sẵn sàng train trên Kaggle (DEC-018). |
+| 4 | 1.3.0 | 2026-09-27 | DEC-019: scope chỉ C/C++ — lộ trình còn EXP-003…006, ~20h GPU. |

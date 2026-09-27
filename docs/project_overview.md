@@ -34,11 +34,13 @@ control flow hoặc cách triển khai. Output phục vụ trực tiếp bài b�
 
 ## 2. Phạm vi
 
-- Ngôn ngữ: **C/C++** (POJ-104) và **Python** (CodeNet Python). Không mở rộng
-  sang Java/C#/JavaScript khi chưa có yêu cầu rõ ràng.
-- Core experiment: **1 baseline (B1) + 5 model (M1–M5)**, xem bảng dưới.
-- Phase INIT: chưa train đầy đủ; chỉ loaders, audit, leakage, interface,
-  smoke test baseline/transformer, feasibility AST/CPG.
+- Ngôn ngữ: **C/C++ (POJ-104) — phạm vi duy nhất** (DEC-019). Khối Python
+  (CodeNet) đã hủy vì quota compute; dataset vẫn giữ trong repo để mở lại được.
+  Không mở rộng sang Java/C#/JavaScript.
+- Core experiment: **1 baseline (B1) + 5 model (M1–M5)** trên POJ-104, xem bảng
+  dưới (EXP-001…EXP-006).
+- Trạng thái hiện tại: EXP-001 COMPLETED; EXP-002 đang train trên Kaggle;
+  M3/M4/M5 còn là stub.
 
 [🔝 Quay lại mục lục](#top)
 

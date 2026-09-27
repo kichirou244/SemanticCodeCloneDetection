@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.9.0 |
+| **Phiên bản** | 1.10.0 |
 | **Ngày cập nhật** | 2026-09-27 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -31,6 +31,7 @@
 - [DEC-016 — EXP-002 pair architecture và max_length](#dec-016--exp-002-pair-architecture-va-max-length)
 - [DEC-017 — Sửa bug scheduler và device metadata của EXP-002](#dec-017--sua-bug-scheduler-va-device-metadata-cua-exp-002)
 - [DEC-018 — Kaggle run protocol cho EXP-002](#dec-018--kaggle-run-protocol-cho-exp-002)
+- [DEC-019 — Thu hẹp scope: chỉ C/C++ (POJ-104)](#dec-019--thu-hep-scope-chi-cc-poj-104)
 - [Lịch sử thay đổi](#lich-su-thay-doi)
 
 ---
@@ -303,6 +304,38 @@
 
 ---
 
+## DEC-019 — Thu hẹp scope: chỉ C/C++ (POJ-104)
+
+- Quyết định: bỏ khối thí nghiệm Python. EXP-007…EXP-012 chuyển `CANCELLED`.
+  Toàn bộ kết quả báo cáo chỉ dựa trên POJ-104 (C/C++).
+- Lý do:
+  1. **RQ1–RQ4 không phụ thuộc ngôn ngữ.** Chúng so sánh representation
+     (M1 vs M2 vs M3 vs M4), transformer-vs-program-graph (M2 vs M4), hybrid
+     (M2 vs M4 vs M5) và robustness dưới transformation. POJ-104 trả lời
+     đủ cả bốn.
+  2. **Quota Kaggle không đủ.** EXP-008…012 dự kiến ~11.3h mỗi run (CodeNet có
+     484,292 train pairs so với 332,000 của POJ-104, gấp 1.46×), tổng ~57h vượt
+     quota 30h/tuần. POJ-104 còn ~20h, vừa một tuần.
+  3. EXP-008 dự kiến vượt cả giới hạn 12h/phiên, buộc phải hạ `max_length` hoặc
+     giảm epoch — tạo thêm biến số không cần thiết cho so sánh công bằng.
+- Cái mất: không có bằng chứng cross-language generalization. Ghi rõ ở phần
+  limitation/discussion thay vì bỏ trống — reviewer có thể hỏi, nên trả lời
+  trước.
+- Cái giữ nguyên: dataset CodeNet đã audit và build xong (`reports/003/006`,
+  manifest `data/manifests/codenet_python.json`, 547k pairs, leakage passed) và
+  code loader vẫn còn. Nếu sau này cần mở rộng sang Python thì dùng lại được
+  ngay, không tốn thí nghiệm nào đã chạy.
+- Ước lượng phần còn lại (POJ-104): EXP-003 ~7.8h, EXP-004 ~2h, EXP-005 ~2h,
+  EXP-006 ~8h → **~20h**, khớp quota 1 tuần. Early stopping (patience 2) có thể
+  cắt ngắn thêm.
+- Ảnh hưởng tài liệu: `docs/research_questions.md` (thêm ghi chú scope),
+  `docs/project_overview.md`, `README.md`, `docs/experiment_registry.md`
+  (EXP-007…012 → CANCELLED).
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
 ## Lịch sử thay đổi
 
 | No. | Phiên bản | Ngày thay đổi | Nội dung thay đổi |
@@ -317,3 +350,4 @@
 | 8 | 1.7.0 | 2026-09-20 | Thêm DEC-015 (CodeBERT checkpoint), DEC-016 (pair arch + max_length 256). |
 | 9 | 1.8.0 | 2026-09-21 | Thêm DEC-017 (fix scheduler per-update + device metadata thật). |
 | 10 | 1.9.0 | 2026-09-27 | Thêm DEC-018 (Kaggle run protocol: flush mỗi epoch, time budget, resume). |
+| 11 | 1.10.0 | 2026-09-27 | Thêm DEC-019 (thu hẹp scope: chỉ C/C++ POJ-104, hủy EXP-007…012). |

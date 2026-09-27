@@ -1,4 +1,4 @@
-# Semantic Code Clone Detection (C/C++, Python)
+# Semantic Code Clone Detection (C/C++)
 
 Project nghiên cứu phục vụ bài báo khoa học: xây dựng và đánh giá các phương pháp
 AI/Deep Learning phát hiện hai đoạn code tương đương ngữ nghĩa/chức năng.
@@ -14,9 +14,12 @@ AI/Deep Learning phát hiện hai đoạn code tương đương ngữ nghĩa/ch�
 | M4 | CPG-GNN (backbone `gat`) | Program Graph |
 | M5 | GraphCodeBERT + CPG-GNN (`concat_mlp`) | Hybrid |
 
-- Dataset C/C++ duy nhất: POJ-104 (`google/code_x_glue_cc_clone_detection_poj104`)
-- Dataset Python duy nhất: CodeNet Python (`windchimeran/codenet_python`)
-- Ngôn ngữ: C/C++, Python. Không Java/C#/JavaScript.
+- Dataset duy nhất trong phạm vi: **POJ-104 (C/C++)**
+  (`google/code_x_glue_cc_clone_detection_poj104`) → EXP-001…EXP-006
+- **Ngôn ngữ: C/C++.** Khối Python (CodeNet) đã hủy theo DEC-019 vì quota
+  compute; dữ liệu CodeNet vẫn giữ trong repo để mở rộng lại được nếu cần.
+  Xem `docs/research_questions.md` §5.
+- Không Java/C#/JavaScript.
 
 ## Bắt đầu nhanh (người dùng tự chạy — agent không chạy terminal)
 

@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.5.0 |
+| **Phiên bản** | 1.6.0 |
 | **Ngày cập nhật** | 2026-09-27 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -28,14 +28,20 @@
 | EXP-004 | POJ-104 | M3 ASTNN | PLANNED | - | - |
 | EXP-005 | POJ-104 | M4 CPG-GNN | PLANNED | - | - |
 | EXP-006 | POJ-104 | M5 Hybrid | PLANNED | - | - |
-| EXP-007 | CodeNet Python | B1 TF-IDF | PLANNED | - | - |
-| EXP-008 | CodeNet Python | M1 CodeBERT | PLANNED | - | - |
-| EXP-009 | CodeNet Python | M2 GraphCodeBERT | PLANNED | - | - |
-| EXP-010 | CodeNet Python | M3 ASTNN | PLANNED | - | - |
-| EXP-011 | CodeNet Python | M4 CPG-GNN | PLANNED | - | - |
-| EXP-012 | CodeNet Python | M5 Hybrid | PLANNED | - | - |
+| EXP-007 | CodeNet Python | B1 TF-IDF | CANCELLED | - | DEC-019 |
+| EXP-008 | CodeNet Python | M1 CodeBERT | CANCELLED | - | DEC-019 |
+| EXP-009 | CodeNet Python | M2 GraphCodeBERT | CANCELLED | - | DEC-019 |
+| EXP-010 | CodeNet Python | M3 ASTNN | CANCELLED | - | DEC-019 |
+| EXP-011 | CodeNet Python | M4 CPG-GNN | CANCELLED | - | DEC-019 |
+| EXP-012 | CodeNet Python | M5 Hybrid | CANCELLED | - | DEC-019 |
 
-Trạng thái: PLANNED / RUNNING / COMPLETED / FAILED / BLOCKED / INVALIDATED.
+Trạng thái: PLANNED / RUNNING / COMPLETED / FAILED / BLOCKED / INVALIDATED / CANCELLED.
+
+**Scope: chỉ C/C++ (POJ-104)** theo DEC-019. EXP-007…012 hủy vì (a) RQ1–RQ4 không
+phụ thuộc ngôn ngữ — POJ-104 trả lời đủ; (b) EXP-008…012 dự kiến ~11.3h mỗi run
+(CodeNet 484,292 train pairs = 1.46× POJ-104) → vượt quota Kaggle 30h/tuần.
+Dataset CodeNet đã audit + build xong và vẫn giữ trong repo, mở rộng lại được
+ngày nào cần mà không tốn thí nghiệm đã chạy.
 
 Ghi chú Phase 1 (2026-09-20): pipeline dataset chung đã implement
 (`scripts/build_dataset.py` + manifests); config EXP-001 sẵn ở
@@ -63,5 +69,6 @@ Sau khi có kết quả: viết `reports/011_codebert_results.md`, đổi status
 | 3 | 1.2.0 | 2026-09-20 | POJ-104 pairs built + passed (sẵn sàng EXP-001); CodeNet pilot chờ rebuild. |
 | 4 | 1.3.0 | 2026-09-20 | EXP-001 COMPLETED (test F1 0.673); EXP-002 → READY_FOR_FULL_RETRAIN. |
 | 5 | 1.5.0 | 2026-09-27 | EXP-002 → READY_FOR_KAGGLE_TRAIN (DEC-018 Kaggle run protocol + diagnostic GPU PASS). |
+| 6 | 1.6.0 | 2026-09-27 | DEC-019: thu hẹp scope chỉ C/C++ — EXP-007…012 → CANCELLED. |
 | 4 | 1.3.0 | 2026-09-20 | EXP-001 COMPLETED (test F1 0.673); report 009. |
 | 5 | 1.4.0 | 2026-09-20 | EXP-002 READY_FOR_GPU (config + runner + tests xong). |

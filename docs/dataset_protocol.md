@@ -30,6 +30,8 @@
   field code là `code`, problem là `label`. Split chính thức
   train 32500 / validation 8500 / test 12000 nhưng **bị bác (DEC-007)**.
 - Python: CodeNet Python duy nhất (`windchimeran/codenet_python`).
+  **Ngoài phạm vi thí nghiệm** theo DEC-019 — nhưng đã audit + build xong
+  (547k pairs, `leakage_passed: true`) và giữ lại trong repo để mở rộng khi cần.
 - **Schema CodeNet đã chốt (audit 20k streaming 2026-09-20): keys
   `[submission_id, problem_id, language, status, code_size, cpu_time, memory,
   code, input, output, problem_description]`** — có `status` để lọc
