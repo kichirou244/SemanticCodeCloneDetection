@@ -154,6 +154,20 @@ def test_joern_or_die_prefers_env(monkeypatch):
     assert joern_or_die() == "/opt/joern/bin/joern"
 
 
+def test_joern_or_die_falls_back_to_install_paths(monkeypatch, tmp_path):
+    """Kaggle chạy dưới root: installer đặt binary ở /opt/joern, symlink ở
+    /usr/local/bin — không phải ~/bin. Phải tìm được, không thì `FileNotFoundError`
+    dù Joern vẫn nằm đúng chỗ (và tự tải lại 1,7GB)."""
+    import scripts.build_cpg_export as mod
+
+    fake = tmp_path / "joern"
+    fake.write_text("#!/bin/sh\n", encoding="utf-8")
+    monkeypatch.delenv("JOERN_BIN", raising=False)
+    monkeypatch.setattr(mod.shutil, "which", lambda _: None)
+    monkeypatch.setattr(mod, "JOERN_FALLBACK_PATHS", (tmp_path / "nope", fake))
+    assert mod.joern_or_die() == str(fake)
+
+
 def test_script_help_runs_without_joern():
     """`--help` phải chạy được kể cả khi máy không có Joern — nếu không, người
     dùng không đọc nổi các tuỳ chọn mà không cài gì."""

@@ -46,6 +46,11 @@ DEFAULT_WORK = "artifacts/cpg_work"
 EXPORT_SCRIPT = Path(__file__).resolve().parent / "joern" / "export_cpg.sc"
 SMOKE_SCRIPT = Path(__file__).resolve().parent / "joern" / "joern_smoke.sc"
 
+# Nơi `joern-install.sh` hay đặt binary: `~/bin/joern` khi chạy bình thường,
+# `/opt/joern` khi chạy dưới root (Kaggle). Tách thành hằng để test được.
+JOERN_FALLBACK_PATHS = (Path.home() / "bin" / "joern", Path("/opt/joern/joern"),
+                        Path("/usr/local/bin/joern"))
+
 
 def _as_argv(joern_cmd: str | list[str]) -> list[str]:
     """Chuẩn hoá lệnh Joern thành argv.
@@ -60,11 +65,12 @@ def _as_argv(joern_cmd: str | list[str]) -> list[str]:
 
 
 def joern_or_die() -> str:
-    """Tìm lệnh Joern: `$JOERN_BIN` → `PATH` → `~/bin/joern`.
+    """Tìm lệnh Joern: `$JOERN_BIN` → `PATH` → các nơi installer hay đặt binary.
 
-    Bản cài chính thức đặt binary ở `~/bin/joern` (xem `joern-install.sh`), nên
-    `joern` kiểu "gõ tay" là không đủ — phải thử cả đường dẫn đó, nếu không sẽ ra
-    `FileNotFoundError` dù Joern vẫn nằm đúng chỗ.
+    Bản cài chính thức (`joern-install.sh`) đặt binary ở `~/bin/joern`, nhưng khi
+    chạy dưới root (đúng trường hợp của Kaggle) nó đặt `/opt/joern` và tạo
+    symlink trong `/usr/local/bin` — chỉ check một đường là fail giả rồi tải lại
+    1,7GB cho nothing.
     """
     env = os.environ.get("JOERN_BIN")
     if env:
@@ -72,8 +78,10 @@ def joern_or_die() -> str:
     found = shutil.which("joern")
     if found:
         return found
-    home_bin = Path.home() / "bin" / "joern"
-    return str(home_bin) if home_bin.exists() else "joern"
+    for p in JOERN_FALLBACK_PATHS:
+        if p.exists():
+            return str(p)
+    return "joern"
 
 
 def read_samples(processed: Path, split: str | None, limit: int) -> list[dict]:
