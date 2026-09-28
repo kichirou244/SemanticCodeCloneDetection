@@ -103,6 +103,25 @@ def joern_or_die() -> str:
     return "joern"
 
 
+def joern_missing_reason(joern_cmd: str | list[str]) -> str:
+    """Trả về lý do không tìm thấy Joern, hoặc chuỗi r���ng nếu tìm thấy.
+
+    Cần hàm này vì `subprocess.run` với binary không tồn tại ném
+    `FileNotFoundError: [WinError 2]` — không nói cho biết *đã thử những đường
+    nào*. Trên Kaggle mà PATH lệch (chạy dưới root, binary ở `/opt/joern`) thì
+    người dùng sẽ phải tự đoán.
+    """
+    exe = _as_argv(joern_cmd)[0]
+    if exe == "joern":
+        return "" if shutil.which("joern") else (
+            "Khong tim thay lenh `joern` trong PATH")
+    if Path(exe).exists():
+        return ""
+    return (f"Khong tim thay Joern tai {exe!r}. Da thu: $JOERN_BIN, PATH, "
+            f"{', '.join(str(p) for p in JOERN_FALLBACK_PATHS)}. "
+            f"Neu vua cai xong, chay: ls -l /usr/local/bin/joern /opt/joern/joern")
+
+
 def read_samples(processed: Path, split: str | None, limit: int) -> list[dict]:
     rows = []
     with Path(processed).open(encoding="utf-8") as fh:
@@ -251,6 +270,11 @@ def main() -> None:
     set_global_seed(int(cfg.get("experiment", {}).get("seed", 42)))
     out_dir, work_dir = Path(args.out_dir), Path(args.work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
+
+    missing = joern_missing_reason(args.joern)
+    if missing:
+        print(f"[cpg-export] {missing}")
+        raise SystemExit(1)
 
     if args.smoke:
         # Đặt TRƯỚC khi đọc dataset: smoke không được phụ thuộc

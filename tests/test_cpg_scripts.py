@@ -133,12 +133,17 @@ def test_smoke_runs_without_dataset(tmp_path, monkeypatch):
     cfg.write_text("experiment:\n  seed: 42\n"
                    "dataset:\n  processed: data/processed/poj104/samples.jsonl\n",
                    encoding="utf-8")
+    # Cố tình trỏ `--joern` vào binary không tồn tại: nếu smoke chết ở chỗ Joern
+    # thì nó đã đi qua được bước đọc dataset. Đây là cách kiểm thứ tự thực thi mà
+    # không phụ thuộc Windows có lệnh `true` hay không.
     r = subprocess.run(
         [sys.executable, str(EXPORT_SCRIPT), "--config", str(cfg), "--smoke",
-         "--joern", "true", "--work-dir", str(tmp_path / "work")],
+         "--joern", "khong-ton-tai-joern-xyz", "--work-dir", str(tmp_path / "work")],
         capture_output=True, text=True, timeout=120, cwd=str(tmp_path))
-    assert r.returncode == 0, r.stderr
-    assert "khong ton tai" not in r.stderr
+    assert "samples.jsonl" not in r.stderr, r.stderr
+    # Không phải FileNotFoundError mơ hồ: phải nói rõ đã thử những đường nào.
+    assert "Khong tim thay Joern" in r.stdout
+    assert "khong-ton-tai-joern-xyz" in r.stdout
 
 
 def test_smoke_code_exercises_all_edge_kinds():
