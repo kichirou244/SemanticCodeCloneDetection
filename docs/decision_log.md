@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.12.0 |
+| **Phiên bản** | 1.13.0 |
 | **Ngày cập nhật** | 2026-09-28 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -441,6 +441,17 @@
   Kaggle (giới hạn 30 h/tuần). Từ giờ chỉ `--mode train` mới cần Kaggle. Checkpoint không
   commit (`.gitignore` loại `*.pt`) nên phải giữ file tải về từ Kaggle cho tới khi hết
   nhu cầu resume.
+- **Quyết định 2b — tải checkpoint BẢN NHẸ, không tải checkpoint đầy đủ (2026-09-28):**
+  `best_checkpoint.pt` = 1,44GB vì nhồi optimizer + scheduler + NumPy RNG state, trong khi
+  evaluate chỉ dùng `model_state`. Thêm `export_eval_weights()` xuất
+  `best_weights_only.pt` (**0,51GB**, chỉ `model_state`/`epoch`/`best_f1`, load được với
+  `weights_only=True`) và `resolve_eval_checkpoint()` để `evaluate_model` ưu tiên
+  checkpoint đầy đủ, không thì fallback bản nhẹ. Kết quả: tải về **0,5GB thay vì
+  1,44GB** (2,9GB nếu lấy cả `best` + `last`) mà metric **không đổi** — đã kiểm chứng
+  trên chính artifact EXP-002 (F1 `0.9099191224319048`, TP/TN/FP/FN giống hệt). Notebook
+  Kaggle đổi từ `tar --exclude='*.pt'` (loại luôn bản nhẹ ⇒ không còn gì để evaluate) sang
+  `--exclude='*checkpoint.pt'`. Nguyên tắc: **mọi job chạy lại được từ artifact nhẹ hơn
+  phải ưu tiên artifact nhẹ hơn**, kể cả khi file đầy đủ có "đủ thông tin hơn".
 - **Quyết định 3 — sửa 3 lỗi im lặng, không đụng số liệu:** (a) `torch.load` thiếu
   `weights_only=False` khiến **mọi** `evaluate` chết sau khi train xong (torch ≥ 2.6 đổi
   mặc định, checkpoint có `np.random.get_state()`); (b) `exp002_codebert` /
@@ -473,3 +484,4 @@
 | 11 | 1.10.0 | 2026-09-27 | Thêm DEC-019 (thu hẹp scope: chỉ C/C++ POJ-104, hủy EXP-007…012). |
 | 12 | 1.11.0 | 2026-09-27 | Thêm DEC-020 (M2 dùng chung runner với M1, khóa bằng test `is`), DEC-021 (M3 ASTNN xong: vectorize RvNN, cache AST, **đo thay vì đoán** — ước lượng ~2h bị thu hồi còn ~35 phút). |
 | 13 | 1.12.0 | 2026-09-28 | Thêm DEC-022 sau khi EXP-002 có số liệu: đóng băng `max_length 256` + chưa thêm `min_delta` cho M1/M2 (đổi recipe giữa chừng sẽ phá so sánh RQ1), evaluate chạy local 5 phút thay vì mở phiên Kaggle, sửa 3 lỗi im lặng (`weights_only`, mất `__main__` guard, `eval_time_s` đo sai). |
+| 14 | 1.13.0 | 2026-09-28 | DEC-022 bổ sung quyết định 2b: xuất `best_weights_only.pt` (0,51GB) để tải về chạy evaluate thay vì tải checkpoint 1,44GB, kèm `resolve_eval_checkpoint` fallback; sửa tar trong notebook EXP-002/003 vốn loại luôn bản nhẹ. |

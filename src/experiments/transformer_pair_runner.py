@@ -49,6 +49,12 @@ SMOKE_VAL_PAIRS = 128
 # setup + eval + tar + margin để notebook không bị kill giữa chừng.
 DEFAULT_TIME_BUDGET_S = 9 * 3600
 
+# Tên file checkpoint. `best_checkpoint.pt` đầy đủ (model + optimizer + scheduler +
+# rng) chỉ cần trên máy train; `best_weights_only.pt` là bản nhẹ để tải về máy
+# khác chạy `--mode evaluate` — chỉ còn tensor nên load bằng `weights_only=True`.
+BEST_CKPT_NAME = "best_checkpoint.pt"
+EVAL_WEIGHTS_NAME = "best_weights_only.pt"
+
 
 # ---------------------------------------------------------------- data
 def load_code_map(processed: Path, splits: list[str]) -> dict[str, str]:
@@ -249,9 +255,35 @@ def save_training_state(out_dir: Path, model, optimizer, scheduler, epoch: int,
     torch.save(ckpt, tmp)
     tmp.replace(out_dir / "last_checkpoint.pt")
     if is_best:
-        tmp2 = out_dir / "best_checkpoint.pt.tmp"
+        tmp2 = out_dir / (BEST_CKPT_NAME + ".tmp")
         torch.save(ckpt, tmp2)
-        tmp2.replace(out_dir / "best_checkpoint.pt")
+        tmp2.replace(out_dir / BEST_CKPT_NAME)
+
+
+def export_eval_weights(out_dir: Path) -> dict:
+    """Rút `best_checkpoint.pt` thành `best_weights_only.pt` chỉ còn `model_state`.
+
+    Lý do: checkpoint đầy đủ mang optimizer/scheduler/rng (và với ASTNN còn rất
+    nặng), tải về máy khác tốn hàng GB chỉ để chạy `--mode evaluate`. Bản nhẹ
+    nhỏ hơn nhiều và `torch.load(..., weights_only=True)` mở được ⇒ an toàn hơn.
+
+    Giữ nguyên cấu trúc `{"model_state": ...}` để `evaluate_model` dùng chung
+    được (xem `resolve_eval_checkpoint`).
+    """
+    src = out_dir / BEST_CKPT_NAME
+    if not src.exists():
+        raise FileNotFoundError(f"Thiếu {src} — cần train xong trước khi export")
+    ckpt = torch.load(src, map_location="cpu", weights_only=False)
+    dst = out_dir / EVAL_WEIGHTS_NAME
+    tmp = out_dir / (EVAL_WEIGHTS_NAME + ".tmp")
+    torch.save({"model_state": ckpt["model_state"],
+                "epoch": ckpt.get("epoch"),
+                "best_f1": ckpt.get("best_f1")}, tmp)
+    tmp.replace(dst)
+    src_mb, dst_mb = src.stat().st_size / 1e6, dst.stat().st_size / 1e6
+    print(json.dumps({"exported": str(dst), "from_mb": round(src_mb, 1),
+                      "to_mb": round(dst_mb, 1), "ratio": round(dst_mb / src_mb, 3)}))
+    return {"path": str(dst), "from_mb": round(src_mb, 1), "to_mb": round(dst_mb, 1)}
 
 
 def load_training_state(out_dir: Path, model, optimizer, scheduler) -> dict:
@@ -418,6 +450,33 @@ def train_model(cfg, out_dir: Path, device: torch.device, max_pairs: int = 0, ep
 
 
 # ---------------------------------------------------------------- evaluate
+def resolve_eval_checkpoint(out_dir: Path) -> Path:
+    """Tìm checkpoint để evaluate: `best_checkpoint.pt` (đầy đủ) hoặc bản nhẹ
+    `best_weights_only.pt` mà `export_eval_weights` sinh ra.
+
+    Bản nhẹ là đường tải về từ Kaggle: 1,44GB → ~0,5GB cho CodeBERT, và
+    `weights_only=True` load được vì chỉ còn tensor.
+    """
+    for name in (BEST_CKPT_NAME, EVAL_WEIGHTS_NAME):
+        p = out_dir / name
+        if p.exists():
+            return p
+    raise FileNotFoundError(
+        f"Thiếu checkpoint trong {out_dir}: cần {BEST_CKPT_NAME} "
+        f"(từ train) hoặc {EVAL_WEIGHTS_NAME} (từ `export_eval_weights`)")
+
+
+def load_eval_weights(ckpt_path: Path, map_location) -> dict:
+    """Nạp `model_state` từ checkpoint — nhận cả bản đầy đủ lẫn bản nhẹ.
+
+    Bản nhẹ (`best_weights_only.pt`) chỉ chứa tensor + số ⇒ `weights_only=True` vừa
+    đủ **và** an toàn (không unpickle object tuỳ ý). Checkpoint đầy đủ có
+    `np.random.get_state()` nên torch ≥ 2.6 bắt buộc `weights_only=False`.
+    """
+    light = ckpt_path.name == EVAL_WEIGHTS_NAME
+    return torch.load(ckpt_path, map_location=map_location, weights_only=light)["model_state"]
+
+
 def evaluate_model(cfg, out_dir: Path, device: torch.device) -> dict:
     t_start = time.perf_counter()  # gồm cả inference, không chỉ thời gian ghi file
     manifest_path = Path(cfg["dataset"]["manifest"])
@@ -425,15 +484,11 @@ def evaluate_model(cfg, out_dir: Path, device: torch.device) -> dict:
     processed = Path(cfg["dataset"]["processed"])
     validate_dataset(manifest_path, pairs_dir, processed)
 
-    ckpt_path = out_dir / "best_checkpoint.pt"
-    if not ckpt_path.exists():
-        raise FileNotFoundError(f"Thiếu best checkpoint: {ckpt_path} (§23)")
+    ckpt_path = resolve_eval_checkpoint(out_dir)
     tokenizer = load_tokenizer(cfg["model"]["hf_id"])
     model = TransformerPairClassifier(cfg["model"]["hf_id"]).to(device)
     assert_device_setup(device, model)
-    # weights_only=False: checkpoint chứa rng state (np.random.get_state) — torch>=2.6 chặn mặc định
-    model.load_state_dict(
-        torch.load(ckpt_path, map_location=device, weights_only=False)["model_state"])
+    model.load_state_dict(load_eval_weights(ckpt_path, device))
     model.eval()
     max_len, bs = cfg["tokenizer"]["max_length"], cfg["inference"]["pair_batch_size"]
 

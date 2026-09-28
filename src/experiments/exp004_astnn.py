@@ -38,8 +38,8 @@ from src.experiments.exp001_tfidf import (
 )
 from src.experiments.transformer_pair_runner import (
     DEFAULT_TIME_BUDGET_S, _AMP, _assert_device_match, _atomic_write_text, _optimizer_step,
-    _restrict_codes, assert_device_setup, collect_device_metadata, load_code_map, load_pair_refs,
-    load_training_state, save_training_state, write_history,
+    _restrict_codes, assert_device_setup, collect_device_metadata, load_code_map, load_eval_weights,
+    load_pair_refs, load_training_state, resolve_eval_checkpoint, save_training_state, write_history,
 )
 from src.models.astnn.model import ASTNNPairClassifier, to_device
 from src.representations.ast.store import ASTTreeStore
@@ -337,15 +337,11 @@ def evaluate_model(cfg, out_dir: Path, device: torch.device) -> dict:
     processed = Path(cfg["dataset"]["processed"])
     validate_dataset(manifest_path, pairs_dir, processed)
 
-    ckpt_path = out_dir / "best_checkpoint.pt"
-    if not ckpt_path.exists():
-        raise FileNotFoundError(f"Thiếu best checkpoint: {ckpt_path} (§23)")
+    ckpt_path = resolve_eval_checkpoint(out_dir)
     model = ASTNNPairClassifier(
         int(cfg["model"]["hidden_size"]), float(cfg["training"].get("dropout", 0.2))).to(device)
     assert_device_setup(device, model)
-    # weights_only=False: checkpoint chứa rng state (np.random.get_state) — torch>=2.6 chặn mặc định
-    model.load_state_dict(
-        torch.load(ckpt_path, map_location=device, weights_only=False)["model_state"])
+    model.load_state_dict(load_eval_weights(ckpt_path, device))
     model.eval()
     bs = int(cfg["inference"]["pair_batch_size"])
 

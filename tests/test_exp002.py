@@ -11,12 +11,16 @@ import torch
 
 from src.experiments.exp002_codebert import (
     evaluate_model,
+    export_eval_weights,
     load_code_map,
+    load_eval_weights,
     load_pair_refs,
     preflight,
+    resolve_eval_checkpoint,
     train_model,
     truncation_analysis,
 )
+from src.experiments.transformer_pair_runner import EVAL_WEIGHTS_NAME
 from src.experiments.exp001_tfidf import validate_dataset
 from src.models.codebert_pair import (
     CodeBERTPairClassifier,
@@ -335,3 +339,61 @@ def test_atomic_write_leaves_no_partial_file(tmp_path):
     _atomic_write_text(p, json.dumps({"v": 2}))
     assert json.loads(p.read_text(encoding="utf-8")) == {"v": 2}
     assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_export_eval_weights_is_small_and_weights_only_safe(tmp_path):
+    """Bản nhẹ phải nhỏ hơn nhiều, load được bằng `weights_only=True`, và
+    `evaluate_model` chạy được khi máy chỉ còn bản nhẹ (không tải 1,4GB về)."""
+    proc, pairs_dir, mp = _tiny_dataset(tmp_path)
+    out = tmp_path / "out"
+    out.mkdir()
+    m = CodeBERTPairClassifier(HF_ID)
+    opt = torch.optim.AdamW(m.parameters(), lr=1e-5)
+    # step một lần để optimizer state (2 tensor/param) có thật — giống checkpoint
+    # sau 31k update, nếu không thì optimizer rỗng và bản nhẹ chẳng nhỏ hơn.
+    sum(p.sum() for p in m.parameters()).backward()
+    opt.step()
+    torch.save({"model_state": m.state_dict(), "optimizer_state": opt.state_dict(),
+                "epoch": 1, "best_f1": 0.5,
+                "rng": {"numpy": __import__("numpy").random.get_state()}},
+               out / "best_checkpoint.pt")
+
+    info = export_eval_weights(out)
+    light = out / EVAL_WEIGHTS_NAME
+    assert light.exists() and info["to_mb"] < 0.8 * info["from_mb"]
+
+    # weights_only=True mở được => đã loại object lạ (np RNG state) của bản đầy đủ
+    loaded = torch.load(light, map_location="cpu", weights_only=True)
+    assert set(loaded) == {"model_state", "epoch", "best_f1"}
+    for a, b in zip(m.state_dict().values(), loaded["model_state"].values()):
+        assert torch.equal(a, b)
+    # loader dùng weights_only=True cho bản nhẹ (an toàn) và vẫn đọc được bản đầy đủ
+    for k, v in m.state_dict().items():
+        assert torch.equal(load_eval_weights(light, "cpu")[k], v)
+
+    # chỉ còn bản nhẹ: resolve vẫn trúng và evaluate vẫn chạy
+    (out / "best_checkpoint.pt").unlink()
+    assert resolve_eval_checkpoint(out) == light
+    cfg = {
+        "dataset": {"manifest": str(mp), "pairs_dir": str(pairs_dir), "processed": str(proc)},
+        "model": {"hf_id": HF_ID},
+        "tokenizer": {"max_length": 32},
+        "inference": {"pair_batch_size": 2},
+        "threshold": {"grid_step": 0.1},
+        "error_analysis": {"top_k": 10},
+    }
+    summary = evaluate_model(cfg, out, torch.device("cpu"))
+    assert "f1" in summary["test"]
+
+    # bản đầy đủ (có np RNG state) vẫn phải nạp được qua cùng loader
+    full = out / "best_checkpoint.pt"
+    torch.save({"model_state": m.state_dict(),
+                "rng": {"numpy": __import__("numpy").random.get_state()}}, full)
+    assert resolve_eval_checkpoint(out) == full
+    for k, v in m.state_dict().items():
+        assert torch.equal(load_eval_weights(full, "cpu")[k], v)
+
+
+def test_resolve_eval_checkpoint_fails_fast_without_any(tmp_path):
+    with pytest.raises(FileNotFoundError, match="checkpoint"):
+        resolve_eval_checkpoint(tmp_path)

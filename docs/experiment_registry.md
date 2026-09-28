@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.7.0 |
+| **Phiên bản** | 1.8.0 |
 | **Ngày cập nhật** | 2026-09-28 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -24,7 +24,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | EXP-001 | POJ-104 | B1 TF-IDF | COMPLETED | Test P/R/F1 0.552/0.860/0.673, thr 0.24 | reports/009_baseline_results.md |
 | EXP-002 | POJ-104 | M1 CodeBERT | COMPLETED | Test P/R/F1 0.931/0.890/0.910, ROC-AUC 0.973, thr 0.59 (val-selected), best epoch 1/3, 7,03h T4 | reports/011_codebert_results.md |
-| EXP-003 | POJ-104 | M2 GraphCodeBERT | READY_FOR_KAGGLE_TRAIN | Implementation xong, dùng **chung code path** với EXP-002 (DEC-020); 10 test khóa tính công bằng; throughput đo = EXP-002 ⇒ **~7,8h** | - |
+| EXP-003 | POJ-104 | M2 GraphCodeBERT | READY_FOR_KAGGLE_TRAIN | Implementation xong, dùng **chung code path** với EXP-002 (DEC-020); 12 test khóa tính công bằng (13 test gồm cả notebook EXP-003 phải mirror EXP-002); notebook `notebooks/exp003_graphcodebert_kaggle.ipynb` sẵn sàng; throughput đo = EXP-002 ⇒ **~7,8h** | - |
 | EXP-004 | POJ-104 | M3 ASTNN | READY_FOR_KAGGLE_TRAIN | Implementation xong (DEC-021): extractor thật, RvNN vectorize, cache AST; 25 test; smoke + diagnostic PASS trên RTX 5060; **~35 phút** trên T4 (hiệu chuẩn, cần verify trực tiếp) | - |
 | EXP-005 | POJ-104 | M4 CPG-GNN | PLANNED | - | - |
 | EXP-006 | POJ-104 | M5 Hybrid | PLANNED | - | - |
@@ -85,3 +85,4 @@ nên chạy EXP-004 trước cũng được nếu cần kết quả sớm.
 | 6 | 1.5.0 | 2026-09-27 | DEC-019: thu hẹp scope chỉ C/C++ — EXP-007…012 → CANCELLED. |
 | 7 | 1.6.0 | 2026-09-27 | EXP-003/EXP-004 → READY_FOR_KAGGLE_TRAIN (M2 dùng chung code path M1 theo DEC-020; M3 ASTNN implement xong theo DEC-021, ~35 phút). Sửa dòng lịch sử bị trùng. |
 | 8 | 1.7.0 | 2026-09-28 | EXP-002 → COMPLETED: test F1 0.910 (ROC-AUC 0.973), +0.237 so với EXP-001; report `011_codebert_results.md`; thêm DEC-022 (đóng băng `max_length 256` + chưa thêm `min_delta` cho M1/M2, eval chạy local). |
+| 9 | 1.8.0 | 2026-09-28 | EXP-003 có notebook Kaggle `notebooks/exp003_graphcodebert_kaggle.ipynb` (mirror EXP-002, có test chặn lệch); luồng tải kết quả chuyển sang checkpoint bản nhẹ `best_weights_only.pt` (0,5GB) — DEC-022 §2b. |

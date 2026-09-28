@@ -20,6 +20,17 @@ CB_ID = "microsoft/codebert-base"
 GCB_ID = "microsoft/graphcodebert-base"
 CFG2 = Path("configs/exp002_codebert.yaml")
 CFG3 = Path("configs/exp003_graphcodebert.yaml")
+NB2 = Path("notebooks/exp002_codebert_kaggle.ipynb")
+NB3 = Path("notebooks/exp003_graphcodebert_kaggle.ipynb")
+
+
+def _nb_text(p: Path, code_only: bool = False) -> str:
+    import json
+
+    cells = json.loads(p.read_text(encoding="utf-8"))["cells"]
+    if code_only:
+        cells = [c for c in cells if c["cell_type"] == "code"]
+    return "\n".join("".join(c["source"]) for c in cells)
 
 
 @pytest.fixture(scope="module")
@@ -150,3 +161,48 @@ def test_codebert_alias_still_works():
     from src.models.codebert_pair import CodeBERTPairClassifier
 
     assert CodeBERTPairClassifier is TransformerPairClassifier
+
+
+# --------------------------------------------------------------- notebook
+def test_notebooks_mirror_each_other():
+    """Notebook EXP-003 phải là bản sao EXP-002 đổi tên (DEC-016).
+
+    Rủi ro thật: sửa notebook M1 (thêm cell, sửa lệnh) mà quên M2, rồi chạy M2
+    bằng quy trình cũ → sai lệch âm thầm giữa hai bên, đúng thứ mà toàn bộ
+    EXP-003 sinh ra để trả lời.
+    """
+    import re
+
+    assert NB3.exists(), "thiếu notebook Kaggle cho EXP-003"
+    # So LỆNH thực thi, không so chú thích: mỗi bên có phần giới thiệu riêng.
+    # Chuẩn hoá mọi tham chiếu riêng (tên exp/tên model) — phần còn lại phải khớp.
+    def cmds(p):
+        out = []
+        for line in _nb_text(p, code_only=True).splitlines():
+            line = re.sub(r"\s*#.*$", "", line).strip()  # bỏ comment
+            if line:
+                out.append(re.sub(r"exp00[23]|M[12]|codebert-base|graphcodebert-base|"
+                                  r"codebert|graphcodebert|CodeBERT|GraphCodeBERT", "X", line))
+        return out
+
+    a, b = cmds(NB2), set(cmds(NB3))
+    assert len(a) >= 8, f"notebook EXP-002 h suspiciously ít lệnh ({len(a)})"
+    missing = [x for x in a if x not in b]
+    assert not missing, f"lệnh có trong notebook EXP-002 nhưng thiếu ở EXP-003: {missing[:3]}"
+
+
+@pytest.mark.parametrize("nb,out_dir", [(NB2, "results/exp002_codebert_poj104"),
+                                        (NB3, "results/exp003_graphcodebert_poj104")])
+def test_notebook_packages_lightweight_weights_only(nb, out_dir):
+    """Không tải 1,4GB về: phải xuất bản nhẹ, và tar KHÔNG được loại nó đi.
+
+    Rủi ro: `--exclude='*.pt'` khiến archive không có gì để evaluate local, buộc
+    user phải tải checkpoint đầy đủ 1,4GB (2,9GB cho best+last).
+    """
+    t = _nb_text(nb)
+    assert "export_eval_weights" in t, f"{nb.name}: thiếu bước rút checkpoint bản nhẹ"
+    assert "--exclude='*checkpoint.pt'" in t, (
+        f"{nb.name}: tar phải loại *checkpoint.pt nhưng GIỀ best_weights_only.pt "
+        f"(\"best_weights_only.pt\" không khớp mẫu này)")
+    assert "--exclude='*.pt'" not in t, f"{nb.name}: --exclude='*.pt' xoá luôn bản nhẹ"
+    assert out_dir in t

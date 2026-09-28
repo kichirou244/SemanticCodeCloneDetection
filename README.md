@@ -57,6 +57,15 @@ python -m src.experiments.exp004_astnn --config configs/exp004_astnn.yaml --mode
 để Kaggle theo DEC-018 (checkpoint nằm trong `/kaggle/working` ⇒ phải archive
 ngay cuối mỗi epoch).
 
+Notebook Kaggle: `notebooks/exp002_codebert_kaggle.ipynb`, `notebooks/exp003_graphcodebert_kaggle.ipynb`
+(bản EXP-003 là bản sao EXP-002 chỉ đổi tên — DEC-016; test `test_notebooks_mirror_each_other` chặn lệch).
+
+**Chỉ tải checkpoint bản nhẹ về (0,5GB thay vì 1,44GB).** Sau khi train trên Kaggle,
+gọi `export_eval_weights(Path("results/<exp>_poj104"))` để tạo `best_weights_only.pt`
+(chỉ `model_state`, load được với `weights_only=True`); `evaluate_model` tự fallback
+sang file này nếu không có checkpoint đầy đủ. `best_checkpoint.pt`/`last_checkpoint.pt`
+chỉ dùng để resume trên Kaggle — đừng tải về (DEC-022 §2b).
+
 Thời gian trên Kaggle T4: **EXP-002 7,03h (đo)** · EXP-003 ~7,8h (đo từ throughput
 EXP-002) · **EXP-004 ~35 phút**. Xem `docs/experiment_registry.md` cho trạng thái từng run.
 

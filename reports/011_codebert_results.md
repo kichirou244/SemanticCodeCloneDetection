@@ -2,6 +2,8 @@
 
 Ngày chốt kết quả: 2026-09-28. Báo cáo này thay thế `reports/010_codebert_audit.md`
 (audit code, **không** phải kết quả) và là nguồn số liệu chính thức của M1 cho RQ1.
+Phiên bản `v1.14.0` (2026-09-28) — thêm 11.13 về quy trình tải/đóng gói checkpoint
+bản nhẹ `best_weights_only.pt` (DEC-022).
 
 ## 11.1 Experiment Identity
 
@@ -160,10 +162,12 @@ vùng mà mô hình mù hoàn toàn, và 11.9 cho thấy lỗi tập trung đún
 | Train tối đa | — | 3 × ~8.400 s ≈ 7,0 h/epoch |
 | Eval (val 10k + test 11k pair, fp32) | local RTX 5060 8,5GB | **316 s (5 m 16 s)** |
 
-Ghi chú: trường `eval_time_s` trong `EVAL_COMPLETE.json` của lần chạy này báo `0.096` —
+Ghi chú: `eval_time_s` trong `EVAL_COMPLETE.json` của lần chạy này báo `0.096` —
 nó chỉ đo thời gian **ghi artifact**, không tính inference (timer khởi tạo sai chỗ). Đã
 sửa ở `transformer_pair_runner.evaluate_model` và `exp004_astnn.evaluate_model`; số
-316 s ở trên là đo ngoài (`Stopwatch`), artifact của run này vẫn giữ giá trị cũ.
+316 s ở trên là đo ngoài (`Stopwatch`), artifact của run này vẫn giữ giá trị cũ. Sau khi
+sửa, lần evaluate chạy lại từ checkpoint bản nhẹ (11.13) báo `eval_time_s = 298,5 s`,
+khớp với đo ngoài 316 s (chênh do warm-up cuối epoch).
 
 ## 11.13 Reproducibility
 
@@ -181,8 +185,28 @@ python -m src.experiments.exp002_codebert --config configs/exp002_codebert.yaml 
   --mode evaluate --device cuda
 ```
 
-- Checkpoint (`best_checkpoint.pt`, 1,44GB) **không** commit — `.gitignore` loại `*.pt`.
-  Khôi phục lại bằng `--mode resume` (cần `last_checkpoint.pt`) hoặc tải lại từ Kaggle.
+**Chỉ cần tải checkpoint BẢN NHẸ về (0,5GB), không phải 1,44GB.** Sau khi train
+trên Kaggle, chạy cell đóng gói của `notebooks/exp002_codebert_kaggle.ipynb` (hoặc
+gọi trực tiếp `export_eval_weights(Path("results/exp002_codebert_poj104"))`):
+
+| File | Nội dung | Kích thước | Cần tải về? |
+| :--- | :--- | ---: | :--- |
+| `best_checkpoint.pt` | model + optimizer + scheduler + RNG state | 1,44GB | ✗ (chỉ để resume trên Kaggle) |
+| `last_checkpoint.pt` | như trên, của epoch cuối | 1,44GB | ✗ (chỉ để resume) |
+| `best_weights_only.pt` | chỉ `model_state` + `epoch` + `best_f1` | **0,51GB** | ✓ |
+
+- `best_weights_only.pt` chỉ chứa tensor + số nên `load_eval_weights()` nạp nó bằng
+  `torch.load(..., weights_only=True)` (không unpickle object tuỳ ý); checkpoint đầy đủ
+  vẫn phải `weights_only=False` vì có `np.random.get_state()`. Cấu trúc giữ nguyên
+  (`model_state`) nên `evaluate_model` dùng được mà không sửa code. Runner ưu tiên
+  checkpoint đầy đủ nếu còn, không thì tự fallback sang bản nhẹ.
+- **Đã kiểm chứng trên chính artifact của lần chạy này**: xoá `best_checkpoint.pt`,
+  chạy `--mode evaluate` lại ⇒ metric **giống hệt** (F1 `0.9099191224319048`, TP 4894,
+  TN 5137, FP 363, FN 606), `eval_time_s = 298,5 s` (đúng thời gian thật sau fix timer
+  ở 11.12). Quy trình cũ (`--exclude='*.pt'`) khiến archive **không còn gì để evaluate**,
+  buộc tải 1,44GB; đã đổi sang `--exclude='*checkpoint.pt'` để giữ bản nhẹ.
+- Checkpoint (`*.pt`) **không** commit — `.gitignore` loại `*.pt`. Khôi phục train bằng
+  `--mode resume` (cần `last_checkpoint.pt` từ version Kaggle đã save) hoặc train lại.
 - `config.yaml` + `manifest.json` copy trong thư mục result là snapshot của đúng run; hash
   cũng nằm trong `run_metadata.json` (`config_sha256`, `manifest_sha256`).
 - `predictions/{validation,test}_scores.jsonl` (11k + 10k dòng) đủ để tính lại **mọi**
