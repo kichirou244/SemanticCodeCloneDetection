@@ -20,6 +20,11 @@ AI/Deep Learning phát hiện hai đoạn code tương đương ngữ nghĩa/ch�
   compute; dữ liệu CodeNet vẫn giữ trong repo để mở rộng lại được nếu cần.
   Xem `docs/research_questions.md` §5.
 - Không Java/C#/JavaScript.
+- **M4 (CPG-GNN):** code đã xong (schema + ingest + store + GAT, 34 test local),
+  còn thiếu **CPG thật** vì cần Joern. Joern **không cài ở máy local** — cài trong
+  `notebooks/exp005_cpg_extract_kaggle.ipynb` rồi chạy **cell smoke trước** (in ra
+  danh sách step CPGQL để xác nhận exporter), sau đó mới đo `ham/giây` thật.
+  Xem DEC-024, DEC-025 và `reports/005_ast_cpg_feasibility.md`.
 
 ## Bắt đầu nhanh (người dùng tự chạy — agent không chạy terminal)
 

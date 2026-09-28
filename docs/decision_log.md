@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.14.0 |
+| **Phiên bản** | 1.16.0 |
 | **Ngày cập nhật** | 2026-09-28 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -36,6 +36,8 @@
 - [DEC-021 — M3 ASTNN: vectorize, cache, và đo thay vì đoán thời gian](#dec-021--m3-astnn-vectorize-rvnn-cache-cay-ast-v--%C4%91o-thay-v%C4%AB-%C4%91o%C3%A1n-th%C4%9Di-gian)
 - [DEC-022 — Đóng băng recipe M1/M2 + evaluate chạy local](#dec-022--%C4%91%C3%B3ng-b%C4%91ng-recipe-m1m2-sau-run-exp-002-evaluate-ch%E1%BA%A1y-local)
 - [DEC-023 — Notebook riêng cho M3 và M2, chạy M3 trước; evaluate ở Kaggle; EXP-005 là blocker](#dec-023--notebook-ri%C3%AEng-cho-m3-v%C3%A0-m2-ch%E1%BA%A1y-m3-tr%C6%B0%E1%BB%9Bevaluate-%E1%BB%9F-kaggleexp-005-l%C3%A0-blocker)
+- [DEC-024 — M4 contract-first: đo thay vì cài, Joern chạy trên Kaggle không cài local](#dec-024--m4-contract-first--%C4%91o-thay-v%C3%AC-c%C3%A3i-joern-ch%E1%BA%A1y-tr%C3%AAn-kaggle-kh%C3%B4ng-c%C3%A1i-local)
+- [DEC-025 — Joern v4: script Scala + gom cả lô vào một tiến trình, và smoke test bắt buộc](#dec-025--joern-v4-script-scala--gom-c%E1%BA%A3-l%C3%B4-v%C3%A0o-m%E1%BB%99t-ti%E1%BA%BFn-tr%C3%ACnh-v%C3%A0-smoke-test-b%E1%BA%AFt-bu%E1%BB%99c)
 - [Lịch sử thay đổi](#lich-su-thay-doi)
 
 ---
@@ -506,6 +508,103 @@
 
 ---
 
+## DEC-024 — M4 contract-first: đo thay vì cài, Joern chạy trên Kaggle không cài local
+
+- **Bối cảnh (2026-09-28, sau DEC-023):** người dùng hỏi "có cần test ở local không,
+  train ở Kaggle thì khỏi cài". Câu trả lời là **không** — và nguyên nhân kỹ thuật
+  cũng là lý do để quyết định này: phần bị chặn không phải code M4 mà là **một lệnh
+  cài**. Nên tách việc: viết và test mọi tầng sau trích xuất (không cần Joern), còn
+  Joern thì chạy ở nơi duy nhất mà train cần — Kaggle.
+- **Quyết định 1 — contract-first, không chờ Joern:** vocabulary CPG được **đóng băng**
+  trước trong `src/representations/cpg/schema.py` (13 nhãn node, 9 nhãn cạnh), và mọi
+  tầng phía sau — `ingest` (JSON → `CPGraph`), `CPGStore` (cache `.npz`), `CPGGNN` (GAT
+  có điều kiện nhãn cạnh, 204.801 tham số) — được test bằng **đồ thị tổng hợp** đúng
+  format mà `scripts/joern/export_cpg.py` sẽ ghi ra (33 test, xanh local, không cần
+  Java/GPU). Vì sao hợp lệ: format JSON là **do ta định nghĩa**, không phải format nội
+  bộ Joern; phần chưa kiểm chứng chỉ còn đúng một chỗ — exporter có ghi đúng format đó
+  hay không. Nếu chờ Joern rồi code, ta sẽ không có gì để test cho tới khi lên Kaggle.
+- **Quyết định 2 — JSON format tự định nghĩa:** exporter phía Joern chỉ giữ đúng các
+  nhãn trong schema; nhãn lạ → `OTHER` (node) hoặc bỏ (cạnh), **luôn được đếm** trong
+  stats. Lý do: Joern đổi tên node type giữa các version, và vocabulary đầu vào mô
+  hình phải đóng băng — đổi vocabulary = đổi feature = mọi checkpoint cũ vô dùng.
+- **Quyết định 3 — Joern cài trên Kaggle, KHÔNG cài local:** máy dự án không có Java và
+  không cần có. Kaggle có sẵn JDK 17 + quota CPU, nên `notebooks/exp005_cpg_extract_kaggle.ipynb`
+  cài rồi đo ngay trong phiên đó. Cài local tốn hàng trăm MB, đụng môi trường đang xanh,
+  và không giúp ích gì cho lần train vì lần train vẫn ở Kaggle.
+- **Quyết định 4 — số đo thay cho ước lượng, và đo trước khi cam kết:** notebook đo
+  20 hàm rồi 500 hàm, ghi `artifacts/cpg_export/benchmark.json`
+  (`functions_per_second`, `error_rate`, `est_hours_full_dataset`). Trước khi chạy 62k
+  hàm (5–17 h) phải thấy con số đó. Ngưỡng: **< 0,3 hàm/s ⇒ 62k hàm > 1 ngày ⇒ phải
+  bàn lại phạm vi** (giảm số hàm, hoặc song hoá 4 tiến trình) thay vì đốt quota.
+- **Quyết định 5 — gate chất lượng CPG sau khi nạp:** `nodes_per_code_mean < 20` ⇒
+  exporter hỏng, dừng; `edges_dropped_*` lớn ⇒ lệch schema, sửa trước khi train;
+  thiếu nhãn `REACHING_DEF` ⇒ đồ thị không còn là CPG, dừng. Ba gate này rẻ hơn nhiều
+  so với một lần train 5 h ra số rác.
+- **Hệ quả:** `configs/exp005_cpg_gnn.yaml` mang `status: BLOCKED_ON_JOERN` +
+  `blocked_by: [java, joern]`, và `src/representations/cpg/build.py` báo cáo
+  `ready: false` kèm hướng dẫn. Trạng thái này là **trung thực**: phần đã xong được
+  ghi ra, phần chưa được ghi ra, không có gì được ghi là sẵn sàng.
+- **Còn lại (không làm trong DEC này):** runner `src/experiments/exp005_cpg_gnn.py` và
+  notebook train M4 — cố ý chờ số đo, vì chúng chỉ khác EXP-004 ở chỗ load CPG store;
+  viết trước rồi mới sửa batch size theo số node thật là việc làm hai lần.
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
+## DEC-025 — Joern v4: script Scala + gom cả lô vào một tiến trình, và smoke test bắt buộc
+
+- **Bối cảnh (2026-09-28, ngay sau DEC-024):** trước khi đóng gói EXP-005, phần
+  Joern được đối chiếu với tài liệu chính thức — và **cả ba giả định ban đầu đều
+  sai**. Sai thì tốn một lần chạy Kaggle dài, nên kiểm trước khi cài gì:
+  1. **Ngôn ngữ lập trình:** Joern hiện là **v4.0.x** (phát hành bản mới hằng
+     ngày), không phải v2.x. Asset tải về tên `joern-cli-linux-x86_64.zip` (~2GB),
+     **không có** `joern.zip` như đoán trước đó ⇒ URL hardcode kiểu đó là công thức
+     404.
+  2. **Giao diện script:** Python (`from joern import cpgFromCode`) là của
+     `joernpy` ở bản cũ. Bản v4 chạy script bằng **Scala** qua CLI
+     `joern --script x.sc --param k=v` (đã đối chiếu docs.joern.io/interpreter).
+  3. **Chi phí khởi động:** mỗi lần gọi `joern` là một JVM + scala-repl, tốn
+     **vài chục giây**; dựng CPG một hàm thì dưới 1 giây.
+- **Quyết định 1 — không hardcode version/tên asset:** dùng đúng cách cài chính
+  thức (`joern-install.sh` tự dò platform, đặt binary ở `~/bin/joern`), và
+  `build_cpg_export.py` tìm Joern theo thứ tự `$JOERN_BIN` → `PATH` →
+  `~/bin/joern`. Lý do: Joern ra bản mới hằng ngày; bất cứ thứ gì ghim version
+  trong repo sẽ hỏng trong vài tuần mà không ai sửa kịp.
+- **Quyết định 2 — exporter là Scala, và mỗi loại cạnh một hàm riêng:** không có
+  lựa chọn nào khác cho Joern v4, nhưng để giữ rủi ro thấp khi **không kiểm chứng
+  được**: `astEdges`/`callEdges`/`argEdges`/`refEdges`/`reachingDefEdges`/`cfgEdges`
+  tách bạch, mỗi cái một hàm — sửa một tên hàm không phá các chỗ khác.
+- **Quyết định 3 — bắt buộc có smoke test trước lô lớn:** vì không có Java ở máy
+  dự án, `scripts/joern/joern_smoke.sc` chạy trên **một** hàm và in ra danh sách
+  step CPGQL mà chính Joern khai báo (`cpg.help`) cùng các dòng probe độc lập
+  (`ast=`, `callOut=`, `reachingDef=`…). Nguyên tắc: **phép đo rẻ đi trước lỗi
+  đắt đi sau**; một lần chạy 60 giây thay cho một lần chạy 500 hàm rồi mới biết
+  mình sai. Cell smoke được đặt ngay sau cell cài Joern và được ghi rõ là
+  **không được bỏ qua**.
+- **Quyết định 4 — một tiến trình cho cả lô, không phải một tiến trình mỗi hàm:**
+  `--batch-size` file được ghi thành `NNNNN.cpp` trong một thư mục, kèm
+  `index.tsv` ánh xạ tên file → `sample_id`, rồi Joern được gọi **một lần cho cả
+  lô**. Con số này quyết định toàn bộ ngân sách thời gian: 62.000 tiến trình × 20s
+  khởi động ≈ **15 ngày** chỉ để bật JVM, trong khi gom lô 100 hàm/lần thì chi phí
+  khởi động là 620 lần khởi động cho cả dataset. Bắt buộc phải có
+  `index.tsv` vì Joern chỉ trả về *tên file*, còn `sample_id` của dataset có dạng
+  `poj104-train-7` — suy ra không được.
+- **Quyết định 5 — `.meta` cạnh mỗi CPG:** mỗi hàm xuất kèm
+  `n_methods_in_file`, `n_nodes`, `n_edges`, `method_name`. Bốn số này là gate
+  chất lượng: POJ-104 mỗi dòng là một hàm, nên `n_methods_in_file > 1` là dấu
+  hiệu ta đang lấy **sai hàm** — thứ mà nhìn bằng mắt trên 500 file sẽ bỏ sót.
+- **Hệ quả:** `export_cpg.py` bị xoá (đường `joernpy` không còn là đường chính
+  thức); `benchmark.json` nay có thêm `n_missing`/`nodes_per_cpg_mean`/
+  `files_with_multiple_methods`, và **hàm không ra JSON cũng bị tính là lỗi**
+  (`error_rate` gộp cả hai) — trước đó một lô timeout sẽ bị báo cáo là "0 lỗi".
+- **Còn lại:** tên step CPGQL trong `export_cpg.sc` chỉ được xác nhận sau khi cell
+  smoke chạy trên Kaggle. Không coi EXP-005 là "đã xong" cho tới lúc đó.
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
 ## Lịch sử thay đổi
 
 | No. | Phiên bản | Ngày thay đổi | Nội dung thay đổi |
@@ -525,3 +624,5 @@
 | 13 | 1.12.0 | 2026-09-28 | Thêm DEC-022 sau khi EXP-002 có số liệu: đóng băng `max_length 256` + chưa thêm `min_delta` cho M1/M2 (đổi recipe giữa chừng sẽ phá so sánh RQ1), evaluate chạy local 5 phút thay vì mở phiên Kaggle, sửa 3 lỗi im lặng (`weights_only`, mất `__main__` guard, `eval_time_s` đo sai). |
 | 14 | 1.13.0 | 2026-09-28 | DEC-022 bổ sung quyết định 2b: xuất `best_weights_only.pt` (0,51GB) để tải về chạy evaluate thay vì tải checkpoint 1,44GB, kèm `resolve_eval_checkpoint` fallback; sửa tar trong notebook EXP-002/003 vốn loại luôn bản nhẹ. |
 | 15 | 1.14.0 | 2026-09-28 | Thêm DEC-023: **2 notebook riêng** cho M3 và M2 (bản gộp 1 phiên bị bỏ), chạy M3 trước M2 (phụ thuộc, không phải thẩm mỹ); **evaluate chạy trên Kaggle** và chỉ tải metrics + predictions về (sửa hướng của DEC-022 §2); chốt EXP-005 là blocker (không có Joern/Java, CPG ~62k file, chưa có model — vấn đề là toolchain chứ không phải GPU). |
+| 16 | 1.15.0 | 2026-09-28 | Thêm DEC-024: M4 làm **contract-first** (schema → ingest → store → GAT, 33 test local, không cần Joern); JSON format tự định nghĩa để đổi backend không phá model; **Joern cài trên Kaggle, không cài local**; số đo `ham/giay` + gate chất lượng CPG trước khi cam kết 5–17 h. |
+| 17 | 1.16.0 | 2026-09-28 | Thêm DEC-025: đối chiếu tài liệu Joern → **v4.0.x, script Scala** (`joern --script x.sc --param k=v`), **không hardcode version/tên asset** (`joern-install.sh`); exporter `.py` bị xoá; **gom lô vào 1 tiến trình** (62k tiến trình × JVM ≈ 15 ngày); **smoke test bắt buộc** trước lô lớn; `error_rate` nay gộp cả hàm không ra JSON. |
