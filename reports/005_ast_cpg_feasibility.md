@@ -26,6 +26,36 @@
 ## Blockers
 - Joern chưa cài (cần Java); M4-C++ chờ. Không chặn M3 và CPG-Python.
 
-## Next Actions
-1. Phase sau: AST extractor thật bằng tree-sitter → M3; CPG-Python → nửa M4.
-2. User quyết định cài Joern khi tới M4-C++.
+## Cập nhật 2026-09-28 — EXP-005 (M4 CPG-GNN) chưa làm được, và đo được vì sao
+
+Kiểm lại trên máy user (không phải suy đoán từ tài liệu):
+
+| Kiểm tra | Kết quả |
+| :--- | :--- |
+| `joern --version` | **không có** (vẫn `not recognized`, đúng như 2026-09-20) |
+| `java -version` | **không có JRE** ⇒ không cài được Joern ngay |
+| `python scripts/check_toolchain.py` | tree-sitter + grammar cpp OK; `cpg.status = feasibility_pending` |
+| Code hiện có cho CPG | `src/representations/cpg/build.py` **chỉ là stub** `cpg_status()` — chưa có extractor, chưa có model, chưa có config |
+
+**Throughput tree-sitter trên POJ-104 (đo, không ước lượng):** 500 file C++ thật →
+**0,16 s** ⇒ **3.153 file/s**, trung bình 825 node/file. Toàn bộ POJ-104 (~62k code ở ba
+split) parse hết trong **~20 giây**. Đây là lý do M3 (ASTNN) rẻ.
+
+**Ước lượng Joern:** Joern cần JVM, front-end C/C++ đầy đủ (AST + CFG + data-flow) và
+mỗi lần launch đều tốn thời gian khởi tạo. Thực tế Joern xử lý khoảng **0,3–1 file/s**
+mỗi tiến trình. Với ~62k code:
+
+- 1 tiến trình: **5,4–17,2 giờ**
+- 4 tiến trình (Kaggle có ~4 vCPU): **1,4–4,3 giờ**
+
+Tức là CPG **ăn hết hoặc gần hết** một phiên Kaggle 12h, chưa kể thời gian implement mô
+hình CPG-GNN (node/edge embedding, GGNN/DRNN, ghép với cặp pair) chưa tồn tại trong repo.
+
+**Kết luận:** EXP-005 **không** gộp được vào cùng phiên Kaggle với EXP-003/EXP-004
+(DEC-023). Đây là milestone riêng: cài JRE + Joern → đo throughput thật trên 500 file →
+mới quyết định có làm M4 hay không. Không đổi M4 sang model khác (giữ nguyên DEC-009).
+
+**Next actions (cập nhật)**
+1. Phase này: M3 (EXP-004) + M2 (EXP-003) trong một phiên Kaggle — DEC-023.
+2. Phase sau: nếu muốn M4, cài JRE 17 + Joern, chạy `joern-parse` trên 500 file đo số
+   giây/file rồi báo lại để quyết định ngân sách giờ.

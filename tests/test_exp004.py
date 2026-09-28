@@ -481,3 +481,73 @@ def test_atomic_write_leaves_no_partial_file(tmp_path):
     _atomic_write_text(p, json.dumps({"v": 2}))
     assert json.loads(p.read_text(encoding="utf-8")) == {"v": 2}
     assert not list(tmp_path.glob("*.tmp"))
+
+
+# ------------------------------------------------------- notebook phiên chung
+NB_SESSION = Path("notebooks/kaggle_m3_m2_session.ipynb")
+
+
+def _nb_cells(p: Path) -> list[dict]:
+    return json.loads(p.read_text(encoding="utf-8"))["cells"]
+
+
+def _nb_code(p: Path) -> str:
+    return "\n".join("".join(c["source"]) for c in _nb_cells(p) if c["cell_type"] == "code")
+
+
+def test_session_notebook_trains_exp004_before_exp003():
+    """Một phiên Kaggle train cả M3 lẫn M2 — và M3 phải ĐỨNG TRƯỚC.
+
+    Thứ tự là quyết định phụ thuộc, không phải thẩm mỹ: M3 tốn ~35 phút, M2 tốn
+    ~7,8h. Nếu M2 chạy trước và session chết, ta mất 8h mà chưa có M3. Đảo thứ tự
+    trong notebook ⇒ mất M3 mà không có gì bù lại.
+    """
+    assert NB_SESSION.exists(), "thiếu notebook phiên chung (train 2 mô hình 1 lần)"
+    t = _nb_code(NB_SESSION)
+    i4 = t.index("exp004_astnn --config configs/exp004_astnn.yaml \"\n   f\"--mode {MODE}")
+    i3 = t.index("exp003_graphcodebert --config configs/exp003_graphcodebert.yaml \"\n   f\"--mode {MODE}")
+    assert i4 < i3, "EXP-004 (rẻ) phải chạy trước EXP-003 (đắt)"
+    # cả hai đều phải train (không phải chỉ evaluate) và có budget riêng
+    assert t.count("TIME_BUDGET_S = ") >= 2
+    # dataset chỉ build MỘT lần cho cả hai mô hình
+    assert t.count("scripts/build_dataset.py") == 1
+
+
+def test_session_notebook_packages_both_models_lightweight():
+    """Mỗi mô hình một tar riêng, và tar phải giữ checkpoint bản nhẹ.
+
+    Sai lệch âm thầm: `--exclude='*.pt'` khiến archive không còn gì để evaluate
+    local, buộc tải checkpoint đầy đủ (M2: 1,44GB × 2 file).
+    """
+    t = _nb_code(NB_SESSION)
+    assert t.count("--exclude='*checkpoint.pt'") == 2, "phải đóng gói 2 tar"
+    assert "--exclude='*.pt'" not in t
+    assert t.count("export_eval_weights(Path(") == 2, "phải rút bản nhẹ cho cả M2 và M3"
+    for out in ("results/exp003_graphcodebert_poj104", "results/exp004_astnn_poj104"):
+        assert out in t
+    for tar in ("exp003_results.tar.gz", "exp004_results.tar.gz"):
+        assert tar in t
+    # phải nhắc người dùng backup M3 trước khi dồn 8h vào M2
+    assert "Save Version" in "\n".join("".join(c["source"]) for c in _nb_cells(NB_SESSION))
+
+
+def test_exp004_runner_accepts_lightweight_checkpoint(tmp_path):
+    """M3 cũng phải evaluate được từ `best_weights_only.pt` (đường tải 0,5GB
+    dùng chung cho mọi mô hình, không có ngoại lệ riêng cho ASTNN)."""
+    from src.experiments.transformer_pair_runner import export_eval_weights, load_eval_weights
+
+    d = tmp_path / "out"
+    d.mkdir()
+    m = ASTNNPairClassifier(200, 0.2)
+    opt = torch.optim.AdamW(m.parameters(), lr=1e-3)
+    sum(p.sum() for p in m.parameters()).backward()
+    opt.step()
+    torch.save({"model_state": m.state_dict(), "optimizer_state": opt.state_dict(),
+                "epoch": 2, "best_f1": 0.4,
+                "rng": {"numpy": np.random.get_state()}}, d / "best_checkpoint.pt")
+    info = export_eval_weights(d)
+    assert info["to_mb"] < info["from_mb"]
+    m2 = ASTNNPairClassifier(200, 0.2)
+    m2.load_state_dict(load_eval_weights(d / "best_weights_only.pt", "cpu"))
+    for a, b in zip(m.state_dict().values(), m2.state_dict().values()):
+        assert torch.equal(a, b)

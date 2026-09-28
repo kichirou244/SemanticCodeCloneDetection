@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.13.0 |
+| **Phiên bản** | 1.14.0 |
 | **Ngày cập nhật** | 2026-09-28 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -35,6 +35,7 @@
 - [DEC-020 — M2 dùng chung code path với M1](#dec-020--m2-dung-chung-code-path-voi-m1-khong-clone-runner)
 - [DEC-021 — M3 ASTNN: vectorize, cache, và đo thay vì đoán thời gian](#dec-021--m3-astnn-vectorize-rvnn-cache-cay-ast-v--%C4%91o-thay-v%C4%AB-%C4%91o%C3%A1n-th%C4%9Di-gian)
 - [DEC-022 — Đóng băng recipe M1/M2 + evaluate chạy local](#dec-022--%C4%91%C3%B3ng-b%C4%91ng-recipe-m1m2-sau-run-exp-002-evaluate-ch%E1%BA%A1y-local)
+- [DEC-023 — Một phiên Kaggle cho M3 + M2, chạy M3 trước; EXP-005 là blocker](#dec-023--m%E1%BB%9Ft-phi%C3%AAn-kaggle-cho-m3--m2-ch%E1%BA%A1y-m3-tr%C6%B0%E1%BB%9Bexp-005-l%C3%A0-blocker)
 - [Lịch sử thay đổi](#lich-su-thay-doi)
 
 ---
@@ -467,6 +468,33 @@
 
 ---
 
+## DEC-023 — Một phiên Kaggle cho M3 + M2, chạy M3 trước; EXP-005 là blocker
+
+- **Bối cảnh (2026-09-28):** EXP-002 đã xong. EXP-003 (M2, ~7,8h) và EXP-004 (M3, ~35 phút)
+  cùng `READY_FOR_KAGGLE_TRAIN`. Người dùng muốn train một lần cho cả hai. EXP-005 (M4
+  CPG-GNN) được hỏi thêm "nếu được thì làm luôn".
+- **Quyết định 1 — gộp hai mô hình vào một phiên, M3 TRƯỚC M2:** tổng ~8,4h < giới hạn
+  12h của Kaggle; một lần clone + một lần build dataset. M3 chạy trước vì **rẻ hơn 13×**:
+  nếu session chết giữa chừng thì đã có kết quả M3, còn nếu M2 đứng trước thì 8h bay mà
+  chưa có M3. Đây là lý do phụ thuộc, không phải sở thích thứ tự — test
+  `test_session_notebook_trains_exp004_before_exp003` khoá lại. Mỗi mô hình có
+  `--time-budget-s` riêng (45 phút cho M3, 9h cho M2) và đóng gói tar ngay khi xong.
+- **Quyết định 2 — EXP-005 không gộp vào phiên này:** ba lý do độc lập, đều đo được —
+  (a) `joern` **chưa cài** và máy không có Java (DEC-009 để ngỏ, `reports/005`; kiểm lại
+  2026-09-28 vẫn `not recognized`); (b) tree-sitter đo được **3.153 file/s** trên POJ-104
+  (500 file, 0,16s), Joern cần JVM + front-end C/C++ đầy đủ nên chậm hơn 1–2 đơn vị ⇒ CPG
+  cho ~62k code tốn **vài giờ đến hàng chục giờ**, không còn chỗ trong phiên 12h; (c) chưa có
+  model CPG-GNN — `src/representations/cpg/build.py` mới chỉ là stub `cpg_status()`, chưa có
+  config, chưa có training loop, chưa có test. Nói "làm luôn" mà bỏ (a)(b)(c) thì hoặc tốn
+  cả ngày không ra số, hoặc ra số không kiểm chứng được.
+- **Việc còn lại:** EXP-005 là một milestone riêng — cài Joern (JRE 17), đo throughput thật
+  trên 500 file để ước lượng, rồi mới quyết định có làm hay không. Không sửa `PLANNED`
+  thành vời; không thay M4 bằng model khác (DEC-009).
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
 ## Lịch sử thay đổi
 
 | No. | Phiên bản | Ngày thay đổi | Nội dung thay đổi |
@@ -485,3 +513,4 @@
 | 12 | 1.11.0 | 2026-09-27 | Thêm DEC-020 (M2 dùng chung runner với M1, khóa bằng test `is`), DEC-021 (M3 ASTNN xong: vectorize RvNN, cache AST, **đo thay vì đoán** — ước lượng ~2h bị thu hồi còn ~35 phút). |
 | 13 | 1.12.0 | 2026-09-28 | Thêm DEC-022 sau khi EXP-002 có số liệu: đóng băng `max_length 256` + chưa thêm `min_delta` cho M1/M2 (đổi recipe giữa chừng sẽ phá so sánh RQ1), evaluate chạy local 5 phút thay vì mở phiên Kaggle, sửa 3 lỗi im lặng (`weights_only`, mất `__main__` guard, `eval_time_s` đo sai). |
 | 14 | 1.13.0 | 2026-09-28 | DEC-022 bổ sung quyết định 2b: xuất `best_weights_only.pt` (0,51GB) để tải về chạy evaluate thay vì tải checkpoint 1,44GB, kèm `resolve_eval_checkpoint` fallback; sửa tar trong notebook EXP-002/003 vốn loại luôn bản nhẹ. |
+| 15 | 1.14.0 | 2026-09-28 | Thêm DEC-023: gộp EXP-004 + EXP-003 vào **một** phiên Kaggle, chạy M3 trước M2 (phụ thuộc, không phải thẩm mỹ); chốt EXP-005 là blocker (Joern chưa có, CPG ~62k file, chưa có model). |

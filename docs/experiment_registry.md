@@ -25,7 +25,7 @@
 | EXP-001 | POJ-104 | B1 TF-IDF | COMPLETED | Test P/R/F1 0.552/0.860/0.673, thr 0.24 | reports/009_baseline_results.md |
 | EXP-002 | POJ-104 | M1 CodeBERT | COMPLETED | Test P/R/F1 0.931/0.890/0.910, ROC-AUC 0.973, thr 0.59 (val-selected), best epoch 1/3, 7,03h T4 | reports/011_codebert_results.md |
 | EXP-003 | POJ-104 | M2 GraphCodeBERT | READY_FOR_KAGGLE_TRAIN | Implementation xong, dùng **chung code path** với EXP-002 (DEC-020); 12 test khóa tính công bằng (13 test gồm cả notebook EXP-003 phải mirror EXP-002); notebook `notebooks/exp003_graphcodebert_kaggle.ipynb` sẵn sàng; throughput đo = EXP-002 ⇒ **~7,8h** | - |
-| EXP-004 | POJ-104 | M3 ASTNN | READY_FOR_KAGGLE_TRAIN | Implementation xong (DEC-021): extractor thật, RvNN vectorize, cache AST; 25 test; smoke + diagnostic PASS trên RTX 5060; **~35 phút** trên T4 (hiệu chuẩn, cần verify trực tiếp) | - |
+| EXP-004 | POJ-104 | M3 ASTNN | READY_FOR_KAGGLE_TRAIN | Implementation xong (DEC-021): extractor thật, RvNN vectorize, cache AST; 28 test; preflight + export bản nhẹ PASS trên RTX 5060; **~35 phút** trên T4 (hiệu chuẩn, cần verify trực tiếp) | - |
 | EXP-005 | POJ-104 | M4 CPG-GNN | PLANNED | - | - |
 | EXP-006 | POJ-104 | M5 Hybrid | PLANNED | - | - |
 | EXP-007 | CodeNet Python | B1 TF-IDF | CANCELLED | - | DEC-019 |
@@ -62,12 +62,20 @@ epoch 3; (3) checkpoint 1,44 GB không commit (`.gitignore` loại `*.pt`) — c
 **Evaluate chạy được local** (`--mode evaluate`, 5 phút trên RTX 5060) nên từ giờ chỉ
 train mới cần Kaggle; xem DEC-022.
 
-Ghi chú EXP-003/EXP-004 (2026-09-27): cả hai đã implement và test xong, **chưa
-train lần nào** — status `READY_FOR_KAGGLE_TRAIN` nghĩa là "code + test + preflight
-sẵn sàng", không phải đã có số liệu. Thứ tự chạy nên là EXP-003 → EXP-004 vì
-EXP-002 là baseline trung lập cần có trước để so sánh (mốc EXP-001 đã vượt:
-F1 0.673). Thời gian: EXP-003 ~7,8h và EXP-004 ~0,6h ⇒ **EXP-004 rẻ hơn 13×**,
-nên chạy EXP-004 trước cũng được nếu cần kết quả sớm.
+Ghi chú EXP-003/EXP-004 (2026-09-27, cập nhật 2026-09-28): cả hai đã implement và test
+xong, **chưa train lần nào** — status `READY_FOR_KAGGLE_TRAIN` nghĩa là "code + test +
+preflight sẵn sàng", không phải đã có số liệu.
+
+**Thứ tự chạy trong một phiên: EXP-004 → EXP-003** (DEC-023). EXP-004 tốn ~35 phút,
+EXP-003 ~7,8h; chạy M3 trước nên nếu session chết ở M2 thì vẫn giữ được M3. Notebook
+`notebooks/kaggle_m3_m2_session.ipynb` gộp cả hai: một clone, một lần build dataset, hai
+mô hình, tổng ~8,4h < giới hạn 12h của Kaggle. (Trước đó ghi "EXP-003 → EXP-004" vì EXP-002
+là baseline trung lập — nay đảo lại vì lý do phụ thuộc, không phải vì EXP-002 thiếu.)
+
+**EXP-005 (M4 CPG-GNN) không chạy được trong phiên Kaggle hiện tại** — xem
+`reports/005_ast_cpg_feasibility.md` (cần Joern + JRE chưa có; CPG cho ~62k file C/C++
+tốn hàng giờ; chưa có sẵn model CPG-GNN — `src/representations/cpg/build.py` mới chỉ là
+stub `cpg_status()`).
 
 [🔝 Quay lại mục lục](#top)
 

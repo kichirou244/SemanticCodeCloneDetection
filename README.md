@@ -60,6 +60,10 @@ ngay cuối mỗi epoch).
 Notebook Kaggle: `notebooks/exp002_codebert_kaggle.ipynb`, `notebooks/exp003_graphcodebert_kaggle.ipynb`
 (bản EXP-003 là bản sao EXP-002 chỉ đổi tên — DEC-016; test `test_notebooks_mirror_each_other` chặn lệch).
 
+**Train M3 + M2 trong một phiên:** `notebooks/kaggle_m3_m2_session.ipynb` — một clone, một
+lần build dataset, chạy EXP-004 (~35 phút) **trước** EXP-003 (~7,8h) để nếu session chết
+giữa chừng vẫn còn kết quả M3 (DEC-023, tổng ~8,4h < giới hạn 12h).
+
 **Chỉ tải checkpoint bản nhẹ về (0,5GB thay vì 1,44GB).** Sau khi train trên Kaggle,
 gọi `export_eval_weights(Path("results/<exp>_poj104"))` để tạo `best_weights_only.pt`
 (chỉ `model_state`, load được với `weights_only=True`); `evaluate_model` tự fallback
