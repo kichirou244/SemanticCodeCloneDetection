@@ -57,18 +57,29 @@ python -m src.experiments.exp004_astnn --config configs/exp004_astnn.yaml --mode
 để Kaggle theo DEC-018 (checkpoint nằm trong `/kaggle/working` ⇒ phải archive
 ngay cuối mỗi epoch).
 
-Notebook Kaggle: `notebooks/exp002_codebert_kaggle.ipynb`, `notebooks/exp003_graphcodebert_kaggle.ipynb`
-(bản EXP-003 là bản sao EXP-002 chỉ đổi tên — DEC-016; test `test_notebooks_mirror_each_other` chặn lệch).
+Notebook Kaggle (mỗi thí nghiệm một file, tự build dataset, tự đóng gói):
 
-**Train M3 + M2 trong một phiên:** `notebooks/kaggle_m3_m2_session.ipynb` — một clone, một
-lần build dataset, chạy EXP-004 (~35 phút) **trước** EXP-003 (~7,8h) để nếu session chết
-giữa chừng vẫn còn kết quả M3 (DEC-023, tổng ~8,4h < giới hạn 12h).
+| Notebook | Dùng cho | Thời gian T4 |
+| :--- | :--- | ---: |
+| `notebooks/exp002_codebert_kaggle.ipynb` | EXP-002 (M1) — đã xong | 7,03h (đo) |
+| `notebooks/exp003_graphcodebert_kaggle.ipynb` | EXP-003 (M2) | ~7,8h |
+| `notebooks/exp004_astnn_kaggle.ipynb` | EXP-004 (M3) | ~35 phút |
 
-**Chỉ tải checkpoint bản nhẹ về (0,5GB thay vì 1,44GB).** Sau khi train trên Kaggle,
-gọi `export_eval_weights(Path("results/<exp>_poj104"))` để tạo `best_weights_only.pt`
+Chạy **EXP-004 trước EXP-003** (DEC-023): M3 rẻ hơn 13×, nếu phiên M2 chết giữa chừng thì
+vẫn còn M3. Notebook EXP-003 là bản sao EXP-002 chỉ đổi tên — DEC-016; test
+`test_notebooks_mirror_each_other` chặn lệch.
+
+**Mỗi notebook có cell evaluate chạy ngay trên Kaggle** (M2 ~5 phút, M3 ~1 phút), rồi đóng
+gói **chỉ metrics + predictions** (vài MB) — mặc định `KEEP_WEIGHTS = False` nên không
+tải checkpoint (1,44GB) về máy. Muốn giữ `best_weights_only.pt` (0,5GB) để chạy lại ở máy
+khác thì bật cờ đó. Mọi metric đều tính lại được từ `predictions/*_scores.jsonl` mà không
+cần model.
+
+**Chỉ tải checkpoint bản nhẹ về khi thật cần (0,5GB thay vì 1,44GB).** Sau khi train trên
+Kaggle, gọi `export_eval_weights(Path("results/<exp>_poj104"))` để tạo `best_weights_only.pt`
 (chỉ `model_state`, load được với `weights_only=True`); `evaluate_model` tự fallback
 sang file này nếu không có checkpoint đầy đủ. `best_checkpoint.pt`/`last_checkpoint.pt`
-chỉ dùng để resume trên Kaggle — đừng tải về (DEC-022 §2b).
+chỉ dùng để resume trên Kaggle (DEC-022 §2b, DEC-023).
 
 Thời gian trên Kaggle T4: **EXP-002 7,03h (đo)** · EXP-003 ~7,8h (đo từ throughput
 EXP-002) · **EXP-004 ~35 phút**. Xem `docs/experiment_registry.md` cho trạng thái từng run.

@@ -178,22 +178,27 @@ python -m src.experiments.exp002_codebert --config configs/exp002_codebert.yaml 
   --mode train --device cuda --time-budget-s 32400
 ```
 
-Evaluate (**local, 5 phút, không tốn quota Kaggle**):
+Evaluate (**chạy ngay trên Kaggle, 5 phút — cell `--mode evaluate` của notebook**):
 
 ```bash
 python -m src.experiments.exp002_codebert --config configs/exp002_codebert.yaml \
   --mode evaluate --device cuda
 ```
 
-**Chỉ cần tải checkpoint BẢN NHẸ về (0,5GB), không phải 1,44GB.** Sau khi train
-trên Kaggle, chạy cell đóng gói của `notebooks/exp002_codebert_kaggle.ipynb` (hoặc
-gọi trực tiếp `export_eval_weights(Path("results/exp002_codebert_poj104"))`):
+**Không cần tải checkpoint về máy.** Sau khi evaluate xong trên Kaggle, tải về **chỉ
+metrics + predictions** (vài MB) là đủ: `predictions/{validation,test}_scores.jsonl` cho
+phép tính lại **mọi** metric, threshold và error analysis mà không cần model. Quyết định
+này (DEC-023) đảo hướng của DEC-022 §2 — cùng nguyên tắc, hướng ưu tiên khác: 6 phút
+GPU trên Kaggle rẻ hơn tải 0,5–1,44GB rồi chạy lại local.
+
+Nếu vẫn muốn chạy evaluate ở máy khác (ví dụ máy không có GPU rảnh), thì chỉ cần
+`best_weights_only.pt`, **không** phải checkpoint đầy đủ:
 
 | File | Nội dung | Kích thước | Cần tải về? |
 | :--- | :--- | ---: | :--- |
 | `best_checkpoint.pt` | model + optimizer + scheduler + RNG state | 1,44GB | ✗ (chỉ để resume trên Kaggle) |
 | `last_checkpoint.pt` | như trên, của epoch cuối | 1,44GB | ✗ (chỉ để resume) |
-| `best_weights_only.pt` | chỉ `model_state` + `epoch` + `best_f1` | **0,51GB** | ✓ |
+| `best_weights_only.pt` | chỉ `model_state` + `epoch` + `best_f1` | **0,51GB** | △ chỉ khi muốn evaluate ở máy khác |
 
 - `best_weights_only.pt` chỉ chứa tensor + số nên `load_eval_weights()` nạp nó bằng
   `torch.load(..., weights_only=True)` (không unpickle object tuỳ ý); checkpoint đầy đủ

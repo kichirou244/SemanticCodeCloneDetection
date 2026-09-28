@@ -5,6 +5,7 @@ nên test dùng model thật thay vì mock — mọi lỗi kiến trúc đều b
 """
 
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -483,52 +484,55 @@ def test_atomic_write_leaves_no_partial_file(tmp_path):
     assert not list(tmp_path.glob("*.tmp"))
 
 
-# ------------------------------------------------------- notebook phiên chung
-NB_SESSION = Path("notebooks/kaggle_m3_m2_session.ipynb")
+# ------------------------------------------------------------------ notebook
+NB4 = Path("notebooks/exp004_astnn_kaggle.ipynb")
 
 
 def _nb_cells(p: Path) -> list[dict]:
     return json.loads(p.read_text(encoding="utf-8"))["cells"]
 
 
+def _nb_code_cells(p: Path) -> list[dict]:
+    return [c for c in _nb_cells(p) if c["cell_type"] == "code"]
+
+
 def _nb_code(p: Path) -> str:
-    return "\n".join("".join(c["source"]) for c in _nb_cells(p) if c["cell_type"] == "code")
+    return "\n".join("".join(c["source"]) for c in _nb_code_cells(p))
 
 
-def test_session_notebook_trains_exp004_before_exp003():
-    """Một phiên Kaggle train cả M3 lẫn M2 — và M3 phải ĐỨNG TRƯỚC.
+def test_exp004_notebook_is_self_contained():
+    """Notebook EXP-004 phải tự chạy được: clone, cài đủ dependency, build dataset.
 
-    Thứ tự là quyết định phụ thuộc, không phải thẩm mỹ: M3 tốn ~35 phút, M2 tốn
-    ~7,8h. Nếu M2 chạy trước và session chết, ta mất 8h mà chưa có M3. Đảo thứ tự
-    trong notebook ⇒ mất M3 mà không có gì bù lại.
+    Rủi ro riêng của EXP-004: `tree-sitter-cpp` không có sẵn trên Kaggle, thiếu nó
+    thì cell train chết ở bước build cache AST — chết *sau* khi đã dùng hết phần
+    lớn thời gian? Không, chết ngay, nhưng người dùng phải debug giữa phiên.
     """
-    assert NB_SESSION.exists(), "thiếu notebook phiên chung (train 2 mô hình 1 lần)"
-    t = _nb_code(NB_SESSION)
-    i4 = t.index("exp004_astnn --config configs/exp004_astnn.yaml \"\n   f\"--mode {MODE}")
-    i3 = t.index("exp003_graphcodebert --config configs/exp003_graphcodebert.yaml \"\n   f\"--mode {MODE}")
-    assert i4 < i3, "EXP-004 (rẻ) phải chạy trước EXP-003 (đắt)"
-    # cả hai đều phải train (không phải chỉ evaluate) và có budget riêng
-    assert t.count("TIME_BUDGET_S = ") >= 2
-    # dataset chỉ build MỘT lần cho cả hai mô hình
-    assert t.count("scripts/build_dataset.py") == 1
+    assert NB4.exists(), "thiếu notebook Kaggle cho EXP-004"
+    t = _nb_code(NB4)
+    assert "tree-sitter-cpp" in t, "thiếu cài tree-sitter-cpp (parser C++ cho AST cache)"
+    assert "scripts/build_dataset.py" in t
+    assert "get_parser('cpp')" in t, "phải kiểm tra parser C++ nạp được trước khi train"
+    assert "pip install -q" in t
+    # KHÔNG được cài torch (Kaggle đã có bản CUDA; cài lại sẽ kéo bản CPU)
+    assert not re.search(r"pip install[^\n]*\btorch\b", t), "cài torch sẽ phá tốc độ train"
 
 
-def test_session_notebook_packages_both_models_lightweight():
-    """Mỗi mô hình một tar riêng, và tar phải giữ checkpoint bản nhẹ.
+def test_exp004_notebook_evaluates_on_kaggle_not_locally():
+    """Evaluate chạy trên Kaggle (~1 phút) rồi mới đóng gói — không tải về chạy lại.
 
-    Sai lệch âm thầm: `--exclude='*.pt'` khiến archive không còn gì để evaluate
-    local, buộc tải checkpoint đầy đủ (M2: 1,44GB × 2 file).
+    Quyết định của người dùng (2026-09-28): chạy ở Kaggle rồi tải xuống thôi, khỏi
+    tải checkpoint về máy. Thiếu cell evaluate ⇒ người dùng phải tải model về chạy.
     """
-    t = _nb_code(NB_SESSION)
-    assert t.count("--exclude='*checkpoint.pt'") == 2, "phải đóng gói 2 tar"
+    cells = _nb_code_cells(NB4)
+    i_eval = next((i for i, c in enumerate(cells) if "--mode evaluate" in "".join(c["source"])), None)
+    i_pack = next((i for i, c in enumerate(cells) if "tar --exclude" in "".join(c["source"])), None)
+    assert i_eval is not None, "thiếu cell chạy evaluate"
+    assert i_pack is not None, "thiếu cell đóng gói"
+    assert i_eval < i_pack, "phải evaluate xong rồi mới đóng gói"
+    t = _nb_code(NB4)
+    assert "KEEP_WEIGHTS = False" in t, "mặc định không tải checkpoint về"
+    assert "export_eval_weights" in t
     assert "--exclude='*.pt'" not in t
-    assert t.count("export_eval_weights(Path(") == 2, "phải rút bản nhẹ cho cả M2 và M3"
-    for out in ("results/exp003_graphcodebert_poj104", "results/exp004_astnn_poj104"):
-        assert out in t
-    for tar in ("exp003_results.tar.gz", "exp004_results.tar.gz"):
-        assert tar in t
-    # phải nhắc người dùng backup M3 trước khi dồn 8h vào M2
-    assert "Save Version" in "\n".join("".join(c["source"]) for c in _nb_cells(NB_SESSION))
 
 
 def test_exp004_runner_accepts_lightweight_checkpoint(tmp_path):

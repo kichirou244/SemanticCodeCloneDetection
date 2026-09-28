@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.8.0 |
+| **Phiên bản** | 1.9.0 |
 | **Ngày cập nhật** | 2026-09-28 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -25,7 +25,7 @@
 | EXP-001 | POJ-104 | B1 TF-IDF | COMPLETED | Test P/R/F1 0.552/0.860/0.673, thr 0.24 | reports/009_baseline_results.md |
 | EXP-002 | POJ-104 | M1 CodeBERT | COMPLETED | Test P/R/F1 0.931/0.890/0.910, ROC-AUC 0.973, thr 0.59 (val-selected), best epoch 1/3, 7,03h T4 | reports/011_codebert_results.md |
 | EXP-003 | POJ-104 | M2 GraphCodeBERT | READY_FOR_KAGGLE_TRAIN | Implementation xong, dùng **chung code path** với EXP-002 (DEC-020); 12 test khóa tính công bằng (13 test gồm cả notebook EXP-003 phải mirror EXP-002); notebook `notebooks/exp003_graphcodebert_kaggle.ipynb` sẵn sàng; throughput đo = EXP-002 ⇒ **~7,8h** | - |
-| EXP-004 | POJ-104 | M3 ASTNN | READY_FOR_KAGGLE_TRAIN | Implementation xong (DEC-021): extractor thật, RvNN vectorize, cache AST; 28 test; preflight + export bản nhẹ PASS trên RTX 5060; **~35 phút** trên T4 (hiệu chuẩn, cần verify trực tiếp) | - |
+| EXP-004 | POJ-104 | M3 ASTNN | READY_FOR_KAGGLE_TRAIN | Implementation xong (DEC-021): extractor thật, RvNN vectorize, cache AST; 30 test; preflight + export bản nhẹ PASS trên RTX 5060; notebook `notebooks/exp004_astnn_kaggle.ipynb` sẵn sàng; **~35 phút** trên T4 (hiệu chuẩn, cần verify trực tiếp) | - |
 | EXP-005 | POJ-104 | M4 CPG-GNN | PLANNED | - | - |
 | EXP-006 | POJ-104 | M5 Hybrid | PLANNED | - | - |
 | EXP-007 | CodeNet Python | B1 TF-IDF | CANCELLED | - | DEC-019 |
@@ -59,18 +59,24 @@ Báo cáo: `reports/011_codebert_results.md`. Ba điều chưa xong, ghi lại �
 `early_stopping` không có `min_delta` nên không bao giờ kích hoạt, lãng phí ~2,3 h ở
 epoch 3; (3) checkpoint 1,44 GB không commit (`.gitignore` loại `*.pt`) — cần
 `last_checkpoint.pt` nếu muốn resume.
-**Evaluate chạy được local** (`--mode evaluate`, 5 phút trên RTX 5060) nên từ giờ chỉ
-train mới cần Kaggle; xem DEC-022.
+**Evaluate chạy được ở mọi nơi** (`--mode evaluate`, 5 phút) nên từ giờ chỉ train mới cần
+quota GPU dài; theo quyết định mới nhất, notebook chạy evaluate **ngay trên Kaggle** rồi
+tải metrics + predictions về — xem DEC-022 §2 và DEC-023.
 
 Ghi chú EXP-003/EXP-004 (2026-09-27, cập nhật 2026-09-28): cả hai đã implement và test
 xong, **chưa train lần nào** — status `READY_FOR_KAGGLE_TRAIN` nghĩa là "code + test +
 preflight sẵn sàng", không phải đã có số liệu.
 
-**Thứ tự chạy trong một phiên: EXP-004 → EXP-003** (DEC-023). EXP-004 tốn ~35 phút,
-EXP-003 ~7,8h; chạy M3 trước nên nếu session chết ở M2 thì vẫn giữ được M3. Notebook
-`notebooks/kaggle_m3_m2_session.ipynb` gộp cả hai: một clone, một lần build dataset, hai
-mô hình, tổng ~8,4h < giới hạn 12h của Kaggle. (Trước đó ghi "EXP-003 → EXP-004" vì EXP-002
-là baseline trung lập — nay đảo lại vì lý do phụ thuộc, không phải vì EXP-002 thiếu.)
+**Thứ tự chạy: EXP-004 → EXP-003** (DEC-023), mỗi mô hình một notebook riêng:
+`notebooks/exp004_astnn_kaggle.ipynb` (~35 phút) và `notebooks/exp003_graphcodebert_kaggle.ipynb`
+(~7,8h). M3 phải chạy trước vì **rẻ hơn 13×** — nếu phiên M2 chết giữa chừng thì vẫn giữ
+được M3. Cả hai nằm trong một ngày quota 30h GPU (tổng ~8,4h < giới hạn 12h/phiên).
+(Trước đó ghi "EXP-003 → EXP-004" vì EXP-002 là baseline trung lập — nay đảo lại vì lý do
+phụ thuộc, không phải vì EXP-002 thiếu.)
+
+**Evaluate chạy trên Kaggle**, mỗi notebook có cell `--mode evaluate` riêng (~5 phút M2,
+~1 phút M3) rồi đóng gói **chỉ metrics + predictions** (vài MB) — không tải checkpoint
+1,44GB về chạy lại local. Bật `KEEP_WEIGHTS = True` nếu muốn giữ `best_weights_only.pt`.
 
 **EXP-005 (M4 CPG-GNN) không chạy được trong phiên Kaggle hiện tại** — xem
 `reports/005_ast_cpg_feasibility.md` (cần Joern + JRE chưa có; CPG cho ~62k file C/C++
@@ -94,3 +100,4 @@ stub `cpg_status()`).
 | 7 | 1.6.0 | 2026-09-27 | EXP-003/EXP-004 → READY_FOR_KAGGLE_TRAIN (M2 dùng chung code path M1 theo DEC-020; M3 ASTNN implement xong theo DEC-021, ~35 phút). Sửa dòng lịch sử bị trùng. |
 | 8 | 1.7.0 | 2026-09-28 | EXP-002 → COMPLETED: test F1 0.910 (ROC-AUC 0.973), +0.237 so với EXP-001; report `011_codebert_results.md`; thêm DEC-022 (đóng băng `max_length 256` + chưa thêm `min_delta` cho M1/M2, eval chạy local). |
 | 9 | 1.8.0 | 2026-09-28 | EXP-003 có notebook Kaggle `notebooks/exp003_graphcodebert_kaggle.ipynb` (mirror EXP-002, có test chặn lệch); luồng tải kết quả chuyển sang checkpoint bản nhẹ `best_weights_only.pt` (0,5GB) — DEC-022 §2b. |
+| 10 | 1.9.0 | 2026-09-28 | Tách notebook: EXP-004 có notebook riêng `notebooks/exp004_astnn_kaggle.ipynb`; bỏ bản gộp 1 phiên. Mọi notebook có cell `--mode evaluate` chạy trên Kaggle và chỉ tải metrics + predictions (`KEEP_WEIGHTS=False`) — DEC-023. |

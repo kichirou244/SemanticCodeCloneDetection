@@ -25,12 +25,14 @@ NB3 = Path("notebooks/exp003_graphcodebert_kaggle.ipynb")
 
 
 def _nb_text(p: Path, code_only: bool = False) -> str:
+    return "\n".join("".join(c["source"]) for c in _nb_code_cells(p, code_only))
+
+
+def _nb_code_cells(p: Path, code_only: bool = True) -> list[dict]:
     import json
 
     cells = json.loads(p.read_text(encoding="utf-8"))["cells"]
-    if code_only:
-        cells = [c for c in cells if c["cell_type"] == "code"]
-    return "\n".join("".join(c["source"]) for c in cells)
+    return [c for c in cells if c["cell_type"] == "code"] if code_only else cells
 
 
 @pytest.fixture(scope="module")
@@ -193,16 +195,38 @@ def test_notebooks_mirror_each_other():
 
 @pytest.mark.parametrize("nb,out_dir", [(NB2, "results/exp002_codebert_poj104"),
                                         (NB3, "results/exp003_graphcodebert_poj104")])
-def test_notebook_packages_lightweight_weights_only(nb, out_dir):
-    """Không tải 1,4GB về: phải xuất bản nhẹ, và tar KHÔNG được loại nó đi.
+def test_notebook_runs_evaluate_on_kaggle_before_packaging(nb, out_dir):
+    """Evaluate phải chạy **trên Kaggle**, không tải checkpoint về máy.
 
-    Rủi ro: `--exclude='*.pt'` khiến archive không có gì để evaluate local, buộc
-    user phải tải checkpoint đầy đủ 1,4GB (2,9GB cho best+last).
+    Lý do (quyết định của người dùng, 2026-09-28): tải 1,44GB về rồi chạy lại
+    local tốn thời gian và giờ GPU của máy, trong khi evaluate trên Kaggle chỉ
+    5 phút. Rủi ro nếu thiếu: notebook chỉ `train` (evaluate ngầm trong train
+    mode), người dùng tải checkpoint về và tự chạy — đúng thứ cần tránh.
     """
-    t = _nb_text(nb)
-    assert "export_eval_weights" in t, f"{nb.name}: thiếu bước rút checkpoint bản nhẹ"
-    assert "--exclude='*checkpoint.pt'" in t, (
-        f"{nb.name}: tar phải loại *checkpoint.pt nhưng GIỀ best_weights_only.pt "
-        f"(\"best_weights_only.pt\" không khớp mẫu này)")
-    assert "--exclude='*.pt'" not in t, f"{nb.name}: --exclude='*.pt' xoá luôn bản nhẹ"
-    assert out_dir in t
+    cells = _nb_code_cells(nb)
+    text = "\n".join("".join(c["source"]) for c in cells)
+    i_eval = next((i for i, c in enumerate(cells)
+                   if "--mode evaluate" in "".join(c["source"])), None)
+    i_pack = next((i for i, c in enumerate(cells)
+                   if "tar --exclude" in "".join(c["source"])), None)
+    assert i_eval is not None, f"{nb.name}: thiếu cell chạy evaluate trên Kaggle"
+    assert i_pack is not None, f"{nb.name}: thiếu cell đóng gói"
+    assert i_eval < i_pack, f"{nb.name}: phải evaluate xong rồi mới đóng gói"
+    assert out_dir in text
+
+
+@pytest.mark.parametrize("nb,out_dir", [(NB2, "results/exp002_codebert_poj104"),
+                                        (NB3, "results/exp003_graphcodebert_poj104")])
+def test_notebook_downloads_no_checkpoint_by_default(nb, out_dir):
+    """Tải về chỉ metrics + predictions; giữ checkpoint phải là **lựa chọn**.
+
+    `KEEP_WEIGHTS = False` mặc định ⇒ tar không có `best_weights_only.pt`
+    (0,5GB) và cũng không có `best/last_checkpoint.pt` (1,44GB mỗi cái). Nếu ai
+    đó xoá cờ này thì người dùng lại tải 0,5GB về không cần thiết.
+    """
+    text = _nb_text(nb, code_only=True)
+    assert "KEEP_WEIGHTS = False" in text, f"{nb.name}: mặc định phải KHÔNG tải checkpoint"
+    assert "if KEEP_WEIGHTS:" in text
+    assert "export_eval_weights" in text
+    assert "tar --exclude='*checkpoint.pt'" in text
+    assert "--exclude='*.pt'" not in text, f"{nb.name}: sẽ loại mất cả bản nhẹ nếu bật KEEP_WEIGHTS"
