@@ -10,6 +10,7 @@ không phải chờ tới Kaggle mới lộ ra.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -152,6 +153,77 @@ def test_probe_script_never_guesses_a_step_name():
     # `wanted` là danh sách *tên* để hỏi qua reflection — hỏi tên không phải gọi tên.
     for banned in ("cpg.call.ref", ".reachingDef.l", ".astChildren", "cpg.all.help"):
         assert banned not in code, f"probe gọi trực tiếp {banned} — se lai compile-sai"
+
+
+def test_export_cpg_only_uses_api_steps_already_scanned():
+    """CHỐT: `export_cpg.sc` không được dùng step chưa từng được compiler xác nhận.
+
+    Ba vòng Kaggle liên tiếp chết vì đoán tên step. Test này biến "đã từng chạy
+    thật" thành điều kiện kiểm tra tự động: mọi `cpg.<type>.<step>` trong exporter
+    phải có mặt trong `docs/joern_api_v4.json` do `api_scan.py` sinh ra. Thêm
+    một step lạ ⇒ test đỏ ngay ở máy local, thay vì mất 15 phút trên Kaggle.
+
+    Bảng `cpg.call.help` không thay thế được: `cpg.call.argument` chạy tốt mà
+    không có trong bảng, còn `cpg.call.ref` bị compiler bác — nên "có trong help"
+    không tương đương "hợp lệ".
+    """
+    api = ROOT / "docs" / "joern_api_v4.json"
+    if not api.exists():
+        pytest.skip("chua chay scripts/joern/api_scan.py tren Kaggle")
+    results = json.loads(api.read_text(encoding="utf-8"))["results"]
+    verified = {name for name, r in results.items() if r.get("ok")}
+
+    src = (ROOT / "scripts" / "joern" / "export_cpg.sc").read_text(encoding="utf-8")
+    code = "\n".join(line.split("//", 1)[0] for line in src.splitlines())
+    used = {f"{t}.{s}" for t, s in
+            re.findall(r"cpg\.(method|call|identifier|local|all)\.(\w+)", code)}
+    unknown = sorted(used - verified)
+    assert not unknown, (
+        f"export_cpg.sc dung step chua duoc compiler xac nhan: {unknown}. "
+        f"Chay `python scripts/joern/api_scan.py --only <ten>` tren Kaggle truoc.")
+
+
+def test_api_scan_controls_are_the_ones_joern_really_rejected():
+    """Bản đồ API chỉ đáng tin nếu nó còn bác đúng những thứ Joern v4 đã bác.
+
+    Nếu ai đó "sửa" `call.ref` thành ứng viên `expect="ok"` thì script sẽ tự
+    dâng thành công và báo cáo sai mà không ai hay. Danh sách đối chứng phải
+    giữ đúng hai tên đã bị bác bởi compiler ở các lần chạy thật.
+    """
+    from scripts.joern.api_scan import CANDIDATES
+
+    controls = {c["name"] for c in CANDIDATES if c["expect"] == "fail"}
+    assert controls == {"call.ref", "local.reachingDef"}
+    assert all(c["expect"] == "ok" for c in CANDIDATES if c["name"] not in controls)
+    # Không được trùng tên: kết quả ghi theo tên, trùng là âm thầm ghi đè.
+    names = [c["name"] for c in CANDIDATES]
+    assert len(names) == len(set(names))
+
+
+def test_api_scan_never_puts_more_than_one_step_in_a_run():
+    """Scala compile cả file: một biểu thức hỏng làm mất trắng cả nhóm, kể cả
+    những cái đã hỏng mà ta chỉ muốn hỏi. Một ứng viên = một tiến trình."""
+    from scripts.joern.api_scan import CANDIDATES, build_script
+
+    for c in CANDIDATES:
+        s = build_script(c, "cpg_scan_test")
+        assert s.count("@main") == 1
+        assert c["expr"] in s
+        if c.get("setup"):
+            assert c["setup"] in s
+
+
+def test_api_scan_warns_when_a_control_suddenly_passes(capsys):
+    """Nếu Joern đổi tên API thì phải nói ra, không được im lặng báo cáo bản đồ
+    sai. Đây là lỗi tự tin — loại lỗi tệ nhất với công cụ đo."""
+    from scripts.joern.api_scan import CANDIDATES, _summarise
+
+    data = {"results": {"call.ref": {"ok": True, "value": "7"},
+                        "local.reachingDef": {"ok": False, "error": "not a member"}}}
+    _summarise(data, [c for c in CANDIDATES if c["name"] in data["results"]],
+               Path("docs/joern_api_v4.json"))
+    out = capsys.readouterr().out
+    assert "CANH BAO" in out and "call.ref" in out
 
 
 def test_smoke_runs_without_dataset(tmp_path, monkeypatch):
