@@ -1,0 +1,22 @@
+{
+  "completed": true,
+  "summary": {
+    "threshold": 0.59,
+    "validation_f1_at_thr": 0.920036119193338,
+    "test": {
+      "precision": 0.9309492105763744,
+      "recall": 0.8898181818181818,
+      "f1": 0.9099191224319048,
+      "threshold": 0.59,
+      "roc_auc": 0.9729241487603306,
+      "pr_auc": 0.9742337252354442,
+      "accuracy": 0.9119090909090909,
+      "TP": 4894,
+      "TN": 5137,
+      "FP": 363,
+      "FN": 606
+    },
+    "eval_time_s": 0.0963796000005459,
+    "out_dir": "results\\exp002_codebert_poj104"
+  }
+}

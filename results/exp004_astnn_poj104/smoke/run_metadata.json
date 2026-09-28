@@ -1,0 +1,32 @@
+{
+  "python": "3.12.10",
+  "os": "Windows-11-10.0.26200-SP0",
+  "cpu": "AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD",
+  "device": "cpu",
+  "config_sha256": "828a7ea38f7af932470decdca92d575c8f81565613931859ac4fd879a43fbd2b",
+  "manifest_sha256": "4fd83fecbd023f659314a966d933af1425cfb4c1db74d580908c0c5d018ddbf2",
+  "versions": {
+    "sklearn": "1.9.1",
+    "numpy": "2.5.3",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.17.0"
+  },
+  "git": "2885e0275b3a8dd78abe1505af7f79712e736370",
+  "device_requested": "cuda",
+  "device_actual": "cuda:0",
+  "model_device": "cuda:0",
+  "cuda_available": true,
+  "cuda_device_name": "NVIDIA GeForce RTX 5060 Laptop GPU",
+  "cuda_device_count": 1,
+  "gpu_memory_allocated": 23237632,
+  "gpu_memory_reserved": 79691776,
+  "scheduler": "linear_warmup_per_update_step (DEC-017)",
+  "wall_clock": "2026-09-27T15:22:25+07:00",
+  "training_time_s": 1.2725656000002346,
+  "best_epoch": 0,
+  "best_val_f1": 0.05714285714285714,
+  "total_optimizer_steps": 8,
+  "stopped_reason": "epochs_exhausted",
+  "epochs_completed": 1,
+  "time_budget_s": null
+}

@@ -1,7 +1,7 @@
 experiment:
   id: EXP-002
   name: codebert_poj104
-  status: READY_FOR_KAGGLE_TRAIN
+  status: COMPLETED
   seed: 42
 
 dataset:

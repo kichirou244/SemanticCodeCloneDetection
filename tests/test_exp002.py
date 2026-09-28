@@ -203,10 +203,12 @@ class _TinyPairModel(torch.nn.Module):
 
 @pytest.fixture
 def tiny_model(monkeypatch):
-    import src.experiments.exp002_codebert as exp
+    # Patch vào `transformer_pair_runner` — module thật sự chứa code train. exp002/exp003
+    # chỉ là wrapper re-export, nên patch vào chúng sẽ không có tác dụng.
+    import src.experiments.transformer_pair_runner as runner
 
-    monkeypatch.setattr(exp, "CodeBERTPairClassifier", _TinyPairModel)
-    return exp
+    monkeypatch.setattr(runner, "TransformerPairClassifier", _TinyPairModel)
+    return runner
 
 
 def _tiny_train_dataset(tmp_path):

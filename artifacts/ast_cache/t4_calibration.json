@@ -1,0 +1,18 @@
+{
+  "gpu_local": "NVIDIA GeForce RTX 5060 Laptop GPU",
+  "exp002_local_sec_per_step": 0.4716,
+  "exp002_local_spread_s": [
+    0.467,
+    0.4814
+  ],
+  "exp002_t4_sec_per_step": 0.8985,
+  "t4_over_local": 1.9,
+  "astnn_local_sec_per_step": 0.0352,
+  "astnn_t4_sec_per_step": 0.0671,
+  "astnn_t4_steps": 31125,
+  "astnn_t4_train_s": 2087.1,
+  "astnn_t4_train_min": 34.8,
+  "astnn_t4_train_h": 0.58,
+  "exp002_t4_actual_h": 7.77,
+  "speedup_vs_exp002_t4": 13.4
+}

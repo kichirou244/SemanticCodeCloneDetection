@@ -38,6 +38,28 @@ python scripts/check_toolchain.py
 Các lệnh nặng (tải dataset đầy đủ, smoke transformer) xem chi tiết trong
 `docs/implementation_plan.md` và `docs/reproducibility.md`.
 
+## Chạy thí nghiệm (EXP-001…EXP-004)
+
+Mọi mode đều dùng **cùng một CLI**; chỉ đổi `--config` và `--mode`.
+
+```bash
+# EXP-002 / EXP-003 — cùng code path, chỉ khác pretrained weights
+python -m src.experiments.exp002_codebert      --config configs/exp002_codebert.yaml      --mode preflight --device cuda
+python -m src.experiments.exp003_graphcodebert --config configs/exp003_graphcodebert.yaml --mode diagnostic --device cuda
+
+# EXP-004 — ASTNN (không cần tokenizer, tự build cache AST)
+python -m src.experiments.exp004_astnn --config configs/exp004_astnn.yaml --mode preflight --device cuda
+python -m src.experiments.exp004_astnn --config configs/exp004_astnn.yaml --mode diagnostic --device cuda
+```
+
+`--mode`: `preflight` → `smoke` → `diagnostic` → `train` → `evaluate`, cộng
+`resume` nếu train bị ngắt. **Local chạy `smoke`/`diagnostic`/`evaluate`**; `train`
+để Kaggle theo DEC-018 (checkpoint nằm trong `/kaggle/working` ⇒ phải archive
+ngay cuối mỗi epoch).
+
+Thời gian trên Kaggle T4: **EXP-002 7,03h (đo)** · EXP-003 ~7,8h (đo từ throughput
+EXP-002) · **EXP-004 ~35 phút**. Xem `docs/experiment_registry.md` cho trạng thái từng run.
+
 ## Tài liệu
 
 - Tổng quan: `docs/project_overview.md`

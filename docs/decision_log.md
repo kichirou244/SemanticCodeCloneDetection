@@ -4,8 +4,8 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.10.0 |
-| **Ngày cập nhật** | 2026-09-27 |
+| **Phiên bản** | 1.12.0 |
+| **Ngày cập nhật** | 2026-09-28 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
 
@@ -32,6 +32,9 @@
 - [DEC-017 — Sửa bug scheduler và device metadata của EXP-002](#dec-017--sua-bug-scheduler-va-device-metadata-cua-exp-002)
 - [DEC-018 — Kaggle run protocol cho EXP-002](#dec-018--kaggle-run-protocol-cho-exp-002)
 - [DEC-019 — Thu hẹp scope: chỉ C/C++ (POJ-104)](#dec-019--thu-hep-scope-chi-cc-poj-104)
+- [DEC-020 — M2 dùng chung code path với M1](#dec-020--m2-dung-chung-code-path-voi-m1-khong-clone-runner)
+- [DEC-021 — M3 ASTNN: vectorize, cache, và đo thay vì đoán thời gian](#dec-021--m3-astnn-vectorize-rvnn-cache-cay-ast-v--%C4%91o-thay-v%C4%AB-%C4%91o%C3%A1n-th%C4%9Di-gian)
+- [DEC-022 — Đóng băng recipe M1/M2 + evaluate chạy local](#dec-022--%C4%91%C3%B3ng-b%C4%91ng-recipe-m1m2-sau-run-exp-002-evaluate-ch%E1%BA%A1y-local)
 - [Lịch sử thay đổi](#lich-su-thay-doi)
 
 ---
@@ -325,12 +328,129 @@
   manifest `data/manifests/codenet_python.json`, 547k pairs, leakage passed) và
   code loader vẫn còn. Nếu sau này cần mở rộng sang Python thì dùng lại được
   ngay, không tốn thí nghiệm nào đã chạy.
-- Ước lượng phần còn lại (POJ-104): EXP-003 ~7.8h, EXP-004 ~2h, EXP-005 ~2h,
-  EXP-006 ~8h → **~20h**, khớp quota 1 tuần. Early stopping (patience 2) có thể
-  cắt ngắn thêm.
+- Ước lượng phần còn lại (POJ-104) **tại thời điểm DEC-019**: EXP-003 ~7.8h,
+  EXP-004 ~2h, EXP-005 ~2h, EXP-006 ~8h → ~20h. Số `~2h` của EXP-004/005 là
+  ước lượng suông, **đã bị thu hồi ở DEC-021** (đo thật ra ~35 phút).
 - Ảnh hưởng tài liệu: `docs/research_questions.md` (thêm ghi chú scope),
   `docs/project_overview.md`, `README.md`, `docs/experiment_registry.md`
   (EXP-007…012 → CANCELLED).
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
+## DEC-020 — M2 dùng chung code path với M1, không clone runner
+
+- **Bối cảnh:** RQ1 hỏi "GraphCodeBERT có tốt hơn CodeBERT không?". M1 và M2 cùng
+  là RoBERTa-base 125M, vocab 50265, cùng hyperparameter. Nếu EXP-003 chạy một
+  bản sao riêng của runner thì bất kỳ sửa đổi nào ở một bên (early stopping,
+  threshold, error analysis) sẽ lọt vào kết quả so sánh dưới dạng "GraphCodeBERT
+  tốt/bad hơn" — tức là đo **implementation gap** thay vì **pretrained weights**.
+- **Quyết định:** tách `transformer_pair_runner` (copy nguyên hành vi từ EXP-002
+  rồi generic hóa đúng một class) và `TransformerPairClassifier`; `exp002_codebert`
+  thành thin wrapper giữ nguyên public API cũ, `exp003_graphcodebert` dùng **cùng
+  tập** re-export. `tests/test_exp003.py` khóa bất biến này bằng assertion
+  `is` (cùng đối tượng function) chứ không phải bằng review tay.
+- **Lý do không "clone + sửa cho khớp":** hai bản sẽ trôi dần theo thời gian và
+  không có gì báo động. Ngay trong lần làm này, `exp003` đã lệch API so với
+  `exp002` (chỉ export `main`) — test bắt được ngay.
+- **Bằng chứng công bằng:** cùng kiến trúc ⇒ cùng số tham số
+  (`126,416,641` cho cả hai) và cùng vocab ⇒ **tokenization giống hệt**, được
+  assert bằng `torch.equal(input_ids)` trên cùng đoạn code.
+- **Cái giữ nguyên:** `configs/exp002_codebert.yaml` và
+  `configs/exp003_graphcodebert.yaml` phải khớp nhau ở mọi mục trừ `model.hf_id`
+  và tên/output — cũng được test tự động.
+- **Hệ quả:** không thể "chỉnh EXP-003 cho đỡ" mà không sửa test. Đó là chủ ý.
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
+## DEC-021 — M3 ASTNN: vectorize RvNN, cache cây AST, và **đo thay vì đoán** thời gian
+
+- **Bối cảnh:** M3 là model khác họ (GRU 428k tham số, train từ scratch), nên
+  **không** áp chung hyperparameter với M1/M2 (DEC-016 chỉ áp cho M1/M2). Vẫn
+  giữ chung seed, số epoch, warmup ratio, early stopping và cách chọn threshold
+  để so sánh ở mức protocol.
+- **Ba quyết định kỹ thuật:**
+
+  1. **Abstraction đúng bài gốc:** lá chỉ còn `ID`/`NUM`/`STR`; node trong giữ
+     **loại statement**. Mỗi lá gắn với statement cha **gần nhất** — đúng nghĩa
+     "tách raw AST thành rừng cây statement" của Zhang et al. 2019, không phải
+     gán cho *mọi* statement tổ tiên.
+  2. **RvNN vectorize hoàn toàn** (`VectorizedRvNN`): gộp cây của cả batch thành
+     mảng phẳng, duyệt **theo tầng độ sâu**, mỗi tầng là 1 matmul + 1
+     `index_add`. Bản gốc đệ quy từng node bằng Python; với POJ-104 (~55
+     statement, ~232 lá/code, 332k pairs × 3 epoch) phần đệ quy đó chiếm
+     **giờ CPU**, không phải giờ GPU.
+  3. **Cache cây `.npz`** (`ASTTreeStore`): compile một lần thay vì mỗi epoch.
+     ~25 giây cho 41.491 codes, 231 byte/code nén.
+
+- **Về "chính xác" của thời gian chạy — bài học rút ra:** ước lượng `~2h` ban
+  đầu là **suy đoán**, đã bị thu hồi. Cách làm thay thế:
+  - `diagnostic` đo `sec_per_optimizer_step` trên **batch thật**, có warmup
+    loại khỏi phép đo, `torch.cuda.synchronize()` trước khi đọc đồng hồ, và mẫu
+    pair **ngẫu nhiên có seed** (lấy "N cái đầu tiên" sẽ thiên lệch về code đơn
+    giản → lạc quan).
+  - M3 chọn `batch_size 32 × accum 1` và M1/M2 là `16 × 2` — cùng **31.125
+    optimizer step**, nên so sánh 1-1.
+  - Máy local là RTX 5060, Kaggle là T4. Để không báo cáo nhầm, đo hiệu chuẩn bằng
+    chính EXP-002: local `0,4716 s/step` (spread 0,467–0,481) so với T4 thật
+    `0,8985 s/step` ⇒ **T4 chậm hơn local 1,90×**. Áp hệ số đó cho M3
+    (`0,0352 s/step` local) ⇒ **~34,8 phút**, nhanh hơn EXP-002 **13,4×**.
+  - Con số này vẫn là **ước lượng**, vì hệ số 1,90× đo trên workload transformer
+    chứ không phải GRU. Bắt buộc chạy lại `--mode diagnostic` trên Kaggle T4 để
+    chốt trước khi đưa vào báo cáo.
+
+- **Ba lỗi im lặng đã bắt được — đều không lộ ra qua smoke/diagnostic:**
+  1. `nn.GRU` với input `PackedSequence` trả **2-tuple** `(output, h_n)`, khác
+     LSTM là `(output, (h_n, h_c))`. Unpack 3 tầng cắt mất chiều batch.
+  2. `VectorizedRvNN` trả `h_acc[:n_stmt]` — tức **tổng h của các con** chứ không
+     phải `h(v)`, khiến **mọi node lá bằng 0**. Model vẫn chạy, loss vẫn giảm,
+     gradient vẫn hữu ích ⇒ mọi test finiteness đều xanh. Chỉ khi so với **bản
+     đệ quy tham chiếu viết độc lập** mới lộ (nay khớp tới `1,3e-06`).
+  3. Đường dẫn cache AST không tách smoke với train đầy đủ ⇒ smoke (vài trăm
+     code) ghi đè cache train (41k code), lần train sau **âm thầm chạy trên vài
+     trăm code**, không cảnh báo nào. Nay cache path tách theo `tag` và
+     `max_code_chars`.
+
+  Kết luận chung: **test finiteness không chứng minh mô hình đúng.** Bản tham chiếu
+  độc lập mới làm được. Đây là lý do `tests/test_exp004.py` có
+  `_reference_rvnn` viết lại từ công thức bài báo thay vì gọi lại code production.
+- **Phương pháp:** ASTNN **không truncate** (giữ toàn bộ cây statement) nên không
+  chịu giới hạn `max_length 256` mà M1/M2 đang cắt mất 60,5% token. Đây là
+  điểm cần nêu trong discussion — thuận lợi của M3 *không* phải do M3 "thông
+  minh hơn" mà do cách biểu diễn, nên cũng là điểm cần thận trọng khi so sánh.
+- **Ước lượng còn lại (POJ-104):** EXP-003 ~7,8h (đo), EXP-004 ~0,6h (đo),
+  EXP-005 **chưa đo** (cần Joern theo DEC-009), EXP-006 ~8h.
+
+## DEC-022 — Đóng băng recipe M1/M2 sau run EXP-002; evaluate chạy local
+
+- **Bối cảnh:** EXP-002 chốt test **F1 0.910** (`reports/011_codebert_results.md`) và lộ ra
+  ba vấn đề đo được: (1) `max_length 256` cắt **78,6 %** code train, tỉ lệ lỗi tăng từ
+  5,2 % (quartile ngắn) lên 12,4 % (quartile dài); (2) `early_stopping` **không có
+  `min_delta`** nên `patience` không bao giờ ăn — epoch 3 lãng phí ~2,3 h; (3) overfit biểu
+  hiện ở `val_loss` (0.377 → 0.442) nhưng **khác** ở ranking (`val_roc_auc` 0.976 → 0.977).
+- **Quyết định 1 — không sửa recipe giữa chừng:** `configs/exp003_graphcodebert.yaml`
+  giữ nguyên `max_length: 256` và **không** thêm `min_delta`, đúng bằng EXP-002. Cải thiện
+  (`max_length 512`, `min_delta: 0.005`) dồn thành **ablation riêng sau khi có đủ M1/M2**,
+  không sửa lên artifact của run đã xong — `config_sha256` trong `run_metadata.json` phải
+  còn khớp với config trong repo.
+- **Quyết định 2 — evaluate là job rẻ, chạy local:** `--mode evaluate` chỉ cần
+  `best_checkpoint.pt` + dataset và mất **5 m 16 s** trên RTX 5060, so với việc mở phiên
+  Kaggle (giới hạn 30 h/tuần). Từ giờ chỉ `--mode train` mới cần Kaggle. Checkpoint không
+  commit (`.gitignore` loại `*.pt`) nên phải giữ file tải về từ Kaggle cho tới khi hết
+  nhu cầu resume.
+- **Quyết định 3 — sửa 3 lỗi im lặng, không đụng số liệu:** (a) `torch.load` thiếu
+  `weights_only=False` khiến **mọi** `evaluate` chết sau khi train xong (torch ≥ 2.6 đổi
+  mặc định, checkpoint có `np.random.get_state()`); (b) `exp002_codebert` /
+  `exp003_graphcodebert` thiếu `if __name__ == "__main__": main()` sau khi refactor
+  DEC-020 ⇒ `python -m` **exit 0 với 0 output**, tức EXP-003 sẽ "chạy 8 h không in gì";
+  (c) `eval_time_s` khởi tạo timer sai chỗ nên chỉ đo thời gian ghi file. Cả ba đều là
+  lỗi im lặng — đúng bài học DEC-021: test finiteness không chứng minh đúng.
+- **Hệ quả:** số liệu EXP-002 giữ nguyên; EXP-003 chạy đúng recipe nên so sánh M1 vs M2
+  hợp lệ; nhưng **kết luận về truncation vẫn là limitation mở**, phải nêu trong discussion
+  thay vì giấu bằng cách đổi config.
 
 [🔝 Quay lại mục lục](#top)
 
@@ -351,3 +471,5 @@
 | 9 | 1.8.0 | 2026-09-21 | Thêm DEC-017 (fix scheduler per-update + device metadata thật). |
 | 10 | 1.9.0 | 2026-09-27 | Thêm DEC-018 (Kaggle run protocol: flush mỗi epoch, time budget, resume). |
 | 11 | 1.10.0 | 2026-09-27 | Thêm DEC-019 (thu hẹp scope: chỉ C/C++ POJ-104, hủy EXP-007…012). |
+| 12 | 1.11.0 | 2026-09-27 | Thêm DEC-020 (M2 dùng chung runner với M1, khóa bằng test `is`), DEC-021 (M3 ASTNN xong: vectorize RvNN, cache AST, **đo thay vì đoán** — ước lượng ~2h bị thu hồi còn ~35 phút). |
+| 13 | 1.12.0 | 2026-09-28 | Thêm DEC-022 sau khi EXP-002 có số liệu: đóng băng `max_length 256` + chưa thêm `min_delta` cho M1/M2 (đổi recipe giữa chừng sẽ phá so sánh RQ1), evaluate chạy local 5 phút thay vì mở phiên Kaggle, sửa 3 lỗi im lặng (`weights_only`, mất `__main__` guard, `eval_time_s` đo sai). |

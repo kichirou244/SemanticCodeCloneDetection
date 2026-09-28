@@ -4,8 +4,8 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.0.0 |
-| **Ngày cập nhật** | 2026-09-20 |
+| **Phiên bản** | 1.2.0 |
+| **Ngày cập nhật** | 2026-09-28 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
 
@@ -39,8 +39,8 @@ control flow hoặc cách triển khai. Output phục vụ trực tiếp bài b�
   Không mở rộng sang Java/C#/JavaScript.
 - Core experiment: **1 baseline (B1) + 5 model (M1–M5)** trên POJ-104, xem bảng
   dưới (EXP-001…EXP-006).
-- Trạng thái hiện tại: EXP-001 COMPLETED; EXP-002 đang train trên Kaggle;
-  M3/M4/M5 còn là stub.
+- Trạng thái hiện tại: EXP-001, EXP-002 COMPLETED; M1/M2/M3 đã implement + test
+  (EXP-003, EXP-004 chờ train); M4/M5 còn là stub.
 
 [🔝 Quay lại mục lục](#top)
 
@@ -48,14 +48,14 @@ control flow hoặc cách triển khai. Output phục vụ trực tiếp bài b�
 
 ## 3. Ma trận model core
 
-| ID | Phương pháp | Nhóm | Trạng thái INIT |
+| ID | Phương pháp | Nhóm | Trạng thái (2026-09-28) |
 | :--- | :--- | :--- | :--- |
-| B1 | TF-IDF + Cosine | Baseline | Chạy được (smoke) |
-| M1 | CodeBERT | Transformer | Smoke embedding |
-| M2 | GraphCodeBERT | Transformer | Smoke embedding |
-| M3 | ASTNN | AST | Stub + feasibility |
-| M4 | CPG-GNN (`gat`) | Program Graph | Stub + feasibility |
-| M5 | GraphCodeBERT + CPG-GNN (`concat_mlp`) | Hybrid | Stub |
+| B1 | TF-IDF + Cosine | Baseline | **COMPLETED** (F1 0.673) |
+| M1 | CodeBERT | Transformer | **COMPLETED** (F1 0.910, EXP-002) |
+| M2 | GraphCodeBERT | Transformer | Xong, chờ train (EXP-003), dùng chung code path M1 |
+| M3 | ASTNN | AST | Xong, chờ train (EXP-004), ~0,6h |
+| M4 | CPG-GNN (`gat`) | Program Graph | Stub + feasibility (cần Joern, DEC-009) |
+| M5 | GraphCodeBERT + CPG-GNN (`concat_mlp`) | Hybrid | Stub (cần M2 + M4) |
 
 [🔝 Quay lại mục lục](#top)
 
@@ -90,3 +90,5 @@ Chi tiết: `docs/dataset_protocol.md`, `docs/leakage_prevention.md`.
 | No. | Phiên bản | Ngày thay đổi | Nội dung thay đổi |
 | :--- | :--- | :--- | :--- |
 | 1 | 1.0.0 | 2026-09-20 | Khởi tạo ở phase INIT. |
+| 2 | 1.1.0 | 2026-09-27 | Cập nhật ma trận model: M1/M2/M3 đã implement + test; M4/M5 còn stub (DEC-019/020/021). |
+| 3 | 1.2.0 | 2026-09-28 | M1 (EXP-002) → **COMPLETED**, test F1 0.910 (ROC-AUC 0.973), vượt B1 +0.237 F1 (reports/011, DEC-022). |

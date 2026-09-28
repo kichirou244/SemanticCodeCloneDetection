@@ -4,8 +4,8 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.3.0 |
-| **Ngày cập nhật** | 2026-09-27 |
+| **Phiên bản** | 1.5.0 |
+| **Ngày cập nhật** | 2026-09-28 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
 
@@ -73,31 +73,39 @@ Kết quả dán lại cho agent để chốt vào reports 002/003/004 và feasi
    353k pairs và CodeNet pilot 547k pairs đều `leakage_passed: true`).
 4. ~~EXP-001 (B1 TF-IDF)~~ — **COMPLETED**, test P/R/F1 0.552/0.860/0.673
    (reports/009). Đây là mốc mà M1–M5 phải vượt.
-5. **EXP-002 (M1 CodeBERT) — đang làm, train trên Kaggle.**
+5. ~~EXP-002 (M1 CodeBERT)~~ — **COMPLETED**, test P/R/F1 **0.931/0.890/0.910**,
+   ROC-AUC 0.973, ngưỡng 0.59 (chọn trên val) — vượt EXP-001 **+0.237 F1**
+   (reports/011).
    - ~~Audit + fix F-01/F-02~~ (DEC-017, reports/010).
    - ~~Diagnostic GPU~~ PASS trên RTX 5060.
    - ~~Kaggle run protocol~~ (DEC-018): flush mỗi epoch, `--time-budget-s`,
      `--mode resume`, notebook đã sửa.
-   - **Còn lại: user chạy `notebooks/exp002_codebert_kaggle.ipynb`**
-     (~7.8h), tải `exp002_results.tar.gz` về, rồi agent viết
-     `reports/011_codebert_results.md` + đổi registry → COMPLETED.
-6. EXP-003 (M2 GraphCodeBERT) — clone runner EXP-002, tái dùng toàn bộ máy móc.
-   Rẻ nhất trong các bước còn lại và cần cho RQ1. **~7.8h GPU**
-7. **Implement M3 (ASTNN)** — cần AST extractor thật (`src/representations/ast/`
-   hiện mới chỉ có `check_toolchain()`; `src/models/astnn/model.py` còn là stub).
-   Kèm EXP-004. **~2h GPU** (RNN nhỏ, rẻ hơn transformer nhiều)
-8. **Implement M4 (CPG-GNN)** — cần CPG-Python hoặc Joern (DEC-009), dùng
-   `torch-geometric`. Kèm EXP-005. **~2h GPU**
+   - ~~Train trên Kaggle~~: 3/3 epoch, 7,03h, Tesla T4, best epoch 1
+     (`device_actual: cuda:0` trong `run_metadata.json`).
+   - **Còn lại:** ablation truncation (`max_length 512`) + `min_delta` cho
+     early stopping — **sau** khi có EXP-003, không sửa recipe giữa chừng (DEC-022).
+6. ~~EXP-003 (M2 GraphCodeBERT) — **implementation xong, chờ train Kaggle.**~~
+   Không clone runner: đã tách `transformer_pair_runner` dùng chung với EXP-002
+   (DEC-020) nên mọi khác biệt quy về pretrained weights. **~7,8h GPU** (đo).
+7. ~~**Implement M3 (ASTNN)** — **xong** (DEC-021)~~: extractor thật
+   (`src/representations/ast/extract.py`), RvNN vectorize (`src/models/astnn/`),
+   `ASTTreeStore` + cache, runner + config + 25 test. Kèm EXP-004.
+   **~35 phút GPU** (đo + hiệu chuẩn T4), không phải ~2h như ước lượng cũ.
+8. **Implement M4 (CPG-GNN)** — cần Joern cho C++ (DEC-009), dùng
+   `torch-geometric`. Kèm EXP-005. Chưa đo.
 9. **Implement M5 (Hybrid `concat_mlp`)** — cần M2 + M4 hoàn chỉnh. Kèm EXP-006.
    **~8h GPU**
 10. Transformation engine cho RQ4 (8 tên đã khóa trong
     `src/transformations/registry.py`) → ablation → error analysis → báo cáo.
 
-**Tổng GPU còn lại: ~20h** → vừa quota 30h/tuần của Kaggle. Early stopping
-(patience 2) có thể cắt ngắn thêm.
+**Tổng GPU còn lại: ~16h** (EXP-003 ~7,8h đã đo + EXP-004 ~0,6h đã đo + EXP-005
+chưa đo + EXP-006 ~8h) → vừa quota 30h/tuần của Kaggle. Early stopping
+(patience 2) có thể cắt ngắn thêm. Số `~2h` cho EXP-004/005 trước đây là
+ước lượng suông, **đã bị thu hồi** — xem DEC-021.
 
-**Ràng buộc vận hành:** local chỉ dùng smoke test (<5 phút). Mọi EXP cần >5 phút
-đều chạy trên Kaggle theo DEC-018.
+**Ràng buộc vận hành:** local dùng cho smoke test (<5 phút) **và `--mode evaluate`**
+(EXP-002 mất 5 m 16 s trên RTX 5060 — DEC-022). Mọi EXP cần >5 phút **train** đều chạy
+trên Kaggle theo DEC-018.
 
 [🔝 Quay lại mục lục](#top)
 
@@ -111,3 +119,5 @@ Kết quả dán lại cho agent để chốt vào reports 002/003/004 và feasi
 | 2 | 1.1.0 | 2026-09-20 | Cập nhật Phase 1: pipeline dataset + lệnh user chạy. |
 | 3 | 1.2.0 | 2026-09-27 | Phase 1 đã khép; EXP-001 COMPLETED; EXP-002 sẵn sàng train trên Kaggle (DEC-018). |
 | 4 | 1.3.0 | 2026-09-27 | DEC-019: scope chỉ C/C++ — lộ trình còn EXP-003…006, ~20h GPU. |
+| 5 | 1.4.0 | 2026-09-27 | DEC-020/021: M2 tách runner dùng chung, M3 implement xong. Sửa estimate EXP-004 từ ~2h (suông) xuống ~35 phút (đo + hiệu chuẩn T4). |
+| 6 | 1.5.0 | 2026-09-28 | EXP-002 → COMPLETED (test F1 0.910, +0.237 so với EXP-001; reports/011). Bổ sung DEC-022: đóng băng recipe M1/M2, evaluate chạy local (5 m 16 s) thay vì mở phiên Kaggle. |
