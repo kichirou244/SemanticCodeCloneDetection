@@ -51,6 +51,25 @@ SMOKE_SCRIPT = Path(__file__).resolve().parent / "joern" / "joern_smoke.sc"
 JOERN_FALLBACK_PATHS = (Path.home() / "bin" / "joern", Path("/opt/joern/joern"),
                         Path("/usr/local/bin/joern"))
 
+# Đoạn C cho smoke test: nhỏ, tự chứa, và **cố tình có cả ba loại cạnh** ta cần
+# (AST + CALL + ARGUMENT) cùng một phép gán để có `reachingDef`. Một snippet quá
+# tầm thường (chỉ `return 0;`) sẽ cho ra CPG 3 node và không chứng minh được
+# exporter dựng được cạnh data-flow.
+SMOKE_CODE = """#include <stdio.h>
+
+int classify(int n) {
+  int total = 0;
+  for (int i = 0; i < n; i++) {
+    if (i % 2 == 0) {
+      total = total + i;
+    } else {
+      printf("%d\\n", total);
+    }
+  }
+  return total;
+}
+"""
+
 
 def _as_argv(joern_cmd: str | list[str]) -> list[str]:
     """Chuẩn hoá lệnh Joern thành argv.
@@ -124,11 +143,16 @@ def _log(work_dir: Path, tag: str, cmd: list[str], proc: subprocess.CompletedPro
         encoding="utf-8")
 
 
-def run_smoke(sample: dict, work_dir: Path, joern_cmd: str, timeout_s: int) -> str:
-    """Chạy `joern_smoke.sc` trên MỘT hàm và trả về stdout để đối chiếu tên step."""
+def run_smoke(code: str, work_dir: Path, joern_cmd: str, timeout_s: int) -> str:
+    """Chạy `joern_smoke.sc` trên MỘT đoạn code và trả về stdout để đối chiếu tên step.
+
+    Cố ý **không** đọc dataset: smoke test phải chạy được trước cả bước dựng
+    dataset (mà dựng dataset nghĩa là tải hàng trăm MB từ HuggingFace). Một
+    phép kiểm tra mà phải tải dữ liệu mới chạy được thì không phải smoke test.
+    """
     work_dir.mkdir(parents=True, exist_ok=True)
     src = work_dir / "smoke.cpp"
-    src.write_text(sample["code"], encoding="utf-8")
+    src.write_text(code, encoding="utf-8")
     cmd = _as_argv(joern_cmd) + ["--script", str(SMOKE_SCRIPT), "--param", f"srcFile={src}"]
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s)
     _log(work_dir, "joern_smoke", cmd, proc)
@@ -217,24 +241,29 @@ def main() -> None:
     ap.add_argument("--timeout-s", type=int, default=3600)
     ap.add_argument("--no-resume", action="store_true")
     ap.add_argument("--smoke", action="store_true",
-                    help="chạy joern_smoke.sc trên 1 hàm và in output (chạy cái này trước)")
+                    help="chạy joern_smoke.sc trên 1 đoạn C và in output "
+                         "(không cần dataset — chạy cái này TRƯỚC mọi bước khác)")
+    ap.add_argument("--smoke-file", default="",
+                    help="file .cpp để smoke; mặc định dùng SMOKE_CODE nhúng sẵn")
     args = ap.parse_args()
 
     cfg = load_config(Path(args.config))
     set_global_seed(int(cfg.get("experiment", {}).get("seed", 42)))
-    processed = Path(cfg["dataset"]["processed"])
     out_dir, work_dir = Path(args.out_dir), Path(args.work_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
     work_dir.mkdir(parents=True, exist_ok=True)
 
-    samples = read_samples(processed, args.split, args.limit)
     if args.smoke:
-        if not samples:
-            print("[cpg-export] khong co sample nao — kiem tra processed path trong config")
-            return
-        print(run_smoke(samples[0], work_dir, args.joern, args.timeout_s))
+        # Đặt TRƯỚC khi đọc dataset: smoke không được phụ thuộc
+        # `data/processed/...` — nếu phụ thuộc thì nó phải chạy sau khi tải
+        # dataset, tức là tốn hàng trăm MB để kiểm tra 60 giây.
+        code = (Path(args.smoke_file).read_text(encoding="utf-8")
+                if args.smoke_file else SMOKE_CODE)
+        print(run_smoke(code, work_dir, args.joern, args.timeout_s))
         return
 
+    out_dir.mkdir(parents=True, exist_ok=True)
+    processed = Path(cfg["dataset"]["processed"])
+    samples = read_samples(processed, args.split, args.limit)
     if args.no_resume:
         for f in out_dir.glob("*.json"):
             f.unlink()

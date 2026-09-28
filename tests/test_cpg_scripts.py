@@ -118,8 +118,43 @@ def test_run_batch_passes_real_cli_and_counts_ok(tmp_path):
 
 
 def test_run_smoke_returns_joern_stdout(tmp_path):
-    out = run_smoke({"code": "int f(){}"}, tmp_path, _fake_joern(tmp_path), 60)
+    out = run_smoke("int f(){}", tmp_path, _fake_joern(tmp_path), 60)
     assert "METHODS" in out and "f | int f()" in out
+
+
+def test_smoke_runs_without_dataset(tmp_path, monkeypatch):
+    """`--smoke` phải chạy được khi CHƯA có `data/processed/...`.
+
+    Lý do: smoke đứng trước bước dựng dataset trong notebook (dựng dataset =
+    tải hàng trăm MB từ HuggingFace). Nếu smoke phụ thuộc dataset thì nó phải
+    chạy sau, tức là tốn 100MB chỉ để kiểm tra 60 giây.
+    """
+    cfg = tmp_path / "cfg.yaml"
+    cfg.write_text("experiment:\n  seed: 42\n"
+                   "dataset:\n  processed: data/processed/poj104/samples.jsonl\n",
+                   encoding="utf-8")
+    r = subprocess.run(
+        [sys.executable, str(EXPORT_SCRIPT), "--config", str(cfg), "--smoke",
+         "--joern", "true", "--work-dir", str(tmp_path / "work")],
+        capture_output=True, text=True, timeout=120, cwd=str(tmp_path))
+    assert r.returncode == 0, r.stderr
+    assert "khong ton tai" not in r.stderr
+
+
+def test_smoke_code_exercises_all_edge_kinds():
+    """Snippet phải có nhánh điều khiển + lời gọi + gán — nếu không thì CPG ra
+    vài node và không chứng minh được exporter dựng được cạnh data-flow."""
+    from scripts.build_cpg_export import SMOKE_CODE
+
+    assert "if" in SMOKE_CODE and "(" in SMOKE_CODE  # control structure + call
+    assert "=" in SMOKE_CODE and "return" in SMOKE_CODE
+
+
+def test_run_smoke_accepts_file(tmp_path):
+    src = tmp_path / "real.cpp"
+    src.write_text("int g(int x){return x+1;}", encoding="utf-8")
+    out = run_smoke(src.read_text(encoding="utf-8"), tmp_path, _fake_joern(tmp_path), 60)
+    assert "METHODS" in out
 
 
 def test_benchmark_reports_rate_errors_and_meta(tmp_path):
