@@ -32,6 +32,7 @@ import json, os, sys
 from pathlib import Path
 
 params = {}
+script = ""
 argv = sys.argv[1:]
 i = 0
 while i < len(argv):
@@ -39,10 +40,14 @@ while i < len(argv):
         k, _, v = argv[i + 1].partition("=")
         params[k] = v
         i += 2
+    elif argv[i] == "--script":
+        script = Path(argv[i + 1]).name
+        i += 2
     else:
         i += 1
+print("[fake] script=" + script)
 
-if "srcFile" in params:            # chế độ smoke
+if "srcFile" in params:            # chế độ smoke / probe
     print("=== METHODS ===")
     print("  f | int f()")
     print("=== NODE LABELS ===")
@@ -120,6 +125,33 @@ def test_run_batch_passes_real_cli_and_counts_ok(tmp_path):
 def test_run_smoke_returns_joern_stdout(tmp_path):
     out = run_smoke("int f(){}", tmp_path, _fake_joern(tmp_path), 60)
     assert "METHODS" in out and "f | int f()" in out
+    assert "joern_smoke.sc" in out
+
+
+def test_run_probe_uses_its_own_script_and_isolated_from_smoke(tmp_path):
+    """Probe và smoke là hai script khác nhau trả lời hai câu khác nhau. Nếu orchestrator
+    lỡ gọi nhầm script thì ta âm thầm hỏi sai câu và tưởng đã dò API."""
+    from scripts.build_cpg_export import run_probe
+
+    out = run_probe(_fake_joern(tmp_path), tmp_path, 60)
+    assert "joern_probe.sc" in out
+    assert "joern_smoke.sc" not in out
+    assert (tmp_path / "probe.cpp").exists()
+    assert (tmp_path / "joern_probe.log").exists()
+
+
+def test_probe_script_never_guesses_a_step_name():
+    """Bản chất của probe: nó dùng `getClass.getMethods` (reflection) chứ không gọi tên
+    step bằng cú pháp. Nếu ai đó thêm `cpg.call.ref` trở lại vào đây thì probe lại có
+    thể chết lúc compile — mất đúng thứ nó sinh ra để tránh. Vì vậy file probe bị
+    khoá: chỉ được dùng step đã xác nhận ở `wanted`/docstring, không được gọi trực tiếp."""
+    src = (ROOT / "scripts" / "joern" / "joern_probe.sc").read_text(encoding="utf-8")
+    # Bỏ comment trước khi kiểm: ghi lại tên step đã hỏng là điều **cần** giữ (đó là
+    # lý do probe tồn tại), chỉ cái gọi thật trong code mới nguy hiểm.
+    code = "\n".join(line.split("//", 1)[0] for line in src.splitlines())
+    # `wanted` là danh sách *tên* để hỏi qua reflection — hỏi tên không phải gọi tên.
+    for banned in ("cpg.call.ref", ".reachingDef.l", ".astChildren", "cpg.all.help"):
+        assert banned not in code, f"probe gọi trực tiếp {banned} — se lai compile-sai"
 
 
 def test_smoke_runs_without_dataset(tmp_path, monkeypatch):
@@ -187,6 +219,61 @@ def test_benchmark_counts_missing_as_failure(tmp_path):
 def test_benchmark_empty_export_dir(tmp_path):
     r = benchmark(tmp_path, [], 0.0)
     assert r["n_ok"] == 0 and r["functions_per_second"] == 0.0
+
+
+def test_zero_throughput_gives_null_estimate_not_absurd_number(monkeypatch, tmp_path):
+    """0 hàm ra JSON thì KHÔNG được xuất `est_hours_full_dataset` — trước đây
+    chia cho 1e-9 ra 14441944444.44 giờ, một con số vô nghĩa trong báo cáo còn tệ
+    hơn không có số."""
+    import scripts.build_cpg_export as mod
+
+    out, work = tmp_path / "out", tmp_path / "work"
+    out.mkdir()
+    processed = tmp_path / "samples.jsonl"
+    processed.write_text("\n".join(
+        json.dumps({"sample_id": f"s{i}", "code": "int f(){}", "split": "train"})
+        for i in range(4)) + "\n", encoding="utf-8")
+    cfg = tmp_path / "cfg.yaml"
+    cfg.write_text(f"experiment:\n  seed: 42\ndataset:\n  processed: {processed}\n",
+                   encoding="utf-8")
+    monkeypatch.setattr(mod, "run_batch", lambda *a, **k: (0, 0))
+    monkeypatch.setattr(mod, "joern_missing_reason", lambda *_: "")
+    monkeypatch.setattr(sys, "argv",
+                        ["build_cpg_export.py", "--config", str(cfg), "--batch-size", "2",
+                         "--out-dir", str(out), "--work-dir", str(work), "--joern", "x"])
+    mod.main()
+    report = json.loads((out / "benchmark.json").read_text(encoding="utf-8"))
+    assert report["n_ok"] == 0 and report["n_missing"] == 4
+    assert report["est_hours_full_dataset"] is None
+    assert "KHONG uoc luong duoc" in report["est_hours_full_dataset_note"]
+
+
+def test_progress_rate_counts_success_not_dispatch(monkeypatch, tmp_path, capsys):
+    """Dòng tiến độ phải tính `ham/giay` trên hàm ĐÃ RA JSON. Tính trên hàm đã
+    gửi đi thì một lần chạy thất bại toàn bộ vẫn in ra "7.8 ham/giay" trông như
+    chạy tốt — đúng thứ gây hiểu nhầm nhất."""
+    import scripts.build_cpg_export as mod
+
+    out, work = tmp_path / "out", tmp_path / "work"
+    out.mkdir()
+    samples = [{"sample_id": f"s{i}", "code": "int f(){}"} for i in range(4)]
+    processed = tmp_path / "samples.jsonl"
+    processed.write_text("\n".join(
+        json.dumps({**s, "split": "train"}) for s in samples) + "\n", encoding="utf-8")
+    cfg = tmp_path / "cfg.yaml"
+    cfg.write_text(f"experiment:\n  seed: 42\ndataset:\n  processed: {processed}\n",
+                   encoding="utf-8")
+    # Joern giả nhưng trả về 0 JSON — giống hệt trường hợp 0/500 trên Kaggle.
+    monkeypatch.setattr(mod, "run_batch", lambda *a, **k: (0, 0))
+    monkeypatch.setattr(mod, "joern_missing_reason", lambda *_: "")
+    monkeypatch.setattr(sys, "argv",
+                        ["build_cpg_export.py", "--config", str(cfg), "--batch-size", "2",
+                         "--out-dir", str(out), "--work-dir", str(work), "--joern", "x"])
+    mod.main()
+    printed = capsys.readouterr().out
+    assert "ham/giay THANH CONG" in printed
+    assert "0.00 ham/giay THANH CONG" in printed
+    assert "CANH BAO: 0/4" in printed
 
 
 def test_joern_or_die_prefers_env(monkeypatch):

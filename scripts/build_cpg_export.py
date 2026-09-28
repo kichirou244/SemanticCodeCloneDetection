@@ -45,6 +45,7 @@ DEFAULT_OUT = "artifacts/cpg_export"
 DEFAULT_WORK = "artifacts/cpg_work"
 EXPORT_SCRIPT = Path(__file__).resolve().parent / "joern" / "export_cpg.sc"
 SMOKE_SCRIPT = Path(__file__).resolve().parent / "joern" / "joern_smoke.sc"
+PROBE_SCRIPT = Path(__file__).resolve().parent / "joern" / "joern_probe.sc"
 
 # Nơi `joern-install.sh` hay đặt binary: `~/bin/joern` khi chạy bình thường,
 # `/opt/joern` khi chạy dưới root (Kaggle). Tách thành hằng để test được.
@@ -178,6 +179,27 @@ def run_smoke(code: str, work_dir: Path, joern_cmd: str, timeout_s: int) -> str:
     return proc.stdout + ("\n--- stderr ---\n" + proc.stderr if proc.stderr else "")
 
 
+def run_probe(joern_cmd: str, work_dir: Path, timeout_s: int) -> str:
+    """Chạy `joern_probe.sc` — dò API Joern v4 bằng reflection.
+
+    Tách riêng khỏi `run_smoke` vì hai lần chạy này trả lời hai câu khác nhau và
+    **fail theo hai kiểu khác nhau**:
+      - probe hỏi "Joern v4 tên step này là gì" → dùng `getMethods`, không có tên
+        nào sai được ⇒ chắc chắn compile.
+      - smoke hỏi "bảng step của Joern in ra gì" (`cpg.call.help`) → dùng step
+        `.help`, tên đúng chưa xác nhận nên vẫn có thể chết lúc compile.
+    Chạy probe trước: nếu probe đã trả lời xong thì smoke chỉ còn là đối chiếu
+    chéo, thất bại của nó không chặn gì cả.
+    """
+    work_dir.mkdir(parents=True, exist_ok=True)
+    src = work_dir / "probe.cpp"
+    src.write_text(SMOKE_CODE, encoding="utf-8")
+    cmd = _as_argv(joern_cmd) + ["--script", str(PROBE_SCRIPT), "--param", f"srcFile={src}"]
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s)
+    _log(work_dir, "joern_probe", cmd, proc)
+    return proc.stdout + ("\n--- stderr ---\n" + proc.stderr if proc.stderr else "")
+
+
 def run_batch(samples: list[dict], out_dir: Path, work_dir: Path, joern_cmd: str,
               batch_dir: Path, timeout_s: int) -> tuple[int, int]:
     """Một lần khởi động Joern cho cả lô. Trả về (số OK, số lỗi)."""
@@ -264,6 +286,10 @@ def main() -> None:
                          "(không cần dataset — chạy cái này TRƯỚC mọi bước khác)")
     ap.add_argument("--smoke-file", default="",
                     help="file .cpp để smoke; mặc định dùng SMOKE_CODE nhúng sẵn")
+    ap.add_argument("--probe", action="store_true",
+                    help="chạy joern_probe.sc: dò API Joern v4 bằng reflection để "
+                         "chốt tên step, KHÔNG cần dataset. Chạy cái này TRƯỚC khi "
+                         "sửa export_cpg.sc — nó không thể fail vì tên step sai")
     args = ap.parse_args()
 
     cfg = load_config(Path(args.config))
@@ -283,6 +309,12 @@ def main() -> None:
         code = (Path(args.smoke_file).read_text(encoding="utf-8")
                 if args.smoke_file else SMOKE_CODE)
         print(run_smoke(code, work_dir, args.joern, args.timeout_s))
+        return
+
+    if args.probe:
+        # Cùng nguyên tắc với smoke: tự chứa, không đọc dataset. Chạy nó ngay sau
+        # khi Joern cài xong để biết tên step thật trước khi đụng vào exporter.
+        print(run_probe(args.joern, work_dir, args.timeout_s))
         return
 
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -308,17 +340,41 @@ def main() -> None:
         n_err += err
         el = time.perf_counter() - t0
         done = i + len(batch)
-        print(f"[cpg-export] {done:,}/{len(todo):,}  ok={n_ok:,} err={n_err}  "
-              f"{el / 60:.1f} phut  ({done / max(el, 1e-9):.2f} ham/giay)", flush=True)
+        # `ham/giay` phải tính trên **hàm đã ra JSON**, không phải hàm đã gửi đi.
+        # Trước đây dùng `done/elapsed` nên khi exporter hỏng cả lô, dòng log vẫn
+        # in ra "7.81 ham/giay" trông như đang chạy tốt — đúng thứ gây hiểu nhầm
+        # nhất: một lần chạy thất bại trông giống một lần chạy nhanh.
+        rate = n_ok / max(el, 1e-9)
+        print(f"[cpg-export] {done:,}/{len(todo):,} da gui  ok={n_ok:,} err={n_err}  "
+              f"{el / 60:.1f} phut  ({rate:.2f} ham/giay THANH CONG)", flush=True)
+        if n_ok == 0 and n_err == 0 and done == len(todo):
+            print(f"[cpg-export] CANH BAO: 0/{len(todo):,} ham ra JSON. 90% khong phai "
+                  f"loi du lieu — ma xem {work_dir / 'joern_batch_*.log'} "
+                  f"(export_cpg.sc compile sai thi ca lo chet trong ~13s/lot).", flush=True)
 
     seconds = time.perf_counter() - t0
     report = benchmark(out_dir, samples, seconds)
     n_total = sum(1 for line in processed.open(encoding="utf-8") if line.strip())
     per_s = report["functions_per_second"] or 0.0
-    report["est_hours_full_dataset"] = round(n_total / max(per_s, 1e-9) / 3600, 2)
-    report["est_hours_full_dataset_note"] = (
-        f"{n_total:,} ham / {per_s:.3f} ham.s^-1 — uoc luong CPU, KHONG tinh gioi "
-        f"han GPU va KHONG tinh thoi gian tai dataset")
+    n_batches = max(1, -(-len(todo) // args.batch_size))
+    if per_s <= 0:
+        # Trước đây chia cho 1e-9 nên lỗi 0/500 ra `est_hours_full_dataset =
+        # 14441944444.44` giờ — một con số vô nghĩa trong báo cáo còn tệ hơn là
+        # không có số. Không có throughput thì không có ước lượng.
+        report["est_hours_full_dataset"] = None
+        report["est_hours_full_dataset_note"] = (
+            f"KHONG uoc luong duoc: n_ok=0 nen khong co ham/giay. Xem "
+            f"{work_dir / 'joern_batch_*.log'}")
+    else:
+        report["est_hours_full_dataset"] = round(n_total / per_s / 3600, 2)
+        report["est_hours_full_dataset_note"] = (
+            f"{n_total:,} ham / {per_s:.3f} ham.s^-1 — uoc luong CPU, KHONG tinh gioi "
+            f"han GPU va KHONG tinh thoi gian tai dataset")
+    # Chi phí cố định đo được: mỗi lô là MỘT lần bật JVM (~13s quan sát được khi
+    # lô chết sớm). Tách riêng vì nó quyết định liệu `--batch-size` nên lớn cỡ nào.
+    report["jvm_startup_seconds_per_batch"] = round(seconds / n_batches, 1)
+    report["jvm_startup_hours_full_dataset"] = round(
+        n_batches * (seconds / n_batches) / 3600, 2)
     (out_dir / "benchmark.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(json.dumps(report, indent=2), flush=True)
 
