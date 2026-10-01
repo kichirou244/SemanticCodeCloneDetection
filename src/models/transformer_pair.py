@@ -21,11 +21,15 @@ from transformers import AutoModel, AutoTokenizer
 
 
 class TransformerPairClassifier(nn.Module):
-    def __init__(self, hf_id: str, dropout: float = 0.1):
+    def __init__(self, hf_id: str, dropout: float = 0.1, encoder: nn.Module | None = None):
         super().__init__()
         self.hf_id = hf_id
         # Download lỗi → transformers raise → fail-fast (§15).
-        self.encoder = AutoModel.from_pretrained(hf_id)
+        # `encoder` cho phép caller dựng kiến trúc từ config mà không tải trọng
+        # số pretrained (dùng bởi web demo: trọng số đến từ checkpoint của ta nên
+        # tải thêm 500 MB base weights là thừa). Không truyền thì hành vi y hệt
+        # trước đây → EXP-002/003 không đổi gì.
+        self.encoder = encoder if encoder is not None else AutoModel.from_pretrained(hf_id)
         hidden = self.encoder.config.hidden_size
         if hidden is None:
             raise RuntimeError(f"Checkpoint {hf_id} thiếu hidden_size (§15)")

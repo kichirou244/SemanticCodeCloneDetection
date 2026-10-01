@@ -26,5 +26,12 @@ tree-sitter-cpp>=0.20.0
 # Đánh giá & tracking
 scipy>=1.12.0
 
+# Web demo (M6 Ứng dụng demo): src/demo/server.py, scripts/serve_demo.py
+fastapi>=0.110.0
+uvicorn>=0.29.0
+# TestClient (tests/test_demo_server.py) cần httpx; nếu không cài được thì bộ
+# test đó tự bỏ qua (importorskip) — demo vẫn chạy bình thường.
+httpx>=0.27.0
+
 # Test
 pytest>=8.0.0

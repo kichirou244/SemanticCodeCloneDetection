@@ -226,6 +226,64 @@ def test_api_scan_warns_when_a_control_suddenly_passes(capsys):
     assert "CANH BAO" in out and "call.ref" in out
 
 
+def test_api_scan_error_hint_separates_arity_from_missing_member():
+    """Sai *tên* và sai *số tham số* dẫn tới hai việc khác hẳn nhau: cái sau chỉ
+    cần thêm tham số, cái trước phải đổi thiết kế. Lần quét đầu in cột lý do rỗng
+    nên ta không suy ra được gì từ chữ "FAIL" — nên phải trích đúng dòng compiler.
+    """
+    from scripts.joern.api_scan import error_hint
+
+    missing = "x\n[E008] ------------ E008 ------------\n[E008]  value ref is not a member of Iterator[Call]\n"
+    assert "not a member" in error_hint(missing)
+    arity = "[E008] missing argument list for method reachingDef(Boolean)\n"
+    assert "missing argument" in error_hint(arity)
+    # Không bao giờ trả chuỗi rỗng: chuỗi rỗng chính là lỗi lần trước.
+    assert error_hint("$ python x.py\nrc=1\n")
+    assert error_hint("")
+
+
+def test_meta_stats_reports_which_edge_types_exist(tmp_path):
+    """`n_edges` lớn không bảo chứng CPG có data-flow: một đồ thị đầy AST vẫn
+    trông rất ổn. Phải trả lời được "loại cạnh nào có, loại nào vắng"."""
+    from scripts.build_cpg_export import _meta_stats
+
+    (tmp_path / "a.meta").write_text(
+        "n_nodes\t10\nfile_name\tsrc_a.cpp\n"
+        "edge_types\tAST=9;CFG=4\n"
+        "edge_types_missing\tCALL;REF;TARG;PARAMETER_OUT;REACHING_DEF;EVAL_ORDER\n",
+        encoding="utf-8")
+    (tmp_path / "b.meta").write_text(
+        "n_nodes\t20\nfile_name\tsrc_a.cpp\n"
+        "edge_types\tAST=18;CFG=8;REACHING_DEF=3\n"
+        "edge_types_missing\tCALL;REF;TARG;PARAMETER_OUT;EVAL_ORDER\n",
+        encoding="utf-8")
+    s = _meta_stats(tmp_path, ["a", "b"])
+    assert s["edge_types_present"] == ["AST", "CFG", "REACHING_DEF"]
+    assert s["edge_type_totals"]["AST"] == 27
+    assert "CALL" in s["edge_types_never_produced"]
+    # Chỉ 1/2 hàm có data-flow → tỉ lệ thiếu phải lộ ra, không được gộp mất.
+    assert s["edge_types_missing_ratio"]["REACHING_DEF"] == 0.5
+    assert s["nodes_per_cpg_mean"] == 15.0
+    # Cùng một file sinh ra 2 hàm ⇒ ánh xạ sample_id của Python sai.
+    assert s["files_with_multiple_methods"] == 1
+
+
+def test_export_cpg_avoids_constructs_that_failed_to_compile():
+    """V1 chết vì hai thứ: type pattern `io.joern.x2cpg.*` và traversal `m.l` trên
+    node đơn. Cả hai đều không phải thứ Joern v4 chấp nhận."""
+    raw = Path("scripts/joern/export_cpg.sc").read_text(encoding="utf-8")
+    # Bỏ comment trước khi kiểm tra: header giải thích *vì sao* bỏ các construct
+    # này thì chứa tên chúng, và test sẽ dính nhầm vào chính lời giải thích.
+    src = "\n".join(l.split("//", 1)[0] for l in raw.splitlines())
+    assert "io.joern.x2cpg" not in src
+    assert not re.search(r"\bcase \w+: io\.joern", src)
+    # `m.l` — biểu thức chạy trên node đơn; CPGQL chỉ nhận Iterator.
+    assert not re.search(r"\bm\.l\b", src)
+    # Cạnh chưa xác minh được thì không được viết vào: `.meta` phải kê tên.
+    for kind in ("REF", "TARG", "REACHING_DEF", "EVAL_ORDER"):
+        assert kind in src
+
+
 def test_smoke_runs_without_dataset(tmp_path, monkeypatch):
     """`--smoke` phải chạy được khi CHƯA có `data/processed/...`.
 

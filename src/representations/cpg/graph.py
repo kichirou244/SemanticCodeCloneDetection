@@ -14,7 +14,12 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from src.representations.cpg.schema import FEATURE_DIM, N_EDGE_TYPES, N_NODE_TYPES
+from src.representations.cpg.schema import (
+    EDGE_LABELS,
+    FEATURE_DIM,
+    N_EDGE_TYPES,
+    N_NODE_TYPES,
+)
 
 
 @dataclass(frozen=True)
@@ -115,6 +120,13 @@ def graph_stats(graphs: list[CPGraph]) -> dict:
         return {"n_graphs": 0}
     nn_ = np.array([g.n_nodes for g in graphs], dtype=np.int64)
     ne = np.array([g.n_edges for g in graphs], dtype=np.int64)
+    # Đếm theo từng loại cạnh. `n_edges` lớn không bảo chứng có data-flow: một đồ
+    # thị đầy AST + CFG vẫn có `edges_per_code_mean` rất cao và trông rất ổn,
+    # trong khi đúng thứ phân biệt CPG với AST+CFG là REACHING_DEF.
+    counts = np.zeros(N_EDGE_TYPES, dtype=np.int64)
+    for g in graphs:
+        if g.n_edges:
+            counts += np.bincount(g.edge_type, minlength=N_EDGE_TYPES)
     return {
         "n_graphs": len(graphs),
         "nodes_per_code_mean": round(float(nn_.mean()), 1),
@@ -124,6 +136,10 @@ def graph_stats(graphs: list[CPGraph]) -> dict:
         "edges_per_code_max": int(ne.max()),
         "nodes_total": int(nn_.sum()),
         "edges_total": int(ne.sum()),
+        "edge_type_counts": {EDGE_LABELS[i]: int(counts[i])
+                              for i in range(N_EDGE_TYPES) if counts[i] > 0},
+        "edge_types_missing": [EDGE_LABELS[i] for i in range(N_EDGE_TYPES)
+                               if counts[i] == 0],
         "memory_note": "ước lượng 1 node ~1B feature + 1 int64 type; "
                        "xem CPGStore.stats['cache_mb'] sau khi build thật",
     }

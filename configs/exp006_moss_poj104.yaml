@@ -1,0 +1,50 @@
+# EXP-006 — B1 MOSS (winnowing fingerprinting) baseline trên POJ-104.
+#
+# Thay thế TF-IDF (EXP-001) làm baseline: cùng thuật toán fingerprinting của
+# MOSS (Sleator & Bernstein 2003), triển khai local tại src/models/baseline/moss.py,
+# không phụ thuộc dịch vụ moss.stanford.edu.
+#
+# Protocol giữ nguyên quy tắc của EXP-001: threshold duy nhất chọn trên
+# validation (tối ưu F1, §11), freeze, đánh giá test đúng 1 lần. Không có khâu
+# fit — MOSS không học, fingerprint là tất định trên nội dung.
+
+experiment:
+  id: EXP-006
+  name: moss_winnowing_baseline
+  status: PLANNED
+  seed: 42
+
+dataset:
+  name: poj104
+  language: cpp
+  manifest: data/manifests/poj104.json
+  pairs_dir: data/pairs/poj104
+  processed: data/processed/poj104/samples.jsonl
+
+pair_generation:
+  seed: 42
+  positive_negative_ratio: 1:1
+
+model:
+  name: moss_winnowing
+  id: B1
+  # Tham số fingerprinting đúng MOSS mặc định. Đổi giá trị là đổi cách so trùng
+  # của toàn bộ pipeline (demo scan + threshold exp này) — khai ở đây một lần.
+  k: 50
+  w: 100
+
+inference:
+  pair_batch_size: 4096
+
+threshold:
+  method: validation_f1
+  grid_step: 0.01
+
+evaluation:
+  metrics: [accuracy, precision, recall, f1, roc_auc, pr_auc]
+
+error_analysis:
+  top_k: 100
+
+output:
+  directory: results/exp006_moss_poj104

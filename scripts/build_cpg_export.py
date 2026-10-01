@@ -40,6 +40,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.common.config import load_config
 from src.common.seed import set_global_seed
+from src.representations.cpg.schema import EDGE_LABELS
 
 DEFAULT_OUT = "artifacts/cpg_export"
 DEFAULT_WORK = "artifacts/cpg_work"
@@ -223,7 +224,10 @@ def run_batch(samples: list[dict], out_dir: Path, work_dir: Path, joern_cmd: str
 
 def _meta_stats(out_dir: Path, sample_ids: list[str]) -> dict:
     """Đọc `.meta` để đo chất lượng CPG (n_nodes, số hàm lạ trong 1 file)."""
-    n_nodes, n_files_multi_method, parsed = [], 0, 0
+    n_nodes, parsed = [], 0
+    per_file_methods: dict[str, int] = {}
+    edge_totals: dict[str, int] = {}
+    missing_seen: dict[str, int] = {}
     for sid in sample_ids:
         p = out_dir / f"{sid}.meta"
         if not p.exists():
@@ -233,13 +237,32 @@ def _meta_stats(out_dir: Path, sample_ids: list[str]) -> dict:
                   p.read_text(encoding="utf-8").splitlines() if "\t" in line)
         if int(kv.get("n_nodes", 0)) > 0:
             n_nodes.append(int(kv["n_nodes"]))
-        if int(kv.get("n_methods_in_file", 1)) > 1:
-            n_files_multi_method += 1
+        # Một file nhiều hàm ⇒ ánh xạ filename→sample_id của Python là sai, và mọi
+        # hàm sau trong file đó sẽ bị ghi đè cùng một tên. Đếm ở đây thay vì để
+        # Joern đo (bước đó cần một dạng gọi step chưa xác nhận).
+        fn = kv.get("file_name", "")
+        per_file_methods[fn] = per_file_methods.get(fn, 0) + 1
+        # Cộng dồn histogram cạnh. `edge_types` là "loại nào có trong hàm này",
+        # `edge_types_missing` là "loại nào vắng" — phải thấy cả hai, không được
+        # chỉ nhìn tổng số cạnh: một CPG đầy AST mà không có data-flow vẫn có
+        # `n_edges` rất lớn và trông rất ổn.
+        for item in filter(None, kv.get("edge_types", "").split(";")):
+            k, _, v = item.partition("=")
+            if v.isdigit():
+                edge_totals[k] = edge_totals.get(k, 0) + int(v)
+        for k in filter(None, kv.get("edge_types_missing", "").split(";")):
+            missing_seen[k] = missing_seen.get(k, 0) + 1
     return {
         "n_meta_parsed": parsed,
         "nodes_per_cpg_mean": round(sum(n_nodes) / max(len(n_nodes), 1), 1),
         "nodes_per_cpg_p5": sorted(n_nodes)[int(0.05 * (len(n_nodes) - 1))] if n_nodes else 0,
-        "files_with_multiple_methods": n_files_multi_method,
+        "files_with_multiple_methods": sum(1 for v in per_file_methods.values() if v > 1),
+        "edge_type_totals": edge_totals,
+        "edge_types_present": sorted(edge_totals),
+        "edge_types_never_produced": sorted(
+            k for k in EDGE_LABELS if k not in edge_totals),
+        "edge_types_missing_ratio": {k: round(v / max(parsed, 1), 3)
+                                     for k, v in sorted(missing_seen.items())},
     }
 
 

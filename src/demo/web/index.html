@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Semantic Code Clone Detection — Demo trực quan</title>
+<meta name="description" content="Demo phát hiện clone mã nguồn ngữ nghĩa: dán hai hàm C++, xem điểm của MOSS, CodeBERT, GraphCodeBERT, ASTNN và các đoạn khớp được bôi màu.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="stylesheet" href="/static/css/scores.css">
+<link rel="stylesheet" href="/static/css/diff.css">
+<link rel="stylesheet" href="/static/css/scan.css">
+</head>
+<body>
+<header class="app-header">
+  <div class="app-header__brand">
+    <h1 class="app-header__title">Semantic Code Clone Detection</h1>
+    <p class="app-header__subtitle">
+      Dán hai hàm C++ · bấm <b>Phân tích</b> · xem điểm của 4 model và các đoạn khớp được bôi màu
+    </p>
+  </div>
+  <div class="app-header__actions">
+    <fieldset class="mode-switch" id="mode-switch">
+      <legend class="sr-only">Chế độ so khớp token</legend>
+      <label class="mode-switch__option">
+        <input type="radio" name="align-mode" value="literal" id="mode-literal">
+        <span>Nguyên văn</span>
+      </label>
+      <label class="mode-switch__option">
+        <input type="radio" name="align-mode" value="abstract" id="mode-abstract" checked>
+        <span>Bỏ tên biến</span>
+      </label>
+    </fieldset>
+    <button type="button" class="btn btn--primary" id="btn-analyze">Phân tích</button>
+  </div>
+</header>
+
+<main class="app-layout">
+  <!-- ------------------------------------------------------------- cột trái -->
+  <aside class="rail" aria-label="Nguồn code và thiết lập">
+    <section class="panel">
+      <h2 class="panel__title" id="rail-samples-title">Ví dụ có sẵn</h2>
+      <div class="sample-list" id="sample-list" role="list"
+           aria-labelledby="rail-samples-title"></div>
+      <p class="hint" id="sample-note"></p>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__title" id="rail-real-title">Cặp thật từ POJ-104</h2>
+      <div class="real-list" id="real-list" role="list"
+           aria-labelledby="rail-real-title"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__title">Mã nguồn phía A</h2>
+      <textarea id="input-a" class="code-input" spellcheck="false"
+                aria-label="Mã nguồn phía A" placeholder="int f(...) { ... }"></textarea>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__title">Mã nguồn phía B</h2>
+      <textarea id="input-b" class="code-input" spellcheck="false"
+                aria-label="Mã nguồn phía B" placeholder="int g(...) { ... }"></textarea>
+    </section>
+  </aside>
+
+  <!-- ------------------------------------------------------------- cột phải -->
+  <section class="workspace">
+    <section class="score-strip" id="score-strip"
+             aria-label="Điểm và phán quyết của từng model"></section>
+
+    <section class="cover" id="scan-panel" aria-label="Quét thư mục database" hidden>
+      <div class="scan-panel">
+        <div class="scan-toolbar">
+          <h2 class="scan-toolbar__title">Quét thư mục database</h2>
+          <div class="scan-toolbar__controls">
+            <label class="scan-threshold">
+              <span>Ngưỡng</span>
+              <b id="scan-threshold-value">50%</b>
+              <input type="range" id="scan-threshold" min="0" max="100" step="1" value="50"
+                     aria-label="Ngưỡng % giải tương tự để quét">
+            </label>
+            <button type="button" class="btn" id="btn-scan">Quét</button>
+          </div>
+        </div>
+        <div class="scan-results" id="scan-results"></div>
+        <p class="scan-meta" id="scan-note"></p>
+      </div>
+    </section>
+
+    <section class="panel panel--flush">
+      <div class="alignment-bar">
+        <div class="alignment-bar__stats" id="alignment-stats"></div>
+        <div class="alignment-bar__legend" id="block-legend"
+             aria-label="Chú giải các khối khớp"></div>
+      </div>
+      <div class="diff" id="diff-view">
+        <p class="empty-state" id="empty-state">
+          Chọn một ví dụ hoặc dán code rồi bấm <b>Phân tích</b>.
+        </p>
+      </div>
+    </section>
+  </section>
+</main>
+
+<script type="module" src="/static/js/main.js"></script>
+</body>
+</html>

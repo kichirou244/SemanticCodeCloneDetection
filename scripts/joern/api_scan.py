@@ -99,6 +99,52 @@ CANDIDATES: list[dict] = [
     {"name": "node.astChildren", "setup": "val n = cpg.method.ast.l.head",
      "expr": "Iterator(n).astChildren.l.size", "expect": "ok"},
 
+    # === VÒNG 2 (sau lần quét đầu tiên) =====================================
+    # Đây là những mắt xích exporter *bắt buộc* phải có. Chúng không nằm trong 25
+    # ứng viên đầu vì lúc đó ta chưa biết `reachingDef` hỏng vì lý do gì — mà
+    # "không có member" và "thiếu tham số" là hai việc khác hẳn nhau. Lần quét đầu
+    # in ra cột lý do **rỗng** (bug của chính script này), nên không suy ra được
+    # gì từ "FAIL"; phải hỏi lại với đúng dạng lời gọi.
+
+    # Cạnh CFG là mắt xích số 1. Hai đường độc lập: (a) đi theo cạnh thật,
+    # (b) nối các node theo thứ tự tự nhiên. Nếu (a) hỏng thì (b) vẫn dựng được
+    # CFG xấp xỉ — và phải ghi rõ trong `.meta` rằng CFG là bản xấp xỉ.
+    {"name": "node.cfgNext", "setup": "val n = cpg.method.cfgNode.l.head",
+     "expr": "Iterator(n).cfgNext.l.size", "expect": "ok"},
+    {"name": "cfgNode.sorted", "expr": "cpg.method.cfgNode.sorted.l.size", "expect": "ok"},
+    {"name": "node.order", "setup": "val n = cpg.method.cfgNode.l.head",
+     "expr": "Iterator(n).order.l.size", "expect": "ok"},
+
+    # ARGUMENT + PARAMETER_OUT: exporter cần ghép cặp (call, đối số) và nhận biết
+    # đối số nào là tham số hàm.
+    {"name": "node.argument", "setup": "val cn = cpg.call.l.head",
+     "expr": "Iterator(cn).argument.l.size", "expect": "ok"},
+
+    # Cạnh CALL: callee nằm ngoài method này nên không có trong node set; cách duy
+    # nhất để gắn cạnh nội bộ là tìm IDENTIFIER cùng tên trong thân hàm. Cần `name`
+    # để khớp — và `code` để dựng EVAL_ORDER mà không cần tới `lineNumber`.
+    {"name": "node.name", "setup": "val n = cpg.method.ast.l.head", "expr": "Iterator(n).name.l.size",
+     "expect": "ok"},
+    {"name": "node.code", "setup": "val n = cpg.method.ast.l.head", "expr": "Iterator(n).code.l.size",
+     "expect": "ok"},
+
+    # Data flow. `reachingDef` trong Joern nhận tham số `includeImplicit`, nên
+    # dò cả ba biến thể. Đây là câu hỏi quyết định M4 còn giữ được cạnh data-flow
+    # hay phải bỏ nó khỏi hợp đồng schema.
+    {"name": "call.reachingDef(false)", "expr": "cpg.call.reachingDef(false).l.size",
+     "expect": "ok"},
+    {"name": "identifier.reachingDef(false)",
+     "expr": "cpg.identifier.reachingDef(false).l.size", "expect": "ok"},
+    {"name": "local.reachingDef(false)", "expr": "cpg.local.reachingDef(false).l.size",
+     "expect": "ok"},
+
+    # TARG/SOURCE: bảng help liệt kê `.target`/`.source` dưới `Call` nhưng gọi
+    # trực tiếp thì hỏng — thử đường qua `.assignment` trước khi kết luận là bỏ.
+    {"name": "call.assignment.target", "expr": "cpg.call.assignment.target.l.size",
+     "expect": "ok"},
+    {"name": "call.assignment.source", "expr": "cpg.call.assignment.source.l.size",
+     "expect": "ok"},
+
     # --- ĐỐI CHỨNG: hai cái này chắc chắn hỏng, đã bác ở các lần chạy trước ----
     {"name": "call.ref", "expr": "cpg.call.ref.l.size", "expect": "fail"},
     {"name": "local.reachingDef", "expr": "cpg.local.reachingDef.l.size", "expect": "fail"},
@@ -113,6 +159,18 @@ TEMPLATE = """// Sinh tự động bởi scripts/joern/api_scan.py — đừng s
   println("VALUE " + ({expr}))
 }}
 """
+
+
+def error_hint(blob: str) -> str:
+    """Dòng lỗi compiler đáng đọc nhất, bỏ tiếng ồn tiền tố `[E008]`/đường dẫn."""
+    for raw in blob.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("$ "):
+            continue
+        low = line.lower()
+        if any(h in low for h in _HINTS):
+            return line[:160]
+    return blob.strip().splitlines()[0][:160] if blob.strip() else "?"
 
 
 def build_script(cand: dict, project: str) -> str:
@@ -139,8 +197,18 @@ def run_one(joern_cmd: list[str], cand: dict, src: Path, sc_path: Path,
     if ok:
         res["value"] = m.group(1).strip()
     else:
-        res["error"] = (err or out).strip()[:300]
+        blob = err or out
+        res["error"] = blob.strip()[:300]
+        res["error_hint"] = error_hint(blob)
     return res
+
+
+# Sai *tên* và sai *số tham số* là hai lỗi khác hẳn nhau: `reachingDef` tồn tại
+# nhưng cần `(includeImplicit)` thì chỉ cần thêm tham số, còn không có member thì
+# phải đổi hẳn thiết kế. Trộn hai cái này thành một dòng trống thì ta không phân
+# biệt được, nên phải trích đúng dòng compiler nói.
+_HINTS = ("not a member", "missing argument", "too many arguments", "type mismatch",
+          "not found", "does not exist", "value ", "cannot resolve")
 
 
 def main() -> None:
@@ -205,9 +273,9 @@ def _summarise(data: dict, cands: list[dict], out_path: Path) -> None:
     for c in cands:
         r = results.get(c["name"])
         if r and not r["ok"]:
-            first = next((ln for ln in (r.get("error") or "").splitlines()
-                          if "not a member" in ln or "not found" in ln), "")
-            print(f"  {c['name']:24s} {first[:110]}")
+            # `error_hint` là phần quan trọng nhất: "not a member" = đổi hẳn tên,
+            # "missing argument" = chỉ thiếu tham số. Hai việc khác hẳn nhau.
+            print(f"  {c['name']:24s} {r.get('error_hint') or '(khong doc loi compiler)'}")
 
     # Đối chứng hỏng ⇒ bản đồ này đáng nghi, phải nói ra chứ không im lặng.
     bad_control = [c["name"] for c in cands

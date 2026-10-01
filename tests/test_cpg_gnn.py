@@ -183,6 +183,26 @@ def test_permuted_graph_is_isomorphic(rng):
     assert set(p.edge_type.tolist()) == set(g.edge_type.tolist())
 
 
+def test_graph_stats_exposes_missing_edge_types():
+    """Cache đã build có thể là CPG *nửa vời* (chỉ AST+CFG). `graph_stats` phải
+    nói thẳng loại cạnh nào vắng — đó là điều kiện để preflight chặn train."""
+    import numpy as np
+    from src.representations.cpg.graph import CPGraph, graph_stats
+    from src.representations.cpg.schema import edge_type_id
+
+    ast_only = CPGraph(
+        node_type=np.array([0, 1, 2], dtype=np.int64),
+        node_feat=np.zeros((3, 1), dtype=np.float32),
+        edge_index=np.array([[0, 1], [1, 2]], dtype=np.int64),
+        edge_type=np.array([edge_type_id("AST"), edge_type_id("CFG")], dtype=np.int64),
+    )
+    s = graph_stats([ast_only])
+    assert s["edge_type_counts"] == {"AST": 1, "CFG": 1}
+    assert "REACHING_DEF" in s["edge_types_missing"]
+    assert "CALL" in s["edge_types_missing"]
+    assert "AST" not in s["edge_types_missing"]
+
+
 def test_graph_stats_reports_size(rng):
     s = graph_stats([_graph_from(make_synthetic_graph(rng, 10)) for _ in range(4)])
     assert s["n_graphs"] == 4

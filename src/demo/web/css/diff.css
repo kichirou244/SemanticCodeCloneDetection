@@ -1,0 +1,226 @@
+/* ==========================================================================
+   Khung so khớp: hai khung code + cột nối giữa.
+
+   Nguyên tắc bố cục: MỘT vùng cuộn dùng chung cho cả hai khung và cột nối.
+   Nếu để mỗi khung cuộn riêng thì cột nối lệch ngay khi hai khung dài khác
+   nhau — mà độ dài khác nhau là chuyện thường xuyên ở demo này.
+   ========================================================================== */
+
+.alignment-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-inset);
+}
+
+.alignment-bar__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  font-size: 0.73rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+.alignment-bar__stats b { color: var(--text-primary); font-weight: 500; }
+.alignment-bar__stats .is-warn { color: var(--verdict-unknown); }
+
+.alignment-bar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.block-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0.16rem 0.5rem 0.16rem 0.32rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--bg-raised);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast);
+}
+.block-chip:hover, .block-chip:focus-visible {
+  border-color: var(--block-hue, 199);
+  color: var(--text-primary);
+  outline: none;
+}
+.block-chip__swatch {
+  width: 0.55rem; height: 0.55rem;
+  border-radius: 3px;
+  background: hsl(var(--block-hue, 199) 55% 50%);
+}
+.block-chip__link {
+  color: var(--text-muted);
+  font-size: 0.62rem;
+}
+
+/* ------------------------------------------------------------------- khung */
+.diff {
+  max-height: min(72vh, 46rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.diff__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--gutter-w) minmax(0, 1fr);
+  width: max-content;
+  min-width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  line-height: var(--code-line-h);
+}
+
+/* Nhãn đầu khung nằm trên grid row riêng: không cộng chiều cao vào cột nối. */
+.diff__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--gutter-w) minmax(0, 1fr);
+  grid-column: 1 / -1;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+.diff__head-cell {
+  padding: 0.45rem 0.75rem;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.diff__head-cell--gap { padding: 0; }
+
+.diff__pane { min-width: 0; }
+
+.diff__pane + .diff__gutter,
+.diff__gutter + .diff__pane { border-left: 1px solid var(--border-subtle); }
+
+.diff__line {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr);
+  min-height: var(--code-line-h);
+}
+
+.diff__lineno {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding-right: 0.7rem;
+  text-align: right;
+  color: var(--text-muted);
+  background: var(--bg-sunken);
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.diff__code {
+  padding: 0 0.75rem;
+  white-space: pre;
+  tab-size: 4;
+}
+
+/* Dòng trống vẫn phải giữ chiều cao, nếu không hai khung lệch hàng. */
+.diff__line--blank .diff__code::after { content: '\200b'; }
+
+/* ------------------------------------------------------------------- token */
+.tok {
+  border-radius: 3px;
+  transition: opacity var(--t-fast), background var(--t-fast);
+}
+
+/* Cú pháp */
+.tok--kw   { color: var(--syn-kw); }
+.tok--type { color: var(--syn-type); }
+.tok--str  { color: var(--syn-str); }
+.tok--num  { color: var(--syn-num); }
+.tok--com  { color: var(--syn-com); font-style: italic; }
+.tok--op   { color: var(--syn-op); }
+.tok--id   { color: var(--syn-id); }
+.tok--pp   { color: var(--syn-pp); }
+.tok--ws   { color: inherit; }
+.tok--bad  { color: var(--syn-bad); text-decoration: underline wavy; }
+
+/* Lệch: nền ấm nhạt. Không dùng đỏ tươi — đọc lâu sẽ chói và dễ tưởng là lỗi. */
+.tok--diff {
+  background: hsl(var(--diff-diff-hue, 6) 55% 50% / 0.18);
+  box-shadow: inset 0 -1.5px 0 hsl(var(--diff-diff-hue, 6) 60% 58% / 0.5);
+}
+
+/* Khớp: nền theo hue của khối + gạch chân đậm để thấy ranh giới khi token sát nhau. */
+.tok--match {
+  background: hsl(var(--block-hue, 158) 52% 48% / 0.3);
+  box-shadow: inset 0 -1.5px 0 hsl(var(--block-hue, 158) 62% 62% / 0.85);
+}
+
+/* Khối đang được rê chuột: nổi lên, phần còn lại mờ đi. */
+.diff .tok.is-dim { opacity: 0.32; }
+.diff .tok.is-focus {
+  opacity: 1;
+  background: hsl(var(--block-hue, 158) 60% 54% / 0.52);
+  box-shadow: inset 0 -2px 0 hsl(var(--block-hue, 158) 70% 70%);
+}
+
+/* ------------------------------------------------------------ cột nối giữa */
+.diff__gutter {
+  position: relative;
+  background: var(--bg-sunken);
+}
+
+.gutter-link {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 2px solid hsl(var(--block-hue, 158) 52% 50% / 0.75);
+  transition: border-color var(--t-fast), opacity var(--t-fast);
+  cursor: pointer;
+}
+.gutter-link::before,
+.gutter-link::after {
+  position: absolute;
+  top: -3.5px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: hsl(var(--block-hue, 158) 55% 52%);
+  content: '';
+}
+.gutter-link::before { left: 3px; }
+.gutter-link::after  { right: 3px; }
+
+.gutter-link.is-dim { opacity: 0.2; }
+.gutter-link.is-focus { border-color: hsl(var(--block-hue, 158) 68% 62%); }
+
+.gutter-link__label {
+  position: absolute;
+  top: -0.55rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 0.2rem;
+  background: var(--bg-sunken);
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 52rem) {
+  :root { --gutter-w: 2rem; }
+  .diff__gutter { display: none; }
+  .diff__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}

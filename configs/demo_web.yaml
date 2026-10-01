@@ -1,0 +1,106 @@
+# Cấu hình web demo (EXP-DEMO-001)
+#
+# Demo chỉ ĐỌC artifact của các experiment đã có. Nó không train, không ghi vào
+# `results/`, và không sinh checkpoint mới — nhờ vậy chạy demo không làm nhiễu
+# số liệu nghiên cứu.
+#
+# Ngưỡng quyết định KHÔNG khai ở đây: đọc từ `<results_dir>/threshold.json`, tức
+# đúng ngưỡng mà `evaluate_model` đã chọn trên validation và đóng băng (DEC-022).
+
+demo:
+  id: EXP-DEMO-001
+  name: clone_demo_web
+  # Thứ tự hiển thị trên UI: baseline trước, rồi theo họ đại diện.
+  order: [B1, M1, M2, M3]
+
+  limits:
+    # Chặn input khổng lồ: demo là công cụ xem trực quan, không phải batch job.
+    # Giữ trùng `max_code_chars` của EXP-004 (20 000) để M3 không vỡ cây.
+    max_code_chars: 20000
+    max_lines: 400
+    max_request_bytes: 262144
+
+server:
+  host: 127.0.0.1
+  port: 8000
+  # Số model nạp trước khi server báo sẵn sàng. 0 = không nạp, model nạp lười
+  # (lazy) ở request đầu tiên tương ứng.
+  preload: [M1, M2, M3]
+
+runtime:
+  # auto = cuda nếu torch thấy GPU, ngược lại cpu. Demo chạy 1 cặp/req nên
+  # CPU vẫn đủ nhanh và giúp chạy được trên máy không có GPU.
+  device: auto
+
+# Dữ liệu thật để mở chế độ "xem cặp của POJ-104". Tách khỏi `models.*` vì đây
+# không phải tham số model mà là nguồn dữ liệu dùng chung cho nhiều model.
+data:
+  pairs_dir: data/pairs/poj104
+  processed: data/processed/poj104/samples.jsonl
+  real_pairs_limit: 5
+
+  # Chế độ quét thư mục: tất cả file .c/.cpp/.h dưới `library_dir` được so all-vs-all
+  # bằng fingerprint MOSS; UI chọn ngưỡng % để lọc cặp hiển thị. Bỏ file mới vào
+  # thư mục này là xuất hiện trong lần quét kế tiếp — không cần upload.
+  library_dir: data/library
+  # Chặn database lớn: quét N² cặp, 300 file là 45k phép so fingerprint.
+  library_max_files: 300
+  # File dài hơn ngưỡng này bị cắt khi fingerprint (giữ cùng quy ước max_code_chars).
+  library_max_chars: 20000
+  # Ngưỡng mặc định cho thanh trượt % trên UI (0..1).
+  library_default_threshold: 0.5
+
+alignment:
+  # Đơn vị so khớp: token (không phải dòng) — đoạn khớp nằm giữa dòng vẫn
+  # bắt được, và đây cũng là thứ ta muốn nhìn thấy.
+  mode: abstract
+  # Bỏ qua khi so khớp: comment và chuỗi literal. Chúng mang ngữ nghĩa riêng
+  # nhưng hay khác nhau giữa hai bản clone, giữ lại sẽ thành nhiễu trực quan.
+  ignore_kinds: [com, str]
+  # Khối khớp ngắn hơn ngưỡng này thì không tô màu (tránh rác highlight do
+  # `;`, `)`, `{` trùng nhau rải rác).
+  min_block_tokens: 2
+  # Số màu để tô chuỗi các khối khớp (bảng màu tuần hoàn trong `web/css`).
+  n_block_colors: 6
+
+models:
+  B1:
+    label: B1 · MOSS (winnowing)
+    family: baseline
+    kind: moss
+    # Baseline = MOSS, thay TF-IDF (EXP-001). Threshold/F1 đọc từ EXP-006; k/w
+    # giữ đúng mặc định MOSS (k=50, w=100) để con số khớp báo cáo.
+    results_dir: results/exp006_moss_poj104
+    k: 50
+    w: 100
+
+  M1:
+    label: M1 · CodeBERT
+    family: transformer
+    kind: transformer
+    results_dir: results/exp002_codebert_poj104
+    hf_id: microsoft/codebert-base
+    max_length: 256
+    # `resolve_eval_checkpoint` ưu tiên bản nhẹ (chỉ tensor) nếu có.
+    checkpoint: results/exp002_codebert_poj104/best_weights_only.pt
+
+  M2:
+    label: M2 · GraphCodeBERT
+    family: transformer
+    kind: transformer
+    results_dir: results/exp003_graphcodebert_poj104
+    hf_id: microsoft/graphcodebert-base
+    max_length: 256
+    # M2 chưa có bản nhẹ (Kaggle chỉ tải về `best_checkpoint.pt` 1.44 GB).
+    # `load_eval_weights` tự phân biệt theo tên file nên vẫn nạp được.
+    checkpoint: results/exp003_graphcodebert_poj104/best_checkpoint.pt
+
+  M3:
+    label: M3 · ASTNN
+    family: ast
+    kind: astnn
+    results_dir: results/exp004_astnn_poj104
+    hidden_size: 200
+    dropout: 0.2
+    language: cpp
+    checkpoint: results/exp004_astnn_poj104/best_checkpoint.pt
