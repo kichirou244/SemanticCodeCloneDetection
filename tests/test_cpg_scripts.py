@@ -237,6 +237,24 @@ def test_api_scan_error_hint_separates_arity_from_missing_member():
     assert "not a member" in error_hint(missing)
     arity = "[E008] missing argument list for method reachingDef(Boolean)\n"
     assert "missing argument" in error_hint(arity)
+
+
+def test_error_hint_prefers_error_line_over_source_line():
+    """Joern in nguyên đoạn source C++ xen giữa báo lỗi. Source hay chứa
+    `println("value : " + ...)`, nên nếu dò source đòi trước thì hint trả về một
+    dòng code vô nghĩa — và ta kết luận nhầm là API sai. Đã dính đúng case này ở
+    `cfgNode.sorted`: thật ra là E172 Type Error."""
+    from scripts.joern.api_scan import error_hint
+
+    blob = (
+        "7 | println(\"value : \" + key + \" -> \" + map.get(key));\n"
+        "  |                                               ^\n"
+        "[E172] ------------ E172 ------------\n"
+        "[E172] Type error: method sorted\n"
+    )
+    hint = error_hint(blob)
+    assert "Type error" in hint, hint
+    assert "println" not in hint
     # Không bao giờ trả chuỗi rỗng: chuỗi rỗng chính là lỗi lần trước.
     assert error_hint("$ python x.py\nrc=1\n")
     assert error_hint("")
@@ -505,3 +523,20 @@ def test_joern_scripts_use_param_interface(script):
     assert "@main def exec(" in text
     assert "importCode(" in text
     assert "CPG_EXPORT_JOBS" not in text  # biến môi trường là cách cũ (joernpy)
+
+
+def test_export_cpg_per_function_histogram_is_not_batch_cumulative():
+    """`.meta` của mỗi hàm phải ghi histogram của chính hàm đó.
+
+    `edgeHist` trong exporter là map cộng dồn toàn lô (cho dòng tổng kết cuối
+    cùng). Nếu gì đó ghi nó vào `.meta` thì hàm đầu lô đúng còn hàm sau mang sẵn
+    loại cạnh của hàm trước — và `edge_types_present` mà Python cộng dồn sẽ báo
+    một hàm thực sự thiếu CFG là có CFG. Đây là loại lỗi âm thầm làm hỏng đúng
+    cái quality gate dùng để quyết định M4; không test được bằng Scala ở máy này
+    (không có JDK) nên phải chặn ngay trên nguồn.
+    """
+    text = (ROOT / "scripts/joern/export_cpg.sc").read_text(encoding="utf-8")
+    assert "val hist = uniq.groupBy(_._3)" in text
+    assert "edgeHist.keys" not in text, (
+        "edgeHist là map cộng dồn toàn lô — dùng cho .meta sẽ bịa loại cạnh cho "
+        "hàm đứng sau hàm khác trong lô")

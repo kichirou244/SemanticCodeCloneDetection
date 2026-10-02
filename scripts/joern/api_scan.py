@@ -248,8 +248,27 @@ def run_one(joern_cmd: list[str], cand: dict, src: Path, sc_path: Path,
 # nhưng cần `(includeImplicit)` thì chỉ cần thêm tham số, còn không có member thì
 # phải đổi hẳn thiết kế. Trộn hai cái này thành một dòng trống thì ta không phân
 # biệt được, nên phải trích đúng dòng compiler nói.
-_HINTS = ("not a member", "missing argument", "too many arguments", "type mismatch",
-          "not found", "does not exist", "value ", "cannot resolve")
+# Ưu tiên dòng nào **là dòng lỗi** trước. Joern in nguyên đoạn source C++ xen
+# giữa báo lỗi, mà source đó hay chứa chữ "value " (println("value : " + ...)),
+# nên nếu dò source đòi trước thì `error_hint` trả về một dòng code vô nghĩa và
+# ta kết luận nhầm API sai. Ví dụ đã dính: `cfgNode.sorted` thật ra là
+# E172 Type Error nhưng hint trả về `7 | println("value : " + ...)`.
+_HINTS_STRONG = ("type error", "not a member", "missing argument", "too many arguments",
+                 "type mismatch", "not found", "does not exist", "cannot resolve")
+# Yếu hơn, chỉ dùng khi không dòng nào khớp mạnh. Giữ "value " ở đây vì lỗi
+# kiểu "value X is not a member of" không luôn kèm từ khóa mạnh.
+_HINTS_WEAK = ("value ", "error")
+
+
+def error_hint(blob: str) -> str:
+    """Dòng lỗi compiler đáng đọc nhất, bỏ tiếng ồn tiền tố `[E008]`/đường dẫn."""
+    lines = [ln.strip() for ln in blob.splitlines() if ln.strip() and not ln.startswith("$ ")]
+    for hints in (_HINTS_STRONG, _HINTS_WEAK):
+        for line in lines:
+            low = line.lower()
+            if any(h in low for h in hints):
+                return line[:160]
+    return lines[0][:160] if lines else "?"
 
 
 def main() -> None:

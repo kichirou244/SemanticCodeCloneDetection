@@ -145,7 +145,13 @@
       val missing = List("AST", "CFG", "CALL", "REF", "ARGUMENT", "TARG",
                          "PARAMETER_OUT", "REACHING_DEF", "EVAL_ORDER")
         .filter(k => !uniq.exists(_._3 == k)).mkString(";")
-      val hist = edgeHist.keys.toList.sorted.map(k => s"$k=${edgeHist(k)}").mkString(";")
+      // Histogram PHẢI tính riêng cho hàm này. `edgeHist` ở trên là map cộng dồn
+      // toàn lô (dùng cho dòng tổng kết cuối cùng); nếu ghi nó vào `.meta` thì hàm
+      // đầu lô đúng còn hàm sau mang sẵn loại cạnh của hàm trước — và Python sẽ
+      // đếm `edge_types_present` theo đúng cái bịa đó, tức một hàm thực sự thiếu
+      // CFG vẫn bị báo là có CFG. `mapValues` + `toList` để chạy được cả 2.12/2.13.
+      val hist = uniq.groupBy(_._3).mapValues(_.size).toList
+        .sortBy(_._1).map { case (k, v) => s"$k=$v" }.mkString(";")
       Files.write(Paths.get(outDir, s"$sid.meta"),
         (s"n_nodes\t${ast.size}\n" +
          s"n_edges\t${uniq.size}\n" +
