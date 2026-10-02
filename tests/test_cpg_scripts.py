@@ -284,6 +284,42 @@ def test_export_cpg_avoids_constructs_that_failed_to_compile():
         assert kind in src
 
 
+def test_failure_digest_shows_the_compiler_error_not_joern_noise():
+    """Lô chết mà không in lý do tốn một cả vòng chạy Joern để đoán. Digest phải
+    lấy dòng đầu (lỗi compile nằm ở đầu) và bỏ tiếng ồn log nội bộ."""
+    import subprocess
+    from scripts.build_cpg_export import _failure_digest
+
+    noisy = "\n".join(
+        ["$ joern --script export_cpg.sc"]          # dòng lệnh, không phải lỗi
+        + [f"[E008] Not Found Error: line {i}" for i in range(1, 6)]
+        + ["org.jline.utils.Log logr", "closing/saving project `cpg_batch`",
+           "The graph has been modified. You may want to use the `save` command"]
+    )
+    proc = subprocess.CompletedProcess(args=["joern"], returncode=1,
+                                       stdout=noisy, stderr="")
+    d = _failure_digest(proc, Path("batch_0"))
+    assert "Not Found Error" in d          # lỗi thật có mặt
+    assert "joern --script" not in d       # dòng lệnh bị lọc
+    assert "closing/saving" in d           # giữ 12 dòng đầu, nên vẫn thấy
+    assert "batch_0" in d and "rc=1" in d  # dẫn tới log đầy đủ
+
+
+def test_failure_digest_caps_output():
+    import subprocess
+    from scripts.build_cpg_export import _failure_digest
+
+    proc = subprocess.CompletedProcess(
+        args=["joern"], returncode=1,
+        stdout="\n".join(f"line {i}" for i in range(200)), stderr="")
+    d = _failure_digest(proc, Path("batch_0"))
+    # Giới hạn là 12 dòng *nội dung* Joern, không phải 12 dòng cả khối in ra
+    # (còn tiêu đề + dòng log đầy đủ).
+    content = [ln for ln in d.splitlines() if ln.startswith("    ")]
+    assert len(content) == 12
+    assert "line 199" not in d
+
+
 def test_smoke_runs_without_dataset(tmp_path, monkeypatch):
     """`--smoke` phải chạy được khi CHƯA có `data/processed/...`.
 

@@ -219,7 +219,31 @@ def run_batch(samples: list[dict], out_dir: Path, work_dir: Path, joern_cmd: str
         return 0, len(samples)
     n_ok = sum(1 for r in samples if (out_dir / f"{r['sample_id']}.json").exists())
     n_err = sum(1 for r in samples if (out_dir / f"{r['sample_id']}.json.error").exists())
+    # Lô chết mà **không in lý do** là kiểu lỗi tốn nhiều thời gian nhất: biết
+    # "0 hàm ra JSON" mà không biết vì sao thì phải đoán, mà đoán thì tốn một cả
+    # vòng chạy Joern nữa. Nên in thẳng dòng compiler nói ngay tại đây.
+    if n_ok == 0 and proc is not None:
+        print(_failure_digest(proc, batch_dir))
     return n_ok, n_err
+
+
+def _failure_digest(proc: subprocess.CompletedProcess, batch_dir: Path) -> str:
+    """Rút lỗi đầu tiên Joern thật sự báo ra.
+
+    Chỉ log ra **phần đầu** output, không phải 5k dòng cuối: lỗi compile Scala
+    nằm ở đầu, còn phần cuối là log nội bộ của Joern (jline, closing project…)
+    và chỉ làm nhiễu. Bỏ dòng `$ ...` và dòng trống, giới hạn 12 dòng.
+    """
+    blob = (proc.stdout or "") + "\n" + (proc.stderr or "")
+    lines = [ln.rstrip() for ln in blob.splitlines() if ln.strip()]
+    interesting = [ln for ln in lines if not ln.startswith("$ ")]
+    head = interesting[:12]
+    return ("\n[cpg-export] LÔ CHẾT mà không ra JSON: "
+            f"{batch_dir.name} (rc={proc.returncode}).\n"
+            "  Dưới đây là 12 dòng đầu Joern trả về — thường là lỗi compile "
+            "Scala, đọc là biết sửa ở đâu:\n    "
+            + "\n    ".join(head)
+            + f"\n  Log đầy đủ: artifacts/cpg_work/joern_batch_{batch_dir.name}.log")
 
 
 def _meta_stats(out_dir: Path, sample_ids: list[str]) -> dict:

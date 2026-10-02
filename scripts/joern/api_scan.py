@@ -145,7 +145,48 @@ CANDIDATES: list[dict] = [
     {"name": "call.assignment.source", "expr": "cpg.call.assignment.source.l.size",
      "expect": "ok"},
 
+    # === VÒNG 3 (sau 36 ứng viên) ============================================
+    # Kết luận vòng 2: `reachingDef` **không tồn tại** — cả dạng không tham số lẫn
+    # dạng `reachingDef(false)` đều FAIL với `E008 Not Found` (không phải "missing
+    # argument list"). Nên nó không phải chuyện thiếu tham số; CPGQL của Joern v4
+    # không có step này cho C++. Hệ quả: nếu chỉ dựa vào DSL thì M4 **không** lấy
+    # được data-flow ⇒ phải bỏ REACHING_DEF khỏi hợp đồng (và M4 chỉ còn
+    # AST+CFG, gần như trùng ASTNN).
+    #
+    # Nhưng dữ liệu thì CÓ: log của `ReachingDefPass` in "Number of definitions:
+    # 22", tức cạnh đã nằm trong đồ thị, chỉ là không có step để đi tới nó.
+    # OverflowDB cho phép đi theo cạnh thô. Nếu `cpg.graph` mở được thì ta dựng
+    # được REACHING_DEF/REF từ đúng cạnh gốc — không phải đoán mò.
+    {"name": "graph.nodes", "expr": "cpg.graph.l.size", "expect": "ok"},
+    {"name": "graph.E", "expr": "cpg.graph.E.l.size", "expect": "ok"},
+
+    # Câu hỏi quan trọng nhất của cả EXP-005: CPG này thực sự lưu những loại cạnh
+    # nào. In ra **từ vựng cạnh** thay vì đếm — biết danh sách là biết ngay M4
+    # có thể có những gì, thay vì mò tiếp từng step một.
+    {"name": "graph.E.labels",
+     "expr": 'cpg.graph.E.l.map(_.label).distinct.sorted.mkString(",")', "expect": "ok"},
+
+    # Nếu vocabulary chứa REACHING_DEF thì lọc trực tiếp được, không cần DSL.
+    {"name": "graph.E.reachingDef",
+     "expr": 'cpg.graph.E.l.filter(_.label == "REACHING_DEF").size', "expect": "ok"},
+    {"name": "graph.E.ref",
+     "expr": 'cpg.graph.E.l.filter(_.label == "REF").size', "expect": "ok"},
+
+    # `.inE`/`.outE` là đường đi cạnh gốc từ một node — nếu mở được thì không cần
+    # `cpg.graph` nữa, mà gắn trực tiếp được cạnh data-flow cho từng node.
+    {"name": "node.outE", "setup": "val n = cpg.method.ast.l.head",
+     "expr": "Iterator(n).outE.l.size", "expect": "ok"},
+    {"name": "node.inE", "setup": "val n = cpg.method.ast.l.head",
+     "expr": "Iterator(n).inE.l.size", "expect": "ok"},
+
+    # Cạnh CALL trong thân hàm: `node.name` đã FAIL nên không khớp được bằng tên.
+    # Nhưng callee là Method (mà `method.name` thì OK) và identifier trong thân hàm
+    # có `.code` (OK). Khớp bằng *text* là đường còn lại.
+    {"name": "callee.name", "setup": "val cn = cpg.call.l.head",
+     "expr": "Iterator(cn).callee.name.l.size", "expect": "ok"},
+
     # --- ĐỐI CHỨNG: hai cái này chắc chắn hỏng, đã bác ở các lần chạy trước ----
+    # Giữ **nguyên tên** để api_scan nhận cache và không chạy lại (tiết kiệm 20s).
     {"name": "call.ref", "expr": "cpg.call.ref.l.size", "expect": "fail"},
     {"name": "local.reachingDef", "expr": "cpg.local.reachingDef.l.size", "expect": "fail"},
 ]
