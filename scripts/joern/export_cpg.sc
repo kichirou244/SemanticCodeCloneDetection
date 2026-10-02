@@ -80,9 +80,34 @@
   val edgeHist = mutable.Map.empty[String, Int]
   val labelHist = mutable.Map.empty[String, Int]
 
+  // Chọn **đúng một** method cho mỗi file, và chỉ ghi sau khi chọn xong.
+  //
+  // Joern sinh thêm method giả cho mỗi file: `<global>`, `<includes>`,
+  // `<operator>.addition`… Chúng có `file.name` **TRÙNG** với file thật — smoke in
+  // ra cả `classify` lẫn `<global>`, đều `List(smoke.cpp)`. Mà `sid` lấy từ tên
+  // file, nên mọi method của một file đều ghi vào cùng một `{sid}.json` và cái
+  // sau **đè** cái trước.
+  //
+  // Tệ hơn: `n_ok` đếm "file có tồn tại" nên vẫn đủ, và mọi gate đều xanh — hỏng
+  // dữ liệu hoàn toàn im lặng. Đo được trên lô 500 hàm: 100 file có >1 method.
+  // Chọn method THẬT (tên không bắt đầu bằng `<`); nếu còn nhiều thì lấy AST lớn
+  // nhất, và nếu vẫn bằng thì so tên để không phụ thuộc thứ tự traversal.
+  val bestReal = mutable.Map.empty[String, (Int, String, String, String)]
+  val bestAny = mutable.Map.empty[String, (Int, String, String, String)]
+  val hits = mutable.Map.empty[String, Int]
+  var n_unindexed = 0
+
   for (m <- cpg.method.l) {
     val fname = m.file.name.l.headOption.getOrElse("")
-    val sid = fileToSample.getOrElse(fname, fname.replaceAll("[^A-Za-z0-9_-]", "_"))
+    // File không có trong `index.tsv` là file giả của Joern (`<includes>`…), không
+    // thuộc dataset. Bỏ qua thay vì đặt tên `<includes>` -> `_includes_.json` rồi
+    // ghi ra file rác mà không ai hỏi. Nếu file THẬT lọt vào nhánh này thì gate
+    // `n_missing` sẽ báo, chứ không im lặng nuốt.
+    if (!fileToSample.contains(fname)) {
+      n_unindexed += 1
+    } else {
+    val sid = fileToSample(fname)
+    hits(sid) = hits.getOrElse(sid, 0) + 1
     val ast = m.ast.l.toList
 
     if (ast.nonEmpty) {
@@ -145,8 +170,6 @@
           uniq.map(e => s"""{"src": ${e._1}, "dst": ${e._2}, "label": ${esc(e._3)}}""").mkString(",") +
           s"""]}"""
 
-      Files.write(Paths.get(outDir, s"$sid.json"), body.getBytes(StandardCharsets.UTF_8))
-
       // `.meta`: chẩn đoán từng hàm. `edge_types_missing` là phần quan trọng —
       // nó nói thẳng CPG này thiếu loại cạnh nào thay vì để ta phát hiện sau khi
       // train xong. `file_name` để Python đếm "file nào chứa nhiều hàm": cách v1
@@ -163,19 +186,45 @@
       // CFG vẫn bị báo là có CFG. `mapValues` + `toList` để chạy được cả 2.12/2.13.
       val hist = uniq.groupBy(_._3).mapValues(_.size).toList
         .sortBy(_._1).map { case (k, v) => s"$k=$v" }.mkString(";")
-      Files.write(Paths.get(outDir, s"$sid.meta"),
+      val metaStr =
         (s"n_nodes\t${ast.size}\n" +
          s"n_edges\t${uniq.size}\n" +
          s"file_name\t${fname}\n" +
          s"method_name\t${m.name}\n" +
          s"method_signature\t${m.signature}\n" +
          s"edge_types\t$hist\n" +
-         s"edge_types_missing\t$missing\n").getBytes(StandardCharsets.UTF_8))
-      n_written += 1
+         s"edge_types_missing\t$missing\n")
+
+      val payload = (ast.size, m.name, body, metaStr)
+      // Hơn nữa: khi AST bằng nhau thì so tên method. `cpg.method.l` không bảo đảm
+      // thứ tự, nên nếu chỉ so `ast.size` thì kết quả có thể đổi giữa hai lần
+      // chạy cùng dữ liệu — và ta không có cách nào phát hiện ngoài việc diff.
+      def better(cand: (Int, String, String, String),
+                 prev: (Int, String, String, String)): Boolean =
+        if (cand._1 != prev._1) cand._1 > prev._1 else cand._2 < prev._2
+      val target = if (!m.name.startsWith("<")) bestReal else bestAny
+      target.get(sid) match {
+        case Some(prev) if !better(payload, prev) => ()
+        case _ => target(sid) = payload
+      }
+    }
     }
   }
 
+  // Chỉ ghi những gì đã chọn. `bestReal` thắng `bestAny`; trong mỗi nhóm đã lưu
+  // method có AST lớn nhất nên không còn phụ thuộc thứ tự `cpg.method.l`.
+  val chosen = bestReal ++ bestAny.filter { case (k, _) => !bestReal.contains(k) }
+  for ((sid, (_, _, body, metaStr)) <- chosen.toList.sortBy(_._1)) {
+    Files.write(Paths.get(outDir, s"$sid.json"), body.getBytes(StandardCharsets.UTF_8))
+    Files.write(Paths.get(outDir, s"$sid.meta"), metaStr.getBytes(StandardCharsets.UTF_8))
+    n_written += 1
+  }
+
   println(s"[export_cpg] wrote=$n_written out=$outDir")
+  // Ba số này là bằng chứng chống ghi đè âm thầm: nếu `files_multi` > 0 mà
+  // `wrote` vẫn bằng số sample thì đã chọn đúng 1 method mỗi file.
+  println(s"[export_cpg] file co >1 method = ${hits.count(_._2 > 1)} " +
+    s"| method bi ao bo (khong indexed) = $n_unindexed")
   println("[export_cpg] edge histogram (toàn lô): " +
     edgeHist.toList.sortBy(_._1).map { case (k, v) => s"$k=$v" }.mkString(" "))
   println(s"[export_cpg] node labels (toàn lô): " +

@@ -579,3 +579,24 @@ def test_export_cpg_project_name_is_unique_per_batch():
     assert "projectName = \"cpg_batch\"" not in text
     assert "val projectName = \"cpg_\" + srcDir" in text
     assert "importCode(inputPath = srcDir, projectName = projectName)" in text
+
+
+def test_export_cpg_writes_one_json_per_sample_no_silent_overwrite():
+    """Một `sample_id` phải tương ứng đúng MỘT file `.json`.
+
+    Joern sinh method giả cho mỗi file (`<global>`, `<includes>`,
+    `<operator>.*`) và chúng có `file.name` **trùng** với file thật. Vì `sid`
+    lấy từ tên file nên chúng ghi vào cùng một `{sid}.json`, cái sau đè cái trước.
+    Tệ hơn: `n_ok` đếm "file có tồn tại" nên vẫn đủ, mọi gate vẫn xanh — hỏng dữ
+    liệu hoàn toàn im lặng. Đã đo được: lô 500 hàm có 100 file với >1 method.
+    """
+    text = _sc_code("scripts/joern/export_cpg.sc")
+    assert "Files.write" not in text.split("for (m <- cpg.method.l)")[1].split("for ((sid,")[0], (
+        "vẫn còn Files.write bên trong vòng lặp duyệt method — tức là nhiều "
+        "method cùng ghi đè một {sid}.json")
+    assert 'val chosen = bestReal ++ bestAny.filter' in text
+    assert 'if (!m.name.startsWith("<"))' in text
+    # File không nằm trong index.tsv là file giả của Joern: bỏ qua, đừng ghi rác.
+    assert "if (!fileToSample.contains(fname))" in text
+    # Bằng chứng chống ghi đè phải được in ra log, không chỉ im lặng xử lý.
+    assert "hits.count(_._2 > 1)" in text
