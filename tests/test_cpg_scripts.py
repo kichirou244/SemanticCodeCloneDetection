@@ -540,3 +540,42 @@ def test_export_cpg_per_function_histogram_is_not_batch_cumulative():
     assert "edgeHist.keys" not in text, (
         "edgeHist là map cộng dồn toàn lô — dùng cho .meta sẽ bịa loại cạnh cho "
         "hàm đứng sau hàm khác trong lô")
+
+
+def _sc_code(path: str) -> str:
+    """Nội dung script Joern **đã bỏ comment**. Comment trong các file này hay
+    nhắc lại chính cái lỗi đã sửa (kèm mã lỗi), nên assert trên nguyên văn sẽ
+    khớp nhầm vào chính dòng giải thích — một test tự thất bại vì lý do ngược với
+    điều nó kiểm tra."""
+    lines = (ROOT / path).read_text(encoding="utf-8").splitlines()
+    out = []
+    for line in lines:
+        # Cắt comment ở khoảng trắng trước `//` để không phá URL/đường dẫn.
+        i = line.find("//")
+        out.append(line[:i].rstrip() if i >= 0 and (i == 0 or line[i - 1] == " ") else line)
+    return "\n".join(out)
+
+
+def test_export_cpg_does_not_treat_scala_option_as_raw_value():
+    """`mutable.Map.get` trả `Option`, không phải giá trị thô.
+
+    Đã dính đúng lỗi này và bị mất một vòng Kaggle: `val na = nArgsByCall.get(n)`
+    rồi `if (na == null) ... else na.intValue` → E008 `value intValue is not a
+    member of Option[Integer]`, cả lô chết. Lưu ý `java.util.IdentityHashMap`
+    (dùng cho `idx`) `.get` trả `null` thật, nên hai chỗ này khác nhau và không
+    thể quy một quy tắc chung — chỗ nào map Scala thì phải match Option.
+    """
+    text = _sc_code("scripts/joern/export_cpg.sc")
+    assert "nArgsByCall.get(n) match" in text
+    for bad in ("na == null", "na.intValue"):
+        assert bad not in text, f"còn sót cách dùng Option như giá trị thô: {bad}"
+
+
+def test_export_cpg_project_name_is_unique_per_batch():
+    """Joern lưu project vào DB (`~/.joern`); các lô chạy tuần tự trong cùng
+    session nên tên project phải khác nhau. Đặt cứng một tên là lô thứ 2 đụng lô
+    thứ 1 — lỗi chỉ lộ ra ở hàm thứ 500, không lộ ở probe 20 hàm."""
+    text = _sc_code("scripts/joern/export_cpg.sc")
+    assert "projectName = \"cpg_batch\"" not in text
+    assert "val projectName = \"cpg_\" + srcDir" in text
+    assert "importCode(inputPath = srcDir, projectName = projectName)" in text

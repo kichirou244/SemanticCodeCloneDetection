@@ -52,7 +52,13 @@
     }
   } finally src.close()
 
-  importCode(inputPath = srcDir, projectName = "cpg_batch")
+  // Tên project phải **khác nhau giữa các lô**. Joern lưu project vào DB riêng
+  // (`~/.joern`), còn các lô chạy tuần tự trong cùng một session — đặt cứng một
+  // tên là lô thứ 2 trở đi sẽ đụng dữ liệu của lô trước, và lỗi đó chỉ lộ ra
+  // khi chạy tới hàm thứ 500 chứ không phải ở lô 20. Lấy tên từ `srcDir` (đã khác
+  // nhau theo lô rồi) để không phải thêm tham số.
+  val projectName = "cpg_" + srcDir.replaceAll("[^A-Za-z0-9]", "_").takeRight(40)
+  importCode(inputPath = srcDir, projectName = projectName)
   Files.createDirectories(Paths.get(outDir))
 
   // Escape chuỗi JSON tối thiểu — không thêm dependency (JVM không có JSON sẵn).
@@ -124,8 +130,13 @@
       uniq.foreach(e => edgeHist(e._3) = edgeHist.getOrElse(e._3, 0) + 1)
 
       val nodeRows = ast.zipWithIndex.map { case (n, i) =>
-        val na = nArgsByCall.get(n)
-        val naStr = if (na == null) "" else s""","n_args": ${na.intValue}"""
+        // `.get` trả `Option`, không phải `Integer`. Viết `na == null` thì luôn
+        // false (Option không bao giờ null) và `na.intValue` không tồn tại →
+        // E008 compile, cả lô chết. Phải match Option.
+        val naStr = nArgsByCall.get(n) match {
+          case Some(v) => s""","n_args": $v"""
+          case None    => ""
+        }
         s"""{"id": $i, "label": ${esc(n.label)}$naStr}"""
       }.mkString(",")
 
