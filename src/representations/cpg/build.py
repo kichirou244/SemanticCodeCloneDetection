@@ -17,6 +17,13 @@ import shutil
 import subprocess
 
 
+# `joern --version` chạy trong notebook (không có TTY) thì jline in log cảnh báo
+# `org.jline.utils.Log logr` và rồi mới tới prompt `joern>`. Lấy "dòng đầu tiên"
+# thì tên phiên bản của Joern thành một dòng log — đọc ra là hiểu nhầm hoàn toàn,
+# và nó nằm ngay trong output của gate nên rất dễ tin nhầm.
+_NOISE = ("org.jline", "SLF4J", "WARNING:", "Picked up", "joern>", "last-login")
+
+
 def _version(cmd: list[str]) -> str | None:
     exe = shutil.which(cmd[0])
     if exe is None:
@@ -25,8 +32,11 @@ def _version(cmd: list[str]) -> str | None:
         out = subprocess.run([exe, *cmd[1:]], capture_output=True, text=True, timeout=30)
     except (OSError, subprocess.SubprocessError):
         return None
-    text = (out.stdout or out.stderr).strip().splitlines()
-    return text[0] if text else ""
+    for line in (out.stdout or out.stderr).strip().splitlines():
+        s = line.strip()
+        if s and not any(n in s for n in _NOISE):
+            return s
+    return ""
 
 
 def cpg_status() -> dict:

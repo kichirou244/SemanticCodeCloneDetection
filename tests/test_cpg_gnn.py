@@ -203,6 +203,26 @@ def test_graph_stats_exposes_missing_edge_types():
     assert "AST" not in s["edge_types_missing"]
 
 
+def test_version_ignores_jline_noise():
+    """`joern --version` trong notebook in log jline rồi mới tới prompt. Lấy dòng
+    đầu thì tên phiên bản thành dòng log — và nó nằm ngay trong output của gate
+    nên rất dễ tin nhầm."""
+    from src.representations.cpg import build as B
+
+    class _P:
+        stdout = "Oct 01, 2026 4:20:59 AM org.jline.utils.Log logr\njoern> \n4.0.7\n"
+        stderr = ""
+
+    monkey = lambda *a, **k: _P()  # noqa: E731
+    orig, B.subprocess.run = B.subprocess.run, monkey
+    orig_which, B.shutil.which = B.shutil.which, lambda _: "/usr/local/bin/joern"
+    try:
+        assert B._version(["joern", "--version"]) == "4.0.7"
+        assert B._version(["java", "-version"]) == "4.0.7"
+    finally:
+        B.subprocess.run, B.shutil.which = orig, orig_which
+
+
 def test_graph_stats_reports_size(rng):
     s = graph_stats([_graph_from(make_synthetic_graph(rng, 10)) for _ in range(4)])
     assert s["n_graphs"] == 4

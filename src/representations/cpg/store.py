@@ -119,7 +119,13 @@ class CPGStore:
                     edge_index=eindex[:, e0:e1],
                     edge_type=etype[e0:e1],
                 ))
-        return cls(graphs, ids, stats)
+        # Stats phái sinh (kích thước đồ thị, coverage cạnh) thì **tính lại từ
+        # graphs**, không tin blob: blob là ảnh chụp lúc ghi, nên một cache viết
+        # bởi phiên bản cũ (thiếu `edge_types_missing`) sẽ khiến gate của
+        # notebook ném KeyError thay vì báo đúng. Phần thống kê lúc nạp
+        # (n_missing, n_failed, edges_dropped_*) thì không tính lại được nên
+        # giữ nguyên từ blob; stats tính lại đè lên trên.
+        return cls(graphs, ids, {**stats, **graph_stats(graphs)})
 
 
 def _ptr(lens: list[int]) -> np.ndarray:
