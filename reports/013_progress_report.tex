@@ -1,0 +1,152 @@
+% !TeX program = xelatex
+% =====================================================================
+%  Báo cáo kết quả huấn luyện — Đề tài: Phát hiện trùng lặp code
+%  Biên dịch:  xelatex -interaction=nonstopmode 013_progress_report.tex
+%  Số liệu:   results/*/{config.yaml,training_history.csv,metrics.json}
+%  Baseline:  MOSS = EXP-013 (scripts/eval_moss.py). KHÔNG dùng TF-IDF.
+%
+%  Bảng dùng tabular* + \extracolsep{\fill} để giãn cột, KHÔNG dùng
+%  resizebox — resizebox co mỗi bảng một tỉ lệ khác nhau nên cỡ chữ lệch.
+%  Mọi bảng cùng cỡ \small. Không dùng ký hiệu toán $..$ vì font math
+%  (Computer Modern) lệch cỡ so với Times.
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\usepackage[a4paper,top=2.0cm,bottom=2.0cm,left=2.2cm,right=1.9cm]{geometry}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{titlesec}
+
+\titleformat{\section}{\normalfont\large\bfseries\raggedright}{}{0pt}{}
+\titlespacing*{\section}{0pt}{1.4ex plus .2ex}{0.6ex plus .2ex}
+\setlist[itemize]{leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt}
+\setlength{\parskip}{2pt}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{3em}
+\setlength{\tabcolsep}{5pt}
+
+\title{\vspace{-1.0cm}\textbf{Báo cáo kết quả huấn luyện}\\[6pt]
+       {\normalsize Đề tài: Phát hiện trùng lặp code}}
+       \date{Ngày báo cáo: 03/10/2026}
+
+\begin{document}
+\maketitle
+\vspace{-0.8cm}
+
+\section{Tổng quan}
+
+\begin{itemize}
+\item Bài toán: phát hiện trùng lặp code trên tập dữ liệu POJ-104.
+\item Nội dung: kết quả huấn luyện các phương pháp trên tập dữ liệu POJ-104.
+\end{itemize}
+
+\section{Dữ liệu}
+
+\begin{itemize}
+\item 51.991 hàm C++, 66.000 cặp, chia ba phần không trùng cặp.
+\item Ngưỡng quyết định chọn trên validation, giữ nguyên khi test.
+\end{itemize}
+
+{\small
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrl@{}}
+\toprule
+\textbf{Phần} & \textbf{Số cặp} & \textbf{Cặp dương} & \textbf{Dùng để} \\
+\midrule
+Train      & 45.000 & 22.500 & huấn luyện \\
+Validation & 10.000 & 5.000  & chọn ngưỡng quyết định \\
+Test       & 11.000 & 5.500  & báo cáo kết quả cuối \\
+\bottomrule
+\end{tabular*}\par}
+
+\section{Các phương pháp}
+
+\begin{itemize}
+\item \textbf{MOSS} (baseline). Sleator \& Bernstein 2003. So khớp đặc trưng
+      k-gram. Tham số k=20, w=5.
+\item \textbf{CodeBERT}. \texttt{microsoft/\allowbreak codebert-base}. Ghép ba
+      vector (A, B, độ lệch tuyệt đối A với B) rồi qua một lớp MLP.
+\item \textbf{GraphCodeBERT}. \texttt{microsoft/\allowbreak graphcodebert-base}.
+      Như CodeBERT, thêm quan hệ token qua cây cú pháp và dữ liệu luồng. Giữ nguyên
+      siêu tham số CodeBERT.
+\item \textbf{ASTNN}. Câu cú pháp rút gọn thành đồ thị câu lệnh, qua mạng đệ quy
+      và mạng hai chiều. Huấn luyện từ đầu.
+\item \textbf{CPG-GNN}. Đồ thị thuộc tính dạng code property graph. Đang xây dựng,
+      chưa có kết quả.
+\end{itemize}
+
+\section{Cấu hình huấn luyện}
+
+\begin{itemize}
+\item CodeBERT, GraphCodeBERT, ASTNN: Kaggle, một GPU Tesla T4, 3 epoch, seed 42.
+\item MOSS: không huấn luyện.
+\end{itemize}
+
+{\small
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccc@{}}
+\toprule
+\textbf{Cấu hình} & \textbf{CodeBERT} & \textbf{GraphCodeBERT} & \textbf{ASTNN} \\
+\midrule
+Mô hình có sẵn & codebert-base & graphcodebert-base & không, từ đầu \\
+Độ dài đầu vào & 256 token & 256 token & không cắt \\
+Learning rate & 2e-5 & 2e-5 & 1e-3 \\
+Batch size & 16 & 16 & 32 \\
+Số tham số & 126.416.641 & 126.416.641 & 428.001 \\
+Thời gian & 7,0 giờ & 6,9 giờ & 17 phút \\
+\bottomrule
+\end{tabular*}\par}
+
+\section{Quá trình huấn luyện}
+
+{\small
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccc@{}}
+\toprule
+\textbf{Phương pháp} & \textbf{1} & \textbf{2} & \textbf{3} &
+\textbf{Thời gian} & \textbf{Đánh giá} \\
+\midrule
+CodeBERT      & \textbf{0,9191} & \textbf{0,9191} & 0,9116 & 7,0 h & đã quá tay \\
+GraphCodeBERT & \textbf{0,9155} & 0,9138 & 0,9108 & 6,9 h & đã quá tay \\
+ASTNN         & 0,6430 & 0,6774 & \textbf{0,7199} & 17 phút & chưa train đủ \\
+\bottomrule
+\end{tabular*}\par}
+
+\section{Kết quả}
+
+\begin{itemize}
+\item Tập test, 11.000 cặp.
+\item Dấu ±: độ lệch chuẩn, bốc ngẫu nhiên lại tập test 2.000 lần.
+\end{itemize}
+
+{\small
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccc@{}}
+\toprule
+\textbf{Phương pháp} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} &
+\textbf{ROC-AUC} & \textbf{Cặp đoán nhầm} \\
+\midrule
+MOSS          & 0,646 & 0,722 & 0,682 ± 0,005 & 0,731 & 2.177 \\
+CodeBERT      & 0,931 & 0,890 & 0,910 ± 0,003 & 0,973 & 363 \\
+GraphCodeBERT & 0,883 & 0,933 & 0,907 ± 0,003 & 0,971 & 682 \\
+ASTNN         & 0,641 & 0,903 & 0,750 ± 0,004 & 0,795 & 2.780 \\
+\bottomrule
+\end{tabular*}\par}
+
+\section{Hạn chế}
+
+\begin{itemize}
+\item Mỗi phương pháp chạy một lần với seed 42.
+\item ASTNN chưa train đủ.
+\item CodeBERT, GraphCodeBERT cắt hàm còn 256 token; 78,6\% hàm trong tập train bị
+      cắt.
+\end{itemize}
+
+\section{Kế hoạch tiếp theo}
+
+\begin{itemize}
+\item Train thêm epoch cho ASTNN.
+\item Chạy lại CodeBERT, GraphCodeBERT vài seed.
+\item Thử độ dài đầu vào 512 token.
+\item Tiếp tục CPG-GNN.
+\end{itemize}
+
+\end{document}

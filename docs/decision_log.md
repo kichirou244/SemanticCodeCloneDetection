@@ -4,8 +4,8 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.16.0 |
-| **Ngày cập nhật** | 2026-09-28 |
+| **Phiên bản** | 1.18.0 |
+| **Ngày cập nhật** | 2026-10-03 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
 
@@ -38,6 +38,7 @@
 - [DEC-023 — Notebook riêng cho M3 và M2, chạy M3 trước; evaluate ở Kaggle; EXP-005 là blocker](#dec-023--notebook-ri%C3%AEng-cho-m3-v%C3%A0-m2-ch%E1%BA%A1y-m3-tr%C6%B0%E1%BB%9Bevaluate-%E1%BB%9F-kaggleexp-005-l%C3%A0-blocker)
 - [DEC-024 — M4 contract-first: đo thay vì cài, Joern chạy trên Kaggle không cài local](#dec-024--m4-contract-first--%C4%91o-thay-v%C3%AC-c%C3%A3i-joern-ch%E1%BA%A1y-tr%C3%AAn-kaggle-kh%C3%B4ng-c%C3%A1i-local)
 - [DEC-025 — Joern v4: script Scala + gom cả lô vào một tiến trình, và smoke test bắt buộc](#dec-025--joern-v4-script-scala--gom-c%E1%BA%A3-l%C3%B4-v%C3%A0o-m%E1%BB%99t-ti%E1%BA%BFn-tr%C3%ACnh-v%C3%A0-smoke-test-b%E1%BA%AFt-bu%E1%BB%99c)
+- [DEC-026 — Baseline của báo cáo là MOSS (EXP-013), không dùng TF-IDF](#dec-026--baseline-c%E1%BB%A3a-b%C3%A1o-c%C3%A1o-l%C3%A1-mo%E1%BB%85-013-kh%C3%B4ng-d%C3%B9ng-tf-idf)
 - [Lịch sử thay đổi](#lich-su-thay-doi)
 
 ---
@@ -626,3 +627,61 @@
 | 15 | 1.14.0 | 2026-09-28 | Thêm DEC-023: **2 notebook riêng** cho M3 và M2 (bản gộp 1 phiên bị bỏ), chạy M3 trước M2 (phụ thuộc, không phải thẩm mỹ); **evaluate chạy trên Kaggle** và chỉ tải metrics + predictions về (sửa hướng của DEC-022 §2); chốt EXP-005 là blocker (không có Joern/Java, CPG ~62k file, chưa có model — vấn đề là toolchain chứ không phải GPU). |
 | 16 | 1.15.0 | 2026-09-28 | Thêm DEC-024: M4 làm **contract-first** (schema → ingest → store → GAT, 33 test local, không cần Joern); JSON format tự định nghĩa để đổi backend không phá model; **Joern cài trên Kaggle, không cài local**; số đo `ham/giay` + gate chất lượng CPG trước khi cam kết 5–17 h. |
 | 17 | 1.16.0 | 2026-09-28 | Thêm DEC-025: đối chiếu tài liệu Joern → **v4.0.x, script Scala** (`joern --script x.sc --param k=v`), **không hardcode version/tên asset** (`joern-install.sh`); exporter `.py` bị xoá; **gom lô vào 1 tiến trình** (62k tiến trình × JVM ≈ 15 ngày); **smoke test bắt buộc** trước lô lớn; `error_rate` nay gộp cả hàm không ra JSON. |
+| 18 | 1.17.0 | 2026-10-03 | Thêm DEC-026: **baseline báo cáo là MOSS (EXP-013), không dùng TF-IDF** — EXP-001 chỉ còn vai trò tham khảo. Tham số gốc MOSS (`k=50,w=100`) **không dùng được** trên POJ-104 (hàm quá ngắn ⇒ mỗi hàm chỉ ~6 fingerprint ⇒ F1 rơi về 0,667 = dự đoán toàn bộ là dương); dò trên validation, chọn `k=20,w=5`. Ghi nhớ tồn đọng: `moss.py` còn 5 test fail, bug `normalize` nuốt dấu `=` ở `*=` không có khoảng trắng. |
+
+---
+
+## DEC-026 — Baseline của báo cáo là MOSS (EXP-013), không dùng TF-IDF
+- **Bối cảnh (2026-10-03):** trước đây EXP-001 (TF-IDF) được coi là baseline vì
+  đã có sẵn và đã qua test. Vấn đề là TF-IDF là mô hình bag-of-token của **chính
+  nhóm**, nên khi dùng làm gốc so sánh rồi kết luận về mô hình học sâu thì bất
+  công: thắng ở đây chưa chắc thắng ở đó. Và TF-IDF không hề bịt cả thông tin về
+  cấu trúc hay dữ liệu, nên nó không phải đối thủ xứng tầm.
+- **Quyết định 1 — MOSS (EXP-013) là baseline chính, dùng cho mọi báo cáo.**
+  MOSS là thuật toán đã có tuổi và được chấp nhận rộng rãi (Sleator & Bernstein
+  2003), chạy lặp lại được không cần mạng, nên đây là đối thủ công bằng. **Không
+  dùng TF-IDF làm baseline.** EXP-001 vẫn giữ trong registry ở trạng thái
+  `COMPLETED (tham khảo)` — số liệu còn nguyên, chỉ là không dùng làm gốc.
+- **Quyết định 2 — không dùng tham số gốc của MOSS.** Bài báo gốc dùng
+  `k=50, w=100`, chọn cho *văn bản dài*. Hàm POJ-104 sau chuẩn hoá dài trung vị
+  chỉ 349 ký tự, nên cửa sổ winnow rộng `100 × 50 = 5.000` ký tự là **rộng hơn cả
+  hàm**: đo được mỗi hàm chỉ còn ~6 fingerprint, similarity bằng 0 với mọi cặp, và
+  F1 rơi đúng 0,667 — bằng đúng F1 của "dự đoán toàn bộ là dương". Trong lưới
+  12 tổ hợp, 9 tổ hợp rơi vào đúng mốc 0,667 này. Đã dò `(k, w)` **trên
+  validation** và chọn `k=20, w=5` (F1 validation 0,729), đóng băng rồi mới chạy
+  test một lần. Test: P 0,646 / R 0,722 / F1 0,682 / ROC-AUC 0,731.
+- **Quyết định 3 — `scripts/eval_moss.py` là runner chính thức của EXP-013.**
+  Chạy CPU vài phút, không cần Kaggle. Threshold ghi kèm `k`, `w` trong
+  `threshold.json` để kết quả luôn đi kèm cấu hình đã dùng.
+- **Đính chính (2026-10-03, ghi đè đoạn "tồn đọng" ở bản 1.17.0 đầu):** nhóm
+  nghi ngờ `normalize` nuốt dấu `=` ở `*=` không khoảng trắng, và từ đó suy ra
+  "17% hàm / 30% cặp bị ảnh hưởng". **Kết luận đó sai.** Đã kiểm chứng:
+  1. `a*=x` → `id*=id;` — không mất `=`. Đúng cả khi có lẫn không khoảng trắng.
+  2. Đếm trên toàn bộ 51.991 hàm POJ-104: `*=` 467 → 464, `/=` 652 → 513,
+     `%=` 193 → 187, `>>=` giữ nguyên, `<<=` 1 → 0. Phần mất đều nằm trong
+     comment hoặc chuỗi literal, tức là **đúng hành vi**. Không toán tử nào bị
+     nuốt ở mã thực thi.
+  3. `=` giảm 7.506 và `.` giảm 25.193 là do chuỗi literal bị quy về `str` —
+     `printf("a.b?c,d")` mất hết dấu bên trong. Cũng đúng thiết kế.
+  Vậy `src/models/baseline/moss.py` **không có bug**, và số liệu EXP-013 không
+  bị ảnh hưởng: chạy lại toàn bộ (kể cả dò 12 tổ hợp) cho `metrics.json` **giống
+  hệt** bản trước. 5 test fail là **kỳ vọng sai trong test**, đã sửa:
+  - `normalize('const char *s = "hello";')` mong `idid*=id=str;` — trong mã nguồn
+    không có toán tử `*=` nào, chỉ là khai báo con trỏ `char *s`. Đúng phải là
+    `idid*id=str;`.
+  - `normalize("a = 'x';")` mong `id=id=str;` — `'x'` là char literal, chỉ thành
+    `str`, không thể vừa là `id` vừa là `str`. Đúng phải là `id=str;`.
+  - 3 test còn lại dùng `k` mặc định 50 trên đoạn mẫu dài 35 ký tự nên ra 0
+    k-gram. Đây là hành vi đúng; đã thêm `TOY_K, TOY_W = 5, 2` cho các test đó
+    và thêm một test ghi rõ `k=50` trên code ngắn cho 0 k-gram.
+  Bổ sung: `similarity` là **containment** (`|A∩B| / min(|A|,|B|)`), nên hàm ngắn
+  rất dễ "nằm trong" hàm dài — bubble sort với hàm cộng vẫn ra ~0,81. Đây là lý
+  do `eval_moss.py` **phải dò ngưỡng trên validation** thay vì dùng hằng số, và là
+  phần giải thích sâu hơn cho việc MOSS đoán nhầm nhiều trên POJ-104.
+- **Bài học rút ra (nhớ kỹ):** khi báo cáo chưa có sẵn một baseline công bằng thì
+  **tự dựng và tự chạy**, đừng lấy số của mô hình yếu hơn cho tiện rồi kết luận
+  sai. Số phải kèm được câu lệnh đã chạy, thời gian chạy, và khả năng tái lập.
+  Và **đừng tin chẩn đoán của chính mình**: cả "có bug" lẫn "17% hàm bị ảnh
+  hưởng" đều là suy đoán chưa kiểm, chỉ đến khi đếm trên dữ liệu thật mới thấy
+  sai. Test fail ≠ có bug; phải hỏi test sai hay code sai trước khi sửa code.
+| 19 | 1.18.0 | 2026-10-03 | **DEC-026 đính chính:** suy đoán “normalize nuốt dấu `=` ở `*=`” và “17% hàm / 30% cặp bị ảnh hưởng” đều **sai**. Đếm kiểm: `*=` 467→464, `+=` 17.882→17.876, `>>=` giữ nguyên; phần mất đều nằm trong comment hoặc chuỗi literal. `moss.py` **không có bug**, `metrics.json` chạy lại **giống hệt**. 5 test fail là kỳ vọng sai → đã sửa test (`idid*id=str;`, `id=str;`, thêm `TOY_K/TOY_W`). Phát hiện thêm: `similarity` là **containment** nên hàm ngắn dễ dễ “chứa” hàm dài (bubble sort vs hàm cộng ≈ 0,81) — lý do phải dò ngưỡng trên validation. |

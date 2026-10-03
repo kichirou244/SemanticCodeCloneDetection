@@ -1,0 +1,15 @@
+{
+  "experiment": "EXP-013",
+  "model": "B0 MoSS (Winnowing)",
+  "k": 20,
+  "w": 5,
+  "grid_searched_on": "validation",
+  "median_fingerprints_per_function": 106.0,
+  "frac_clone_pairs_with_any_match": 0.7468,
+  "similarity": "containment (JPlag-family), chuan hoa theo ben it nguon hon",
+  "threshold_source": "validation_f1 (ghim, khong do lai tren test)",
+  "runtime_seconds": 174.1,
+  "device": "cpu",
+  "n_test": 11000,
+  "note": "Tham so goc k=50,w=100 khong dung duoc tren POJ-104: ham ngan, cua so winnow rong hon ca ham nen moi ham chi con ~6 fingerprint."
+}

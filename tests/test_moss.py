@@ -7,6 +7,7 @@ Bộ này phải xanh mà không cần venv nạp torch/fastapi — chỉ dùng 
 import re
 
 from src.models.baseline.moss import (
+    DEFAULT_K,
     FingerprintDoc,
     fingerprints,
     kgrams,
@@ -14,6 +15,13 @@ from src.models.baseline.moss import (
     scan_pairwise,
     similarity,
 )
+
+# Tham số MOSS gốc `k=50, w=100` chọn cho văn bản dài. Các đoạn mẫu dưới đây
+# chỉ dài 35–141 ký tự sau chuẩn hoá, nên dùng `k=50` sẽ ra 0 k-gram và mọi
+# phép so sánh đều bằng 0 — đó là hành vi đúng, không phải lỗi. Test vì thế dùng
+# tham số cỡ đoạn nhỏ. Trên POJ-104 nhóm dò `(k, w)` trên validation và dùng
+# `k=20, w=5`; xem `scripts/eval_moss.py`.
+TOY_K, TOY_W = 5, 2
 
 CODE_A = """#include <stdio.h>
 int add(int a, int b) {
@@ -39,11 +47,41 @@ void sort_array(int *arr, int n) {
 }
 """
 
+# Ví dụ âm tính mạnh hơn: hàm đệ quy, không có vòng for và không có mảng.
+# `CODE_UNRELATED` ở trên dù là bubble sort vẫn dài 141 ký tự và chia sẻ nhiều
+# dấu ngoặc với hàm cộng, nên containment vẫn ~0,81 — đặc tính của phép đo
+# chứ không phải lỗi của thuật toán.
+CODE_DIFFERENT = """int fib(int n) {
+    if (n < 2)
+        return n;
+    return fib(n - 1) + fib(n - 2);
+}
+"""
+
 
 def test_normalize_idioms():
     assert normalize("int foo = bar + 42;") == "idid=id+num;"
-    assert normalize('const char *s = "hello";') == "idid*=id=str;"
-    assert normalize("a = 'x';") == "id=id=str;"
+    # `const char *s` là khai báo con trỏ: `*` và `=` là hai ký tự riêng,
+    # không có toán tử `*=` trong mã nguồn.
+    assert normalize('const char *s = "hello";') == "idid*id=str;"
+    # `'x'` là char literal nên thành `str`, không phải tên biến `x`.
+    assert normalize("a = 'x';") == "id=str;"
+
+
+def test_normalize_keeps_compound_assignment_without_spaces():
+    # Regex tách từng dấu câu một, nên `*=` không bị nuốt dấu `=` dù không
+    # có khoảng trắng. Bài báo MOSS cần giữ cả hai vì phép gán phức là dấu
+    # hiệu cấu trúc quan trọng.
+    for src, want in [
+        ("a*=x;", "id*=id;"),
+        ("a += x;", "id+=id;"),
+        ("a-=x;", "id-=id;"),
+        ("a/=x;", "id/=id;"),
+        ("a%=x;", "id%=id;"),
+        ("a<<=x;", "id<<=id;"),
+        ("a>>=x;", "id>>=id;"),
+    ]:
+        assert normalize(src) == want, src
 
 
 def test_normalize_strips_block_comment_across_lines():
@@ -100,17 +138,27 @@ def test_fingerprints_empty():
 
 
 def test_similarity_identical_is_1():
-    assert similarity(fingerprints(CODE_A), fingerprints(CODE_A)) == 1.0
+    fa = fingerprints(CODE_A, k=TOY_K, w=TOY_W)
+    assert similarity(fa, fa) == 1.0
 
 
 def test_similarity_renamed_is_high():
-    sim = similarity(fingerprints(CODE_A), fingerprints(CODE_B_RENAMED))
-    assert sim >= 0.9
+    fa = fingerprints(CODE_A, k=TOY_K, w=TOY_W)
+    fb = fingerprints(CODE_B_RENAMED, k=TOY_K, w=TOY_W)
+    assert fa and fb, "du code ngan van phai ra fingerprint o tham so nay"
+    assert similarity(fa, fb) >= 0.9
 
 
-def test_similarity_unrelated_is_low():
-    sim = similarity(fingerprints(CODE_A), fingerprints(CODE_UNRELATED))
-    assert sim < 0.2
+def test_similarity_unrelated_is_lower_than_related():
+    # `similarity` là **containment**: |A∩B| / min(|A|,|B|). Với hàm ngắn,
+    # vài fingerprint trùng đã đủ để lên gần 1,0, nên con số tuyệt đối không
+    # có nghĩa như một "độ giống" thông thường. Đây là lý do
+    # `scripts/eval_moss.py` dò ngưỡng trên validation thay vì dùng hằng số.
+    fa = fingerprints(CODE_A, k=TOY_K, w=TOY_W)
+    fb = fingerprints(CODE_B_RENAMED, k=TOY_K, w=TOY_W)
+    fu = fingerprints(CODE_DIFFERENT, k=TOY_K, w=TOY_W)
+    assert similarity(fa, fu) < 0.5
+    assert similarity(fa, fu) < similarity(fa, fb)
 
 
 def test_similarity_empty_guard():
@@ -119,7 +167,7 @@ def test_similarity_empty_guard():
 
 
 def test_fingerprint_doc_from_code():
-    doc = FingerprintDoc.from_code("a.c", CODE_A)
+    doc = FingerprintDoc.from_code("a.c", CODE_A, k=TOY_K, w=TOY_W)
     assert doc.path == "a.c"
     assert doc.n_chars_original == len(CODE_A)
     assert doc.fingerprints
@@ -127,9 +175,9 @@ def test_fingerprint_doc_from_code():
 
 def test_scan_pairwise_sorts_and_filters():
     docs = [
-        FingerprintDoc.from_code("a.c", CODE_A),
-        FingerprintDoc.from_code("b.c", CODE_B_RENAMED),
-        FingerprintDoc.from_code("c.c", CODE_UNRELATED),
+        FingerprintDoc.from_code("a.c", CODE_A, k=TOY_K, w=TOY_W),
+        FingerprintDoc.from_code("b.c", CODE_B_RENAMED, k=TOY_K, w=TOY_W),
+        FingerprintDoc.from_code("c.c", CODE_UNRELATED, k=TOY_K, w=TOY_W),
     ]
     pairs = scan_pairwise(docs, threshold=0.5)
     assert pairs  # A↔B là clone nên chắc chắn lọt trên ngưỡng
@@ -141,17 +189,27 @@ def test_scan_pairwise_sorts_and_filters():
 
 
 def test_scan_pairwise_cap():
-    docs = [FingerprintDoc.from_code(f"f{i}.c", CODE_B_RENAMED) for i in range(6)]
+    docs = [
+        FingerprintDoc.from_code(f"f{i}.c", CODE_B_RENAMED, k=TOY_K, w=TOY_W)
+        for i in range(6)
+    ]
     assert len(scan_pairwise(docs, threshold=0.0, cap=3)) == 3
 
 
 def test_scan_pairwise_threshold_edge():
     docs = [
-        FingerprintDoc.from_code("a.c", CODE_A),
-        FingerprintDoc.from_code("b.c", CODE_B_RENAMED),
+        FingerprintDoc.from_code("a.c", CODE_A, k=TOY_K, w=TOY_W),
+        FingerprintDoc.from_code("b.c", CODE_B_RENAMED, k=TOY_K, w=TOY_W),
     ]
     assert scan_pairwise(docs, threshold=10.0) == []
     assert scan_pairwise(docs, threshold=0.0) != []
+
+
+def test_short_code_yields_no_kgrams_under_document_default():
+    # `k=50` với đoạn 35 ký tự là không có k-gram nào — hành vi đúng theo định
+    # nghĩa, và là lý do các test còn lại phải truyền `k` tường minh.
+    assert kgrams(normalize(CODE_A), DEFAULT_K) == []
+    assert fingerprints(CODE_A) == []
 
 
 def test_normalize_hex_and_floats():

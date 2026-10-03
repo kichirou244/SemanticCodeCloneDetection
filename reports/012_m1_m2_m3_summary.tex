@@ -1,0 +1,150 @@
+% =====================================================================
+%  Báo cáo ngắn: kết quả B0 (MoSS) và M1 -- M3 trên POJ-104
+%  Biên dịch bằng XELATEX (cần font hỗ trợ tiếng Việt):
+%      xelatex -interaction=nonstopmode 012_m1_m2_m3_summary.tex
+%  Chạy 2 lần để chốt số trang.
+%
+%  Số liệu lấy từ:
+%    - results/*/metrics.json              (P/R/F1/ROC-AUC trên test)
+%    - results/uncertainty/uncertainty_report.json  (bootstrap, McNemar)
+%  Không gõ tay số liệu vào bảng.
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\newfontfamily\monofont{Consolas}
+
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{booktabs}
+\usepackage[table]{xcolor}
+\usepackage{enumitem}
+
+\definecolor{headblue}{RGB}{30,60,110}
+
+\setlength{\parskip}{5pt}
+\setlength{\parindent}{0pt}
+
+\newcommand{\hd}[1]{\textcolor{headblue}{\textbf{#1}}}
+
+\title{\vspace{-2.0cm}\textbf{\color{headblue}Kết quả so sánh trên dataset POJ-104}\\[6pt]
+       \large Baseline MOSS và ba mô hình M1 -- M3}
+\author{Nhóm nghiên cứu}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-1.2cm}
+
+\section{Việc cần làm và dữ liệu}
+
+Bài toán: cho hai hàm code, có phải là bản sao của nhau hay không. Dùng dataset
+POJ-104, gồm 51.991 hàm C++. Ghép thành 66.000 cặp, mỗi cặp có nhãn ``bản sao''
+hay ``không bản sao''. Chia ba phần: train 45.000 cặp, validation 10.000, test
+11.000. Tập test cân bằng, có 5.500 cặp dương và 5.500 cặp âm.
+
+Ngưỡng quyết định của mọi mô hình được chọn trên \emph{validation} rồi giữ
+nguyên, không tinh chỉnh lại trên test.
+
+\section{Các mô hình}
+
+\begin{itemize}[leftmargin=1.3em, itemsep=2pt]
+    \item \textbf{B0 -- MOSS.} Thuật toán Winnowing của Sleator \& Bernstein (2003),
+          cài lại chạy cục bộ. Đây là baseline.
+    \item \textbf{M1 -- CodeBERT.} Mô hình ngôn ngữ cheo token, fine-tune để so hai hàm.
+    \item \textbf{M2 -- GraphCodeBERT.} Giống M1 nhưng có thêm thông tin cấu trúc
+          (quan hệ cây cú pháp, dữ liệu luồng) nối các token.
+    \item \textbf{M3 -- ASTNN.} Rút cây cú pháp thành đồ thị, đưa qua mạng nơ-ron
+          đệ quy để tạo vector đặc trưng. Không dùng token thô.
+\end{itemize}
+
+\section{Kết quả trên tập test}
+
+Cột F1 ghi dạng \texttt{mean $\pm$ SD}. Ý nghĩa: lấy tập test hiện có, bốc
+ngẫu nhiên lại 2.000 lần, tính F1 mỗi lần, rồi lấy trung bình và độ lệch chuẩn.
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+\hd{Mô hình} & \hd{Precision} & \hd{Recall} & \hd{F1} & \hd{ROC-AUC} \\
+\midrule
+B0 -- MOSS              & 0.646 & 0.722 & $0.682 \pm 0.005$ & 0.731 \\
+M1 -- CodeBERT          & 0.931 & 0.890 & $0.910 \pm 0.003$ & 0.973 \\
+M2 -- GraphCodeBERT     & 0.883 & 0.933 & $0.907 \pm 0.003$ & 0.971 \\
+M3 -- ASTNN             & 0.641 & 0.903 & $0.750 \pm 0.004$ & 0.795 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Vài điều đọc được từ bảng:
+
+\begin{itemize}[leftmargin=1.3em, itemsep=2pt]
+    \item M1 và M2 gần như ngang nhau. Chênh lệch F1 chỉ 0.003, nhỏ hơn cả độ lệch
+          chuẩn. Thêm thông tin cấu trúc của M2 không giúp ở bài toán này.
+    \item M1 thiên về precision, M2 thiên về recall. M1 bỏ sót nhiều cặp bản sao hơn,
+          M2 đoán nhầm nhiều cặp không phải bản sao hơn.
+    \item MOSS kém hơn M1 khá xa (F1 0.682 so với 0.910). Lý do dễ hiểu: MOSS so
+          các đoạn chữ giống hệt từng ký tự, mà trong POJ-104 hai hàm là bản sao
+          thì tên biến và cấu trúc đã bị đổi khá nhiều.
+    \item M3 nhớ nhiều bản sao (recall 0.903) nhưng hay đoán nhầm (precision 0.641).
+\end{itemize}
+
+\section{M1 và M2 có thật sự khác nhau không?}
+
+Không thể trả lời bằng cách nhìn hai cột $\pm$ SD rồi kết luận, vì SD ở đây đo
+độ lớn của tập test chứ không đo sai khác giữa hai mô hình. Cách đúng là so hai
+mô hình trên \emph{cùng một} tập test.
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\hd{Cặp so sánh} & \hd{$\Delta$F1} & \hd{Khoảng tin cậy 95\%} & \hd{McNemar} \\
+\midrule
+M1 -- M2  & $-0.003$ & $[-0.0085,\ +0.0028]$ & $p = 0.013$ \\
+M1 -- B0  & $+0.228$ & $[+0.2175,\ +0.2388]$ & $p < 10^{-300}$ \\
+M1 -- M3  & $+0.160$ & $[+0.1507,\ +0.1688]$ & $p < 10^{-300}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Hai cột cuối lại không thống nhất, và điều đó có nghĩa:
+
+\begin{itemize}[leftmargin=1.3em, itemsep=2pt]
+    \item Khoảng tin cậy của $\Delta$F1 \emph{chứa} 0, nên không đủ bằng chứng để nói
+          M1 khác M2 về F1.
+    \item McNemar lại ra $p = 0.013$: hai mô hình \emph{có} khác nhau về số cặp dự
+          đoán đúng.
+    \item Hai kết quả này không mâu thuẫn. Chúng khác nhau vì đo hai thứ khác nhau:
+          McNemar hỏi ``tổng số dự đoán đúng có khác không'', còn khoảng tin cậy hỏi
+          ``F1 có khác không''. M1 và M2 sai ở \emph{hướng khác nhau} (M1 hơi thiên
+          precision, M2 thiên recall) nên trong F1 hai sai lệch đó gần như triệt tiêu.
+\end{itemize}
+
+Kết luận đúng nhất là: \textbf{M1 và M2 không phân biệt được về F1}. Chọn cái nào
+cũng được về mặt F1; nếu cần recall cao thì chọn M2.
+
+Với MOSS và M3 thì khoảng tin cậy không chứa 0, tức là khác biệt thật, không phải
+nhiễu.
+
+\section{Hạn chế cần nói rõ}
+
+\begin{itemize}[leftmargin=1.3em, itemsep=2pt]
+    \item Mỗi mô hình mới chạy \emph{một lần}, nên chưa có độ lệch chuẩn do biến
+          thiên giữa các lần train. Muốn có con số đó thì phải train lại vài seed;
+          với M1/M2 mỗi lần mất khoảng 7 giờ GPU. Hiện tại $\pm$ SD trong bảng chỉ
+          phản ánh độ lớn của tập test.
+    \item M2 vẫn đang train dở (3 epoch, F1 trên validation còn đang tăng), nên số
+          0.907 này có thể còn tăng nữa.
+    \item M1 và M2 bị cắt còn 256 token. Hàm POJ-104 trung bình dài hơn thế, nên
+          phần đuôi hàm bị mất.
+    \item M3 có thể chưa train tới đủ. Số của M3 nên xem là tạm.
+\end{itemize}
+
+\section{Đang làm tiếp}
+
+M4 (CPG-GNN) đang xây dựng: cần dựng code property graph bằng Joern trên Kaggle
+trước, nên hiện chưa có kết quả. Sau khi M1 -- M3 chốt xong sẽ cho M4 chạy và so
+thêm vào bảng này.
+
+\end{document}

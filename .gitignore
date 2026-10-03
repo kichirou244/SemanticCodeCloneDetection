@@ -22,3 +22,11 @@ tmp/
 # Cache AST sinh lại được (DEC-021: tách tag theo smoke/train, không commit)
 artifacts/ast_cache/*
 !artifacts/ast_cache/t4_calibration.json
+
+# Text
+reports/*.aux
+reports/*.log
+reports/*.out
+reports/*.lot
+reports/*.lof
+reports/*.gz

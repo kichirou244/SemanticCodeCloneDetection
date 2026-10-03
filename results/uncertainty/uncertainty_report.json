@@ -1,0 +1,242 @@
+{
+  "n_test": 11000,
+  "n_boot": 2000,
+  "seed": 42,
+  "alpha": 0.05,
+  "reference": "exp002_codebert_poj104",
+  "method": {
+    "single_model": "bootstrap percentile tren tap test, nguong ghim",
+    "paired": "bootstrap ghep tren cung mot chi so resample cho ca hai",
+    "test": "McNemar exact binomial",
+    "scope": "SD nay do kich thuoc tap test (11.000 cap), KHONG do bien thien qua lap train. Muon do bien thien lap train thi phai train lai nhieu seed -> mean +- SD khac."
+  },
+  "models": {
+    "exp013_moss_poj104": {
+      "point": {
+        "precision": 0.6458435008947454,
+        "recall": 0.7218181818181818,
+        "f1": 0.6817206147505795,
+        "threshold": 0.0120519306954322,
+        "n": 11000
+      },
+      "n_boot": 2000,
+      "seed": 42,
+      "alpha": 0.05,
+      "precision": {
+        "mean": 0.6460923935195979,
+        "sd": 0.005975353107527103,
+        "sd_ci95": [
+          0.6341542507807721,
+          0.6575458892829136
+        ]
+      },
+      "recall": {
+        "mean": 0.7219609211472068,
+        "sd": 0.006079905364773297,
+        "sd_ci95": [
+          0.7103730003197161,
+          0.7338657416152433
+        ]
+      },
+      "f1": {
+        "mean": 0.6819044814786082,
+        "sd": 0.004897376592260127,
+        "sd_ci95": [
+          0.6723217579606594,
+          0.6914367805095687
+        ]
+      }
+    },
+    "exp002_codebert_poj104": {
+      "point": {
+        "precision": 0.9309492105763744,
+        "recall": 0.8898181818181818,
+        "f1": 0.9099191224319049,
+        "threshold": 0.59,
+        "n": 11000
+      },
+      "n_boot": 2000,
+      "seed": 42,
+      "alpha": 0.05,
+      "precision": {
+        "mean": 0.9310843620734088,
+        "sd": 0.0033734629135463772,
+        "sd_ci95": [
+          0.9241825626685309,
+          0.9374763982406692
+        ]
+      },
+      "recall": {
+        "mean": 0.8896570561973008,
+        "sd": 0.004160154834311311,
+        "sd_ci95": [
+          0.8814577229890981,
+          0.8973918186042431
+        ]
+      },
+      "f1": {
+        "mean": 0.9098919305543748,
+        "sd": 0.0027861397686204316,
+        "sd_ci95": [
+          0.9041268723800439,
+          0.915103410131645
+        ]
+      }
+    },
+    "exp003_graphcodebert_poj104": {
+      "point": {
+        "precision": 0.8826363792806746,
+        "recall": 0.9325454545454546,
+        "f1": 0.9069047829546459,
+        "threshold": 0.43,
+        "n": 11000
+      },
+      "n_boot": 2000,
+      "seed": 42,
+      "alpha": 0.05,
+      "precision": {
+        "mean": 0.8826989463085336,
+        "sd": 0.0042954386468080225,
+        "sd_ci95": [
+          0.8742880526575718,
+          0.89105891826648
+        ]
+      },
+      "recall": {
+        "mean": 0.9326216419078546,
+        "sd": 0.00330892789251213,
+        "sd_ci95": [
+          0.9261898593634346,
+          0.9388393852308002
+        ]
+      },
+      "f1": {
+        "mean": 0.9069660738893228,
+        "sd": 0.0028280278180900244,
+        "sd_ci95": [
+          0.9016817795208412,
+          0.9124556281780201
+        ]
+      }
+    },
+    "exp004_astnn_poj104": {
+      "point": {
+        "precision": 0.6411514134503679,
+        "recall": 0.903090909090909,
+        "f1": 0.7499056390126065,
+        "threshold": 0.29000000000000004,
+        "n": 11000
+      },
+      "n_boot": 2000,
+      "seed": 42,
+      "alpha": 0.05,
+      "precision": {
+        "mean": 0.6413453214073809,
+        "sd": 0.005418317206363494,
+        "sd_ci95": [
+          0.630862327341319,
+          0.6523502072076957
+        ]
+      },
+      "recall": {
+        "mean": 0.9032294653029478,
+        "sd": 0.0038905224278260753,
+        "sd_ci95": [
+          0.8952627807352426,
+          0.9106949657362227
+        ]
+      },
+      "f1": {
+        "mean": 0.7500720889132201,
+        "sd": 0.004164585053698907,
+        "sd_ci95": [
+          0.7419716383461717,
+          0.7584118704413508
+        ]
+      }
+    }
+  },
+  "paired_vs_reference": {
+    "exp013_moss_poj104": {
+      "bootstrap": {
+        "delta_f1_point": -0.22819850768132532,
+        "delta_f1_mean": -0.2279874490757666,
+        "delta_f1_sd": 0.0054326148650402535,
+        "delta_f1_ci95": [
+          -0.23883945904048326,
+          -0.2175225093380554
+        ],
+        "threshold_a": 0.0120519306954322,
+        "threshold_b": 0.59,
+        "significant": true,
+        "n_boot": 2000,
+        "seed": 42,
+        "alpha": 0.05,
+        "note": "CI cua delta F1 theo bootstrap ghep tren cung mot tap test, moi mo hinh o nguong da ghim cua no. Khong chua 0 => khac biet co y nghia o muc alpha."
+      },
+      "mcnemar": {
+        "a_correct_b_wrong": 618,
+        "a_wrong_b_correct": 3356,
+        "discordant": 3974,
+        "p_value": 0.0,
+        "threshold_a": 0.0120519306954322,
+        "threshold_b": 0.59,
+        "note": "p_value < 0.05 => hai mo hinh sai khac nhau co y nghia. Dung cung nguoi bao cao nay thay cho so hai cot +-SD."
+      }
+    },
+    "exp003_graphcodebert_poj104": {
+      "bootstrap": {
+        "delta_f1_point": -0.0030143394772589316,
+        "delta_f1_mean": -0.0029258566650519962,
+        "delta_f1_sd": 0.0029838155521847336,
+        "delta_f1_ci95": [
+          -0.008529244387277443,
+          0.0028250893351205713
+        ],
+        "threshold_a": 0.43,
+        "threshold_b": 0.59,
+        "significant": false,
+        "n_boot": 2000,
+        "seed": 42,
+        "alpha": 0.05,
+        "note": "CI cua delta F1 theo bootstrap ghep tren cung mot tap test, moi mo hinh o nguong da ghim cua no. Khong chua 0 => khac biet co y nghia o muc alpha."
+      },
+      "mcnemar": {
+        "a_correct_b_wrong": 518,
+        "a_wrong_b_correct": 602,
+        "discordant": 1120,
+        "p_value": 0.013099539693061643,
+        "threshold_a": 0.43,
+        "threshold_b": 0.59,
+        "note": "p_value < 0.05 => hai mo hinh sai khac nhau co y nghia. Dung cung nguoi bao cao nay thay cho so hai cot +-SD."
+      }
+    },
+    "exp004_astnn_poj104": {
+      "bootstrap": {
+        "delta_f1_point": -0.16001348341929833,
+        "delta_f1_mean": -0.1598198416411546,
+        "delta_f1_sd": 0.004620586487232232,
+        "delta_f1_ci95": [
+          -0.16882678361242145,
+          -0.15074759128862136
+        ],
+        "threshold_a": 0.29000000000000004,
+        "threshold_b": 0.59,
+        "significant": true,
+        "n_boot": 2000,
+        "seed": 42,
+        "alpha": 0.05,
+        "note": "CI cua delta F1 theo bootstrap ghep tren cung mot tap test, moi mo hinh o nguong da ghim cua no. Khong chua 0 => khac biet co y nghia o muc alpha."
+      },
+      "mcnemar": {
+        "a_correct_b_wrong": 636,
+        "a_wrong_b_correct": 2980,
+        "discordant": 3616,
+        "p_value": 0.0,
+        "threshold_a": 0.29000000000000004,
+        "threshold_b": 0.59,
+        "note": "p_value < 0.05 => hai mo hinh sai khac nhau co y nghia. Dung cung nguoi bao cao nay thay cho so hai cot +-SD."
+      }
+    }
+  }
+}
