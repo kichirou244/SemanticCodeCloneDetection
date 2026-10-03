@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -227,21 +228,44 @@ def run_batch(samples: list[dict], out_dir: Path, work_dir: Path, joern_cmd: str
     return n_ok, n_err
 
 
+# Mẫu nhận diện dòng lỗi thật trong output Joern (E008 compile, exception
+# runtime, frontend crash). Không khớp thì không phải lỗi — banner khởi động
+# ("Invoking CPG generator", "Creating project"...) không bao giờ khớp.
+_ERROR_PAT = re.compile(
+    r"\[E\d+\]|error|exception|caused by|not a member|not found|cannot|"
+    r"failed|fatal|killed|out of memory|at (scala|java|io\.joern|replpp|ammonite)\.",
+    re.IGNORECASE,
+)
+
+
 def _failure_digest(proc: subprocess.CompletedProcess, batch_dir: Path) -> str:
     """Rút lỗi đầu tiên Joern thật sự báo ra.
 
-    Chỉ log ra **phần đầu** output, không phải 5k dòng cuối: lỗi compile Scala
-    nằm ở đầu, còn phần cuối là log nội bộ của Joern (jline, closing project…)
-    và chỉ làm nhiễu. Bỏ dòng `$ ...` và dòng trống, giới hạn 12 dòng.
+    KHÔNG lấy "12 dòng đầu": lỗi compile Scala / exception runtime nằm SAU
+    banner khởi động của Joern, nên 12 dòng đầu toàn là banner ("Invoking CPG
+    generator", "Creating project"...) — đã chứng minh bằng một lô chết mà 12
+    dòng in ra không chứa lỗi. Tìm dòng khớp mẫu lỗi trước, kèm 1 dòng ngữ
+    cảnh; chỉ khi không có dòng nào khớp mới rơi về 12 dòng đầu.
     """
     blob = (proc.stdout or "") + "\n" + (proc.stderr or "")
     lines = [ln.rstrip() for ln in blob.splitlines() if ln.strip()]
-    interesting = [ln for ln in lines if not ln.startswith("$ ")]
-    head = interesting[:12]
+    hits: list[str] = []
+    for i, ln in enumerate(lines):
+        if ln.startswith("$ "):
+            continue
+        if _ERROR_PAT.search(ln):
+            if i > 0 and not lines[i - 1].startswith("$ ") \
+                    and lines[i - 1] not in hits:
+                hits.append(lines[i - 1])
+            if ln not in hits:
+                hits.append(ln)
+            if len(hits) >= 12:
+                break
+    head = hits[:12] if hits else [
+        ln for ln in lines if not ln.startswith("$ ")][:12]
     return ("\n[cpg-export] LÔ CHẾT mà không ra JSON: "
             f"{batch_dir.name} (rc={proc.returncode}).\n"
-            "  Dưới đây là 12 dòng đầu Joern trả về — thường là lỗi compile "
-            "Scala, đọc là biết sửa ở đâu:\n    "
+            "  Dưới đây là dòng lỗi Joern báo (không phải banner khởi động):\n    "
             + "\n    ".join(head)
             + f"\n  Log đầy đủ: artifacts/cpg_work/joern_batch_{batch_dir.name}.log")
 

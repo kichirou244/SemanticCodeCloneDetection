@@ -354,7 +354,8 @@ def test_export_cpg_param_comparison_is_identity_not_structural():
 
 def test_failure_digest_shows_the_compiler_error_not_joern_noise():
     """Lô chết mà không in lý do tốn một cả vòng chạy Joern để đoán. Digest phải
-    lấy dòng đầu (lỗi compile nằm ở đầu) và bỏ tiếng ồn log nội bộ."""
+    lấy dòng lỗi thật và bỏ tiếng ồn log nội bộ — kể cả khi lỗi nằm SAU banner
+    khởi động (đã dính một lần: 12 dòng đầu toàn là banner, lỗi thật ở sau)."""
     import subprocess
     from scripts.build_cpg_export import _failure_digest
 
@@ -369,8 +370,34 @@ def test_failure_digest_shows_the_compiler_error_not_joern_noise():
     d = _failure_digest(proc, Path("batch_0"))
     assert "Not Found Error" in d          # lỗi thật có mặt
     assert "joern --script" not in d       # dòng lệnh bị lọc
-    assert "closing/saving" in d           # giữ 12 dòng đầu, nên vẫn thấy
+    assert "closing/saving" not in d       # noise nội bộ bị lọc
     assert "batch_0" in d and "rc=1" in d  # dẫn tới log đầy đủ
+
+
+def test_failure_digest_finds_error_buried_after_startup_banner():
+    """Tái hiện sự cố EXP-005/cell 7: banner khởi động chiếm hết đầu output,
+    lỗi thật (exception runtime) nằm sau. Digest phải moi được lỗi, không được
+    in banner thay cho lỗi."""
+    import subprocess
+    from scripts.build_cpg_export import _failure_digest
+
+    noisy = "\n".join(
+        ["=======================================================================",
+         "Invoking CPG generator in a separate process.",
+         "Using generator for language: NEWC: CCpgGenerator",
+         "Creating project `cpg_batch_000000` for code at `artifacts/cpg_work`",
+         "moving cpg.bin.zip to cpg.bin because it is already a database file",
+         "java.lang.RuntimeException: boom o day",
+         "Caused by: frontend crash",
+         "closing/saving project `cpg_batch_000000`"]
+    )
+    proc = subprocess.CompletedProcess(args=["joern"], returncode=1,
+                                       stdout=noisy, stderr="")
+    d = _failure_digest(proc, Path("batch_000000"))
+    assert "RuntimeException" in d         # lỗi thật được moi ra
+    assert "Caused by" in d
+    assert "Invoking CPG generator" not in d  # banner xa lỗi bị loại
+    # Dòng kề ngay trước lỗi được giữ làm ngữ cảnh — chấp nhận được.
 
 
 def test_failure_digest_caps_output():
