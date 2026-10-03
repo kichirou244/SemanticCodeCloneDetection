@@ -352,6 +352,17 @@ def test_export_cpg_param_comparison_is_identity_not_structural():
     assert re.search(r"val params = new java\.util\.IdentityHashMap", src)
 
 
+def test_export_cpg_eval_order_uses_drop_not_tail():
+    """Regression: `kids.zip(kids.tail)` ném `UnsupportedOperationException`
+    trên node lá (không có astChildren) — mà `ast.foreach` duyệt cả node lá
+    nên lô nào cũng chết rc=1 sau ~16s (cell 7 EXP-005, stack trace chỉ đúng
+    dòng này). `drop(1)` trên list rỗng trả về rỗng, an toàn."""
+    raw = Path("scripts/joern/export_cpg.sc").read_text(encoding="utf-8")
+    src = "\n".join(l.split("//", 1)[0] for l in raw.splitlines())
+    assert ".tail" not in src
+    assert "kids.drop(1)" in src
+
+
 def test_failure_digest_shows_the_compiler_error_not_joern_noise():
     """Lô chết mà không in lý do tốn một cả vòng chạy Joern để đoán. Digest phải
     lấy dòng lỗi thật và bỏ tiếng ồn log nội bộ — kể cả khi lỗi nằm SAU banner

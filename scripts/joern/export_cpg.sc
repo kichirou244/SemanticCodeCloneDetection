@@ -151,6 +151,12 @@
       // số cạnh chỉ bằng n-1 mỗi nhóm thay vì n^2 như bản "nối mọi cặp" (n^2 sẽ
       // nổ trên hàm lớn).
       //
+      // ⚠ PHẢI là `.drop(1)`, không phải `.tail`: `ast.foreach` duyệt CẢ node
+      // lá (LITERAL/IDENTIFIER không có con) nên `kids` rỗng là chuyện thường
+      // xuyên, và `[].tail` ném `UnsupportedOperationException: tail of empty
+      // list` làm chết cả lô (đã dính ở cell 7: rc=1 sau ~16s, stack trace
+      // chỉ vào đúng dòng này). `[].drop(1)` trả về rỗng, an toàn.
+      //
       // KHÔNG gom vào hàm `ord(k: Any)`: `Iterator(...)` chỉ resolve được với kiểu
       // cụ thể của node, nới thành `Any` là tự tạo lỗi compile mà không đổi được
       // gì. Giữ `k` nguyên kiểu mà `astChildren` trả về.
@@ -161,7 +167,7 @@
         // Khóa thứ hai là vị trí traversal: hai anh em cùng `order` thì giữ đúng
         // thứ tự nguồn thay vì để hàm sort ổn định tự quyết.
         val kids = keyed.sortBy(k => (k._1, k._2)).map(_._3)
-        kids.zip(kids.tail).foreach { case (a, b) => add(a, b, "EVAL_ORDER") }
+        kids.zip(kids.drop(1)).foreach { case (a, b) => add(a, b, "EVAL_ORDER") }
       }
 
       // --- CFG: cạnh điều khiển thật, không phải "nối node liên tiếp" ----------
