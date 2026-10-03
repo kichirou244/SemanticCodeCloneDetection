@@ -247,10 +247,11 @@ def _failure_digest(proc: subprocess.CompletedProcess, batch_dir: Path) -> str:
 
 
 def _meta_stats(out_dir: Path, sample_ids: list[str]) -> dict:
-    """Đọc `.meta` để đo chất lượng CPG (n_nodes, số hàm lạ trong 1 file)."""
+    """Đọc `.meta` để đo chất lượng CPG (n_nodes, node label, loại cạnh nào có)."""
     n_nodes, parsed = [], 0
-    per_file_methods: dict[str, int] = {}
+    synthetic = 0
     edge_totals: dict[str, int] = {}
+    label_totals: dict[str, int] = {}
     missing_seen: dict[str, int] = {}
     for sid in sample_ids:
         p = out_dir / f"{sid}.meta"
@@ -261,11 +262,17 @@ def _meta_stats(out_dir: Path, sample_ids: list[str]) -> dict:
                   p.read_text(encoding="utf-8").splitlines() if "\t" in line)
         if int(kv.get("n_nodes", 0)) > 0:
             n_nodes.append(int(kv["n_nodes"]))
-        # Một file nhiều hàm ⇒ ánh xạ filename→sample_id của Python là sai, và mọi
-        # hàm sau trong file đó sẽ bị ghi đè cùng một tên. Đếm ở đây thay vì để
-        # Joern đo (bước đó cần một dạng gọi step chưa xác nhận).
-        fn = kv.get("file_name", "")
-        per_file_methods[fn] = per_file_methods.get(fn, 0) + 1
+        # Hàm rơi về method GIẢ của Joern (`<global>`, `<includes>`…) = dấu hiệu
+        # duy nhất còn lại cho "file này không dựng được method thật".
+        #
+        # ⚠ ĐÃ BỎ metric `files_with_multiple_methods` (đếm theo `file_name`):
+        # nó **không thể đúng**. `write_batch` đặt tên lại `00000.cpp`… từ đầu mỗi
+        # lô, nên `file_name` lặp đúng bằng số lô — đo được `100` trên lô 500 (5
+        # lô) và `0` trên lô 20 (1 lô) **dù dữ liệu hoàn toàn tốt**. Đây là
+        # báo động giả: nó kêu "100 hàm bị lấy sai" trên đúng lần chạy đã sửa xong
+        # lỗi ghi đè, và âm thầm giấu lỗi thật ở các lần khác.
+        if kv.get("method_name", "").startswith("<"):
+            synthetic += 1
         # Cộng dồn histogram cạnh. `edge_types` là "loại nào có trong hàm này",
         # `edge_types_missing` là "loại nào vắng" — phải thấy cả hai, không được
         # chỉ nhìn tổng số cạnh: một CPG đầy AST mà không có data-flow vẫn có
@@ -274,13 +281,18 @@ def _meta_stats(out_dir: Path, sample_ids: list[str]) -> dict:
             k, _, v = item.partition("=")
             if v.isdigit():
                 edge_totals[k] = edge_totals.get(k, 0) + int(v)
+        for item in filter(None, kv.get("node_labels", "").split(";")):
+            k, _, v = item.partition("=")
+            if v.isdigit():
+                label_totals[k] = label_totals.get(k, 0) + int(v)
         for k in filter(None, kv.get("edge_types_missing", "").split(";")):
             missing_seen[k] = missing_seen.get(k, 0) + 1
     return {
         "n_meta_parsed": parsed,
         "nodes_per_cpg_mean": round(sum(n_nodes) / max(len(n_nodes), 1), 1),
         "nodes_per_cpg_p5": sorted(n_nodes)[int(0.05 * (len(n_nodes) - 1))] if n_nodes else 0,
-        "files_with_multiple_methods": sum(1 for v in per_file_methods.values() if v > 1),
+        "n_synthetic_method_fallback": synthetic,
+        "node_label_totals": dict(sorted(label_totals.items())),
         "edge_type_totals": edge_totals,
         "edge_types_present": sorted(edge_totals),
         "edge_types_never_produced": sorted(
@@ -417,11 +429,24 @@ def main() -> None:
         report["est_hours_full_dataset_note"] = (
             f"{n_total:,} ham / {per_s:.3f} ham.s^-1 — uoc luong CPU, KHONG tinh gioi "
             f"han GPU va KHONG tinh thoi gian tai dataset")
-    # Chi phí cố định đo được: mỗi lô là MỘT lần bật JVM (~13s quan sát được khi
-    # lô chết sớm). Tách riêng vì nó quyết định liệu `--batch-size` nên lớn cỡ nào.
-    report["jvm_startup_seconds_per_batch"] = round(seconds / n_batches, 1)
-    report["jvm_startup_hours_full_dataset"] = round(
-        n_batches * (seconds / n_batches) / 3600, 2)
+    # Chi phí theo lô. ⚠ Đổi tên khỏi `jvm_startup_*` vì nó **không bao giờ đo
+    # startup**: `seconds / n_batches` là thời gian trung bình của CẢ lô (JVM +
+    # dựng CPG thật), còn `jvm_startup_hours_full_dataset` lại nhân con số đó với
+    # số lô của *lần chạy này* chứ không phải của toàn dataset — nên lô 500 in ra
+    # `0.03` giờ cho "full dataset" trong khi thực tế 520 lô x 22.5s ≈ 3.25 giờ.
+    # Tên sai làm người đọc tưởng có thể tăng batch_size để tiết kiệm 0.03 giờ.
+    batch_seconds_mean = seconds / max(n_batches, 1)
+    report["batch_seconds_mean"] = round(batch_seconds_mean, 1)
+    report["batches_full_dataset"] = -(-n_total // args.batch_size)
+    report["batch_hours_full_dataset"] = round(
+        report["batches_full_dataset"] * batch_seconds_mean / 3600, 2)
+    # Tự kiểm tra nhất quán: hai đường ước lượng phải gần nhau. Lệch xa nghĩa là
+    # throughput không đều giữa đầu lô và cuối lô (thường do lô cuối nhỏ hơn).
+    report["estimate_crosscheck_ok"] = (
+        report["est_hours_full_dataset"] is not None
+        and abs(report["batch_hours_full_dataset"]
+                - report["est_hours_full_dataset"]) < 0.25 * max(
+                    report["est_hours_full_dataset"], 1e-9))
     (out_dir / "benchmark.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(json.dumps(report, indent=2), flush=True)
 

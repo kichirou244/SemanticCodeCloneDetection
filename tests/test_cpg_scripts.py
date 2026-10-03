@@ -266,13 +266,15 @@ def test_meta_stats_reports_which_edge_types_exist(tmp_path):
     from scripts.build_cpg_export import _meta_stats
 
     (tmp_path / "a.meta").write_text(
-        "n_nodes\t10\nfile_name\tsrc_a.cpp\n"
+        "n_nodes\t10\nfile_name\tsrc_a.cpp\nmethod_name\t<global>\n"
         "edge_types\tAST=9;CFG=4\n"
+        "node_labels\tMETHOD=1;IDENTIFIER=5\n"
         "edge_types_missing\tCALL;REF;TARG;PARAMETER_OUT;REACHING_DEF;EVAL_ORDER\n",
         encoding="utf-8")
     (tmp_path / "b.meta").write_text(
-        "n_nodes\t20\nfile_name\tsrc_a.cpp\n"
+        "n_nodes\t20\nfile_name\tsrc_a.cpp\nmethod_name\tsolve\n"
         "edge_types\tAST=18;CFG=8;REACHING_DEF=3\n"
+        "node_labels\tMETHOD=1;CALL=6\n"
         "edge_types_missing\tCALL;REF;TARG;PARAMETER_OUT;EVAL_ORDER\n",
         encoding="utf-8")
     s = _meta_stats(tmp_path, ["a", "b"])
@@ -282,8 +284,34 @@ def test_meta_stats_reports_which_edge_types_exist(tmp_path):
     # Chỉ 1/2 hàm có data-flow → tỉ lệ thiếu phải lộ ra, không được gộp mất.
     assert s["edge_types_missing_ratio"]["REACHING_DEF"] == 0.5
     assert s["nodes_per_cpg_mean"] == 15.0
-    # Cùng một file sinh ra 2 hàm ⇒ ánh xạ sample_id của Python sai.
-    assert s["files_with_multiple_methods"] == 1
+    # Hàm rơi về method giả `<global>` phải được đếm — đây là tín hiệu sức khoẻ
+    # thật, thay cho `files_with_multiple_methods` (xem ghi chú trong `_meta_stats`:
+    # metric đó luôn ra số bằng số lô vì tên file đặt lại mỗi lô).
+    assert s["n_synthetic_method_fallback"] == 1
+    # Node label cũng phải kiểm chứng được như cạnh.
+    assert s["node_label_totals"] == {"CALL": 6, "IDENTIFIER": 5, "METHOD": 2}
+
+
+def test_meta_stats_ignores_file_name_collision_across_batches(tmp_path):
+    """Regression: `file_name` lặp lại giữa các lô nên metric đếm theo nó báo
+    động giả. Lô 20 (1 lô) ra 0, lô 500 (5 lô) ra 100 — dù dữ liệu tốt. Test này
+    dựng đúng case đó: 5 `.meta` trùng `file_name`, trong đó **không** hàm nào
+    dùng method giả."""
+    from scripts.build_cpg_export import _meta_stats
+
+    for i in range(5):
+        (tmp_path / f"s{i}.meta").write_text(
+            f"n_nodes\t10\nfile_name\t0000{i}.cpp\nmethod_name\tsolve\n"
+            "edge_types\tAST=9\nedge_types_missing\tCALL\n",
+            encoding="utf-8")
+    # Cùng tên file cả 5 lô — nhưng metric cũ sẽ báo 5 hàm bị lấy sai.
+    for i in range(5):
+        p = tmp_path / f"s{i}.meta"
+        p.write_text(p.read_text(encoding="utf-8").replace(
+            f"0000{i}.cpp", "00000.cpp"), encoding="utf-8")
+    s = _meta_stats(tmp_path, [f"s{i}" for i in range(5)])
+    assert s["n_meta_parsed"] == 5
+    assert s["n_synthetic_method_fallback"] == 0
 
 
 def test_export_cpg_avoids_constructs_that_failed_to_compile():
@@ -297,9 +325,31 @@ def test_export_cpg_avoids_constructs_that_failed_to_compile():
     assert not re.search(r"\bcase \w+: io\.joern", src)
     # `m.l` — biểu thức chạy trên node đơn; CPGQL chỉ nhận Iterator.
     assert not re.search(r"\bm\.l\b", src)
-    # Cạnh chưa xác minh được thì không được viết vào: `.meta` phải kê tên.
-    for kind in ("REF", "TARG", "REACHING_DEF", "EVAL_ORDER"):
-        assert kind in src
+    # Chỉ được GHI loại cạnh đã xác minh. `CALL`/`REF` xuyên hàm (node đích nằm
+    # ngoài `m.ast` → cạnh dangling) và `REACHING_DEF` cần dataflow frontend, nên
+    # ghi chúng là sinh dữ liệu bịa. Regression: trước đây test này chỉ kiểm
+    # "tên cạnh có xuất hiện trong file" nên không phân biệt được ghi ra với
+    # kê tường minh trong `.meta`.
+    written = set(re.findall(r'add\([^)]*"([A-Z_]+)"\)', src))
+    assert written == {"AST", "CFG", "ARGUMENT", "PARAMETER_OUT",
+                       "TARG", "EVAL_ORDER"}, written
+    # Loại chưa ghi thì phải nằm trong `edge_types_missing` của `.meta`.
+    missing_list = re.search(r"List\((.*?)\)\s*\.filter", src, re.S)
+    assert missing_list, "phai con list 'missing' khai bao loai canh thieu"
+    for kind in ("CALL", "REF", "REACHING_DEF"):
+        assert kind in missing_list.group(1), kind
+
+
+def test_export_cpg_param_comparison_is_identity_not_structural():
+    """Regression: `m.parameter.l.toSet` dùng `equals` cấu trúc, còn node Joern là
+    case class → `contains` không bao giờ trúng node thật. Đo được PARAMETER_OUT=0
+    trên 500/500 hàm. Phải dùng IdentityHashMap như bảng `idx`."""
+    raw = Path("scripts/joern/export_cpg.sc").read_text(encoding="utf-8")
+    src = "\n".join(l.split("//", 1)[0] for l in raw.splitlines())
+    assert "params.containsKey" in src
+    assert "params.contains(" not in src
+    # Bảng tra đối chiếu danh tính phải là IdentityHashMap, không phải Set/Map cấu trúc.
+    assert re.search(r"val params = new java\.util\.IdentityHashMap", src)
 
 
 def test_failure_digest_shows_the_compiler_error_not_joern_noise():
@@ -384,13 +434,13 @@ def test_benchmark_reports_rate_errors_and_meta(tmp_path):
     samples = [{"sample_id": "a1", "code": "int f(){}"},
                {"sample_id": "a2", "code": "int g(){return 2;}"}]
     (out / "a1.json").write_text("{}", encoding="utf-8")
-    (out / "a1.meta").write_text("n_methods_in_file\t1\nn_nodes\t12\n", encoding="utf-8")
+    (out / "a1.meta").write_text("n_nodes\t12\nmethod_name\tsolve\n", encoding="utf-8")
     (out / "a2.json.error").write_text("boom", encoding="utf-8")
     r = benchmark(out, samples, 10.0)
     assert r["n_ok"] == 1 and r["n_error"] == 1 and r["n_missing"] == 0
     assert r["functions_per_second"] == 0.1
     assert r["nodes_per_cpg_mean"] == 12.0
-    assert r["files_with_multiple_methods"] == 0
+    assert r["n_synthetic_method_fallback"] == 0
 
 
 def test_benchmark_counts_missing_as_failure(tmp_path):

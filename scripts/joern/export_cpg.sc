@@ -23,17 +23,26 @@
 //
 // Đã xác nhận bằng compiler (xem `docs/joern_api_v4.json`):
 //   cpg.method / .ast / .call / .callOut / .callIn / .cfgNode / .parameter
-//   cpg.call.argument, cpg.call.callee, method.name/fullName/signature/file.name
-//   n.id, n.label, Iterator(n).astChildren, Iterator(n).astParent
-// Còn suy ra (cùng cơ chế `Iterator(x).<step>`, sẽ xác nhận ở lần chạy kế):
-//   Iterator(c).argument, Iterator(c).cfgNext
+//   cpg.call.argument, cpg.call.callee, cpg.call.assignment.target
+//   method.name/fullName/signature/file.name
+//   n.id, n.label, n.code, n.order, Iterator(n).astChildren, Iterator(n).astParent
+//   Iterator(c).argument, Iterator(c).cfgNext, Iterator(cn).callee.name
 //
-// ⚠ BẢN NÀY CỐ TÌNH CHƯA ĐỦ 9 CẠNH. Đã xác nhận chắc 4 loại (AST, CFG,
-// ARGUMENT, PARAMETER_OUT); 5 loại còn lại chưa có đường đã kiểm chứng nên
-// **không viết vào**: CALL, REF, TARG, REACHING_DEF, EVAL_ORDER. Chúng được liệt
-// kê tường minh trong `.meta` (`edge_types_missing`) và trong stats của
-// `graph_stats()` — im lặng nuốt cạnh thì không phân biệt được "mô hình học
-// được CPG" với "mô hình học được nửa CPG".
+// BẢN NÀY PHÁT 6/9 LOẠI CẠNH: AST, CFG, ARGUMENT, PARAMETER_OUT, TARG,
+// EVAL_ORDER — đều qua step đã kiểm chứng ở trên.
+//
+// ⚠ CÒN THIẾU 3 LOẠI, và đây là hạn chế CẠNG TRƯỚC HÀNG ĐÔN của bài toán,
+// không phải "chưa biết cách gọi":
+//   - CALL / REF: **xuyên hàm**. Node đích (METHOD được gọi) nằm ngoài `m.ast`
+//     của hàm đang xuất, nên `add` sẽ trả về null và cạnh bị rơi (dangling).
+//     Muốn có CALL/ARG thật thì phải thêm node stub cho hàm ngoài — tức là
+//     bơm node giả vào đồ thị, cần quyết định thiết kế riêng.
+//   - REACHING_DEF: cần Joern **dataflow frontend** (`dataflow.sh`), frontend
+//     mặc định (`c2cpg`) không dựng sẵn. Đây là quyết định nghiên cứu, không
+//     phải viết thêm vài dòng Scala.
+// Ba loại này được liệt kê tường minh trong `.meta` (`edge_types_missing`) và
+// trong `graph_stats()` — im lặng nuốt cạnh thì không phân biệt được "mô hình
+// học được CPG" với "mô hình học được nửa CPG".
 // ============================================================================
 
 @main def exec(srcDir: String, indexFile: String, outDir: String) = {
@@ -92,8 +101,8 @@
   // dữ liệu hoàn toàn im lặng. Đo được trên lô 500 hàm: 100 file có >1 method.
   // Chọn method THẬT (tên không bắt đầu bằng `<`); nếu còn nhiều thì lấy AST lớn
   // nhất, và nếu vẫn bằng thì so tên để không phụ thuộc thứ tự traversal.
-  val bestReal = mutable.Map.empty[String, (Int, String, String, String)]
-  val bestAny = mutable.Map.empty[String, (Int, String, String, String)]
+  val bestReal = mutable.Map.empty[String, (Int, String, String, String, Map[String, Int])]
+  val bestAny = mutable.Map.empty[String, (Int, String, String, String, Map[String, Int])]
   val hits = mutable.Map.empty[String, Int]
   var n_unindexed = 0
 
@@ -127,10 +136,33 @@
         }
       }
 
-      ast.foreach { n => labelHist(n.label) = labelHist.getOrElse(n.label, 0) + 1 }
+      // Histogram node **của riêng method này**. Không cộng vào `labelHist` toàn lô
+      // tại đây: `cpg.method.l` gồm cả method giả Joern sinh ra (`<global>`…),
+      // và phần lớn chúng sẽ bị loại ở bước chọn — đếm vào histogram chung sẽ
+      // báo node label của dữ liệu mà ta không hề xuất. Gộp sau khi chọn.
+      val labelsMap = ast.map(n => n.label).groupBy(identity).map { case (k, v) => k -> v.size }
+        .toMap
 
       // --- AST: cha -> con. `astChildren` là bước đi xuống cây cú pháp -------
       ast.foreach { n => Iterator(n).astChildren.l.foreach(c => add(n, c, "AST")) }
+
+      // --- EVAL_ORDER: thứ tự thực thi giữa các câu lệnh anh em ---------------
+      // Nối chuỗi giữa các anh em liên tiếp: đủ để biến đồ thị về tuần tự, và
+      // số cạnh chỉ bằng n-1 mỗi nhóm thay vì n^2 như bản "nối mọi cặp" (n^2 sẽ
+      // nổ trên hàm lớn).
+      //
+      // KHÔNG gom vào hàm `ord(k: Any)`: `Iterator(...)` chỉ resolve được với kiểu
+      // cụ thể của node, nới thành `Any` là tự tạo lỗi compile mà không đổi được
+      // gì. Giữ `k` nguyên kiểu mà `astChildren` trả về.
+      ast.foreach { n =>
+        val keyed = Iterator(n).astChildren.l.toList.zipWithIndex.map { case (k, i) =>
+          (Iterator(k).order.l.headOption.map(_.toLong).getOrElse(0L), i, k)
+        }
+        // Khóa thứ hai là vị trí traversal: hai anh em cùng `order` thì giữ đúng
+        // thứ tự nguồn thay vì để hàm sort ổn định tự quyết.
+        val kids = keyed.sortBy(k => (k._1, k._2)).map(_._3)
+        kids.zip(kids.tail).foreach { case (a, b) => add(a, b, "EVAL_ORDER") }
+      }
 
       // --- CFG: cạnh điều khiển thật, không phải "nối node liên tiếp" ----------
       // Chỉ node CFG mới có `cfgNext`; lấy qua `m.cfgNode` để không gọi nhầm lên
@@ -138,16 +170,27 @@
       val cfg = m.cfgNode.l.toList
       cfg.foreach { c => Iterator(c).cfgNext.l.foreach(s => add(c, s, "CFG")) }
 
-      // --- ARGUMENT + PARAMETER_OUT -----------------------------------------
+      // --- ARGUMENT + PARAMETER_OUT + TARG ---------------------------------
       // `n_args` là feature duy nhất của node (FEATURE_DIM=1): số đối số đã
-      // chuẩn hoá log1p — tín hiệu ngữ nghĩa mà node type không nắm được.
-      val params = m.parameter.l.toSet
+// chuẩn hoá log1p — tín hiệu ngữ nghĩa mà node type không nắm được.
+      //
+      // ⚠ `m.parameter.l.toSet` là **sai âm thầm**: `Set` so sánh cấu trúc
+      // (`equals`), còn node Joern là case class nên hai node khác nhau có thể
+      // bằng nhau mọi trường. Đo trước đó: PARAMETER_OUT = 0 trên 500/500 hàm
+      // dù không có hàm nào thực sự thiếu cạnh — `contains` không bao giờ trúng
+      // node thật. Dùng IdentityHashMap như `idx` ở trên.
+      val params = new java.util.IdentityHashMap[Any, java.lang.Boolean]()
+      m.parameter.l.foreach(p => params.put(p, java.lang.Boolean.TRUE))
       val nArgsByCall = mutable.Map.empty[Any, Integer]
       m.call.l.toList.foreach { c =>
         val args = Iterator(c).argument.l.toList
         nArgsByCall.put(c, Integer.valueOf(args.size))
         args.foreach(a => add(c, a, "ARGUMENT"))
-        args.foreach(a => if (params.contains(a)) add(c, a, "PARAMETER_OUT"))
+        args.foreach(a => if (params.containsKey(a)) add(c, a, "PARAMETER_OUT"))
+        // TARG: gánh kết quả của lời gọi hàm vào biến đích (`x = f(...)`).
+        // Cả hai vế đều nằm trong `m.ast` nên cạnh này **nội hàm**, ngược với
+        // CALL — đây là cạnh data-flow duy nhất lấy được mà không cần stub.
+        Iterator(c).assignment.target.l.foreach(t => add(c, t, "TARG"))
       }
 
       // Gộp trùng rồi sắp xếp cho byte-for-byte ổn định giữa các lần chạy.
@@ -186,6 +229,7 @@
       // CFG vẫn bị báo là có CFG. `mapValues` + `toList` để chạy được cả 2.12/2.13.
       val hist = uniq.groupBy(_._3).mapValues(_.size).toList
         .sortBy(_._1).map { case (k, v) => s"$k=$v" }.mkString(";")
+      val labelsStr = labelsMap.toList.sortBy(_._1).map { case (k, v) => s"$k=$v" }.mkString(";")
       val metaStr =
         (s"n_nodes\t${ast.size}\n" +
          s"n_edges\t${uniq.size}\n" +
@@ -193,14 +237,15 @@
          s"method_name\t${m.name}\n" +
          s"method_signature\t${m.signature}\n" +
          s"edge_types\t$hist\n" +
-         s"edge_types_missing\t$missing\n")
+         s"edge_types_missing\t$missing\n" +
+         s"node_labels\t$labelsStr\n")
 
-      val payload = (ast.size, m.name, body, metaStr)
+      val payload = (ast.size, m.name, body, metaStr, labelsMap)
       // Hơn nữa: khi AST bằng nhau thì so tên method. `cpg.method.l` không bảo đảm
       // thứ tự, nên nếu chỉ so `ast.size` thì kết quả có thể đổi giữa hai lần
       // chạy cùng dữ liệu — và ta không có cách nào phát hiện ngoài việc diff.
-      def better(cand: (Int, String, String, String),
-                 prev: (Int, String, String, String)): Boolean =
+      def better(cand: (Int, String, String, String, Map[String, Int]),
+                 prev: (Int, String, String, String, Map[String, Int])): Boolean =
         if (cand._1 != prev._1) cand._1 > prev._1 else cand._2 < prev._2
       val target = if (!m.name.startsWith("<")) bestReal else bestAny
       target.get(sid) match {
@@ -214,16 +259,22 @@
   // Chỉ ghi những gì đã chọn. `bestReal` thắng `bestAny`; trong mỗi nhóm đã lưu
   // method có AST lớn nhất nên không còn phụ thuộc thứ tự `cpg.method.l`.
   val chosen = bestReal ++ bestAny.filter { case (k, _) => !bestReal.contains(k) }
-  for ((sid, (_, _, body, metaStr)) <- chosen.toList.sortBy(_._1)) {
+  for ((sid, (_, _, body, metaStr, labelsMap)) <- chosen.toList.sortBy(_._1)) {
     Files.write(Paths.get(outDir, s"$sid.json"), body.getBytes(StandardCharsets.UTF_8))
     Files.write(Paths.get(outDir, s"$sid.meta"), metaStr.getBytes(StandardCharsets.UTF_8))
     n_written += 1
+    labelsMap.foreach { case (k, v) => labelHist(k) = labelHist.getOrElse(k, 0) + v }
   }
 
   println(s"[export_cpg] wrote=$n_written out=$outDir")
-  // Ba số này là bằng chứng chống ghi đè âm thầm: nếu `files_multi` > 0 mà
-  // `wrote` vẫn bằng số sample thì đã chọn đúng 1 method mỗi file.
-  println(s"[export_cpg] file co >1 method = ${hits.count(_._2 > 1)} " +
+  // `n_synthetic` đếm hàm rơi về method GIẢ (`<global>`, `<includes>`…) vì Joern
+  // không tạo được method thật cho file đó. Đây mới là tín hiệu sức khoẻ đáng
+  // tin; trước đây Python đếm `files_with_multiple_methods` gom theo `file_name`
+  // mà tên file bị **đặt lại mỗi lô** (`00000.cpp`… lặp 5 lần trong lô 500), nên
+  // metric đó luôn bằng 100/500 bất kể dữ liệu có hỏng hay không — báo động giả.
+  val n_synthetic = chosen.count { case (sid, v) => v._2.startsWith("<") }
+  println(s"[export_cpg] synthetic fallback = $n_synthetic " +
+    s"| file co >1 method = ${hits.count(_._2 > 1)} " +
     s"| method bi ao bo (khong indexed) = $n_unindexed")
   println("[export_cpg] edge histogram (toàn lô): " +
     edgeHist.toList.sortBy(_._1).map { case (k, v) => s"$k=$v" }.mkString(" "))

@@ -185,6 +185,53 @@ CANDIDATES: list[dict] = [
     {"name": "callee.name", "setup": "val cn = cpg.call.l.head",
      "expr": "Iterator(cn).callee.name.l.size", "expect": "ok"},
 
+    # === VÒNG 4: sau khi `cpg.graph.E` đã bác bổ ================================
+    # `node.outE`/`node.inE` **hợp lệ** (Vòng 3) trong khi `cpg.graph.E` thì không.
+    # Nghĩa là: DSL không có `graph`, nhưng **đường đi cạnh gốc từ từng node thì
+    # có**. Vậy câu hỏi "Joern có lưu cạnh data-flow không" hoàn toàn chưa được
+    # trả lời — ta mới chỉ chứng minh là không đọc được qua biến `graph`.
+    #
+    # Đây là câu hỏi quyết định M4, nên phải đo **từ vựng nhãn cạnh** thay vì đếm:
+    # biết danh sách là biết ngay có REACHING_DEF/REF hay không.
+    {"name": "outE.labels",
+     "setup": "val n = cpg.method.ast.l.head",
+     "expr": 'Iterator(n).outE.l.map(_.label).distinct.sorted.mkString(",")',
+     "expect": "ok"},
+    {"name": "inE.labels",
+     "setup": "val n = cpg.method.ast.l.head",
+     "expr": 'Iterator(n).inE.l.map(_.label).distinct.sorted.mkString(",")',
+     "expect": "ok"},
+    # Nếu từ vựng chứa REACHING_DEF/REF thì lọc thẳng, không cần DSL cho tới đâu.
+    {"name": "outE.reachingDef",
+     "setup": "val n = cpg.method.ast.l.head",
+     "expr": 'Iterator(n).outE.l.count(_.label == "REACHING_DEF")', "expect": "ok"},
+    {"name": "inE.reachingDef",
+     "setup": "val n = cpg.method.ast.l.head",
+     "expr": 'Iterator(n).inE.l.count(_.label == "REACHING_DEF")', "expect": "ok"},
+    # Gắn cạnh thô cần biết **hai đầu cạnh**. Không có `.source`/`.target` thì
+    # chỉ đếm được số cạnh mà không dựng được cạnh trong JSON.
+    {"name": "outE.source",
+     "setup": "val n = cpg.method.ast.l.head",
+     "expr": "Iterator(n).outE.l.map(_.source.id).distinct.size", "expect": "ok"},
+    {"name": "outE.target",
+     "setup": "val n = cpg.method.ast.l.head",
+     "expr": "Iterator(n).outE.l.map(_.target.id).distinct.size", "expect": "ok"},
+
+    # === VÒNG 5: hai step exporter MỚI dùng, cần xác nhận đúng kiểu node ========
+    # `node.order` (Vòng 2) chỉ được đo trên **CfgNode**. Exporter dựng EVAL_ORDER
+    # trên node **AST** — hợp lệ chỉ khi `AstNode extends CfgNode`. Không đo thì
+    # đây là giả định, mà giả định sai thì cả lô chết lúc compile.
+    {"name": "ast_node.order", "setup": "val n = cpg.method.ast.l.head",
+     "expr": "Iterator(n).order.l.size", "expect": "ok"},
+    {"name": "ast_child.order",
+     "setup": "val n = cpg.method.ast.l.head; val k = Iterator(n).astChildren.l.head",
+     "expr": "Iterator(k).order.l.size", "expect": "ok"},
+    # TARG: `cpg.call.assignment.target` đã OK, nhưng exporter gọi qua
+    # `Iterator(c).assignment.target`. Cùng cơ chế với `Iterator(cn).argument`
+    # (đã OK) — vẫn phải đo thay vì suy.
+    {"name": "call_assignment_target_via_iterator", "setup": "val c = cpg.call.l.head",
+     "expr": "Iterator(c).assignment.target.l.size", "expect": "ok"},
+
     # --- ĐỐI CHỨNG: hai cái này chắc chắn hỏng, đã bác ở các lần chạy trước ----
     # Giữ **nguyên tên** để api_scan nhận cache và không chạy lại (tiết kiệm 20s).
     {"name": "call.ref", "expr": "cpg.call.ref.l.size", "expect": "fail"},
