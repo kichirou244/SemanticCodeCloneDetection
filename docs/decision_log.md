@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.18.0 |
+| **Phiên bản** | 1.19.0 |
 | **Ngày cập nhật** | 2026-10-03 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -39,6 +39,7 @@
 - [DEC-024 — M4 contract-first: đo thay vì cài, Joern chạy trên Kaggle không cài local](#dec-024--m4-contract-first--%C4%91o-thay-v%C3%AC-c%C3%A3i-joern-ch%E1%BA%A1y-tr%C3%AAn-kaggle-kh%C3%B4ng-c%C3%A1i-local)
 - [DEC-025 — Joern v4: script Scala + gom cả lô vào một tiến trình, và smoke test bắt buộc](#dec-025--joern-v4-script-scala--gom-c%E1%BA%A3-l%C3%B4-v%C3%A0o-m%E1%BB%99t-ti%E1%BA%BFn-tr%C3%ACnh-v%C3%A0-smoke-test-b%E1%BA%AFt-bu%E1%BB%99c)
 - [DEC-026 — Baseline của báo cáo là MOSS (EXP-013), không dùng TF-IDF](#dec-026--baseline-c%E1%BB%A3a-b%C3%A1o-c%C3%A1o-l%C3%A1-mo%E1%BB%85-013-kh%C3%B4ng-d%C3%B9ng-tf-idf)
+- [DEC-027 — M4 schema (b): bỏ CALL/REF/REACHING_DEF, sửa PARAMETER_OUT bằng khớp tên](#dec-027--m4-schema-b-b%E1%BB%8F-callrefreaching_def-s%E1%BB%ADa-parameter_out-b%E1%BA%B1ng-kh%E1%BB%9Bp-t%C3%AAn)
 - [Lịch sử thay đổi](#lich-su-thay-doi)
 
 ---
@@ -685,3 +686,16 @@
   hưởng" đều là suy đoán chưa kiểm, chỉ đến khi đếm trên dữ liệu thật mới thấy
   sai. Test fail ≠ có bug; phải hỏi test sai hay code sai trước khi sửa code.
 | 19 | 1.18.0 | 2026-10-03 | **DEC-026 đính chính:** suy đoán “normalize nuốt dấu `=` ở `*=`” và “17% hàm / 30% cặp bị ảnh hưởng” đều **sai**. Đếm kiểm: `*=` 467→464, `+=` 17.882→17.876, `>>=` giữ nguyên; phần mất đều nằm trong comment hoặc chuỗi literal. `moss.py` **không có bug**, `metrics.json` chạy lại **giống hệt**. 5 test fail là kỳ vọng sai → đã sửa test (`idid*id=str;`, `id=str;`, thêm `TOY_K/TOY_W`). Phát hiện thêm: `similarity` là **containment** nên hàm ngắn dễ dễ “chứa” hàm dài (bubble sort vs hàm cộng ≈ 0,81) — lý do phải dò ngưỡng trên validation. |
+| 20 | 1.19.0 | 2026-10-03 | Thêm DEC-027: **M4 schema phương án (b)** — bỏ CALL/REF/REACHING_DEF khỏi `EDGE_LABELS` (9→6 loại, giữ thứ tự tương đối); sửa PARAMETER_OUT bằng khớp tên (identity không bao giờ trúng, đo 0/500). |
+
+---
+
+## DEC-027 — M4 schema (b): bỏ CALL/REF/REACHING_DEF, sửa PARAMETER_OUT bằng khớp tên
+
+- **Quyết định (người chốt, 2026-10-03):** phương án (b) — đổi hợp đồng schema M4 thay vì chạy dataflow frontend.
+- **Căn cứ đo (EXP-005 cell 7/8/9, Kaggle):** 500/500 OK, error 0; 4,267 hàm/s → est 3,38 giờ cho 51.991 hàm (crosscheck 3,39, khớp); nodes/code 354,6, edges/code 1.188,4; 5 loại cạnh ổn định (ARGUMENT, AST, CFG, EVAL_ORDER, TARG); `truncated=0`, `edges_dropped_*=0`; synthetic fallback 8/500 (1,6%).
+- **Căn cứ API (cell 5, 53 candidate):** mọi đường đọc cạnh data-flow qua DSL đều FAIL — `call.reachingDef*`, `identifier/local.reachingDef*`, `cpg.graph.E*`, `call.ref`, `outE.source/target`. Chỉ `node.outE/inE` per-node hợp lệ nhưng chưa rõ trả về gì. `outE.labels` xác nhận đồ thị CÓ cạnh REACHING_DEF/REF, chỉ là DSL không mở được.
+- **Hợp đồng mới (`EDGE_LABELS`, giữ thứ tự tương đối):** AST, CFG, ARGUMENT, TARG, PARAMETER_OUT, EVAL_ORDER. Chưa train checkpoint nào nên đổi index edge an toàn (`model.py` dùng `N_EDGE_TYPES` động, mọi chỗ khác suy từ `len`).
+- **PARAMETER_OUT 0/500 là bug exporter, không phải dữ liệu:** `m.parameter` (METHOD_PARAMETER_IN khai báo) và argument (biểu thức) không bao giờ là cùng object nên `IdentityHashMap.containsKey` luôn false. Fix: khớp theo tên (`g(x)` tham chiếu tới tham số `x`) — cần cell 5 xác nhận `parameter.name`/`parameter.code` + `argument.code` trước (vòng 6, ~40s), không đoán.
+- **Hệ quả:** M4 mất data-flow xuyên hàm; TARG (kết quả gọi hàm → biến đích, nội hàm) là tín hiệu data-flow duy nhất giữ được. Gần ASTNN hơn nhưng vẫn hơn ở CFG + ARGUMENT + TARG + EVAL_ORDER.
+- **Chưa Save Version:** đúng theo notebook — schema và exporter chưa xong thì chưa Save.

@@ -31,17 +31,17 @@ NODE_LABELS: tuple[str, ...] = (
     "OTHER",             # nhãn lạ — xem node_type_id
 )
 
-# Nhãn cạnh. Tách AST (cây cú pháp) / CFG (luồng điều khiển) / data-flow (REACHING_DEF)
-# là bản chất của CPG: bỏ nhóm nào thì mô hình không còn là CPG-GNN nữa.
+# Nhãn cạnh theo hợp đồng DEC-027 (phương án b): Joern v4 (c2cpg mặc định) không
+# dựng REACHING_DEF/REF, và CALL xuyên hàm không gắn được (node đích nằm ngoài
+# `m.ast` của hàm đang xuất). Chỉ giữ 6 loại exporter thực sự phát được — giữ
+# nguyên thứ tự tương đối để diff nhỏ nhất. Chưa train checkpoint nào nên đổi
+# index lúc này an toàn (`model.py` dùng `N_EDGE_TYPES` động).
 EDGE_LABELS: tuple[str, ...] = (
     "AST",
     "CFG",
-    "CALL",
-    "REF",
     "ARGUMENT",
     "TARG",
     "PARAMETER_OUT",
-    "REACHING_DEF",
     "EVAL_ORDER",
 )
 

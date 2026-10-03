@@ -28,21 +28,21 @@
 //   n.id, n.label, n.code, n.order, Iterator(n).astChildren, Iterator(n).astParent
 //   Iterator(c).argument, Iterator(c).cfgNext, Iterator(cn).callee.name
 //
-// BẢN NÀY PHÁT 6/9 LOẠI CẠNH: AST, CFG, ARGUMENT, PARAMETER_OUT, TARG,
-// EVAL_ORDER — đều qua step đã kiểm chứng ở trên.
+// BẢN NÀY PHÁT 5/6 LOẠI CẠNH THEO HỢP ĐỒNG DEC-027: AST, CFG, ARGUMENT, TARG,
+// EVAL_ORDER — đều qua step đã kiểm chứng. PARAMETER_OUT đang 0/500 (logic so
+// identity không bao giờ trúng — xem khối ARGUMENT + PARAMETER_OUT + TARG),
+// chờ fix khớp tên sau khi cell 5 xác nhận `parameter.name`/`parameter.code`.
 //
-// ⚠ CÒN THIẾU 3 LOẠI, và đây là hạn chế CẠNG TRƯỚC HÀNG ĐÔN của bài toán,
-// không phải "chưa biết cách gọi":
+// ⚠ CALL / REF / REACHING_DEF ĐÃ BỎ KHỎI HỢP ĐỒNG (DEC-027), không phải "thiếu":
 //   - CALL / REF: **xuyên hàm**. Node đích (METHOD được gọi) nằm ngoài `m.ast`
-//     của hàm đang xuất, nên `add` sẽ trả về null và cạnh bị rơi (dangling).
-//     Muốn có CALL/ARG thật thì phải thêm node stub cho hàm ngoài — tức là
+//     của hàm đang xuất. Muốn có thì phải thêm node stub cho hàm ngoài — tức là
 //     bơm node giả vào đồ thị, cần quyết định thiết kế riêng.
 //   - REACHING_DEF: cần Joern **dataflow frontend** (`dataflow.sh`), frontend
-//     mặc định (`c2cpg`) không dựng sẵn. Đây là quyết định nghiên cứu, không
-//     phải viết thêm vài dòng Scala.
-// Ba loại này được liệt kê tường minh trong `.meta` (`edge_types_missing`) và
-// trong `graph_stats()` — im lặng nuốt cạnh thì không phân biệt được "mô hình
-// học được CPG" với "mô hình học được nửa CPG".
+//     mặc định (`c2cpg`) không dựng sẵn. Mọi đường đọc qua DSL đã được cell 5
+//     chứng minh FAIL (call.reachingDef*, graph.E*, call.ref...).
+// Ba loại này không còn trong `EDGE_LABELS` (schema.py) và không nằm trong
+// `.meta` (`edge_types_missing`) nữa — im lặng nuốt cạnh thì không phân biệt
+// được "mô hình học được CPG" với "mô hình học được nửa CPG".
 // ============================================================================
 
 @main def exec(srcDir: String, indexFile: String, outDir: String) = {
@@ -219,14 +219,15 @@
           uniq.map(e => s"""{"src": ${e._1}, "dst": ${e._2}, "label": ${esc(e._3)}}""").mkString(",") +
           s"""]}"""
 
-      // `.meta`: chẩn đoán từng hàm. `edge_types_missing` là phần quan trọng —
-      // nó nói thẳng CPG này thiếu loại cạnh nào thay vì để ta phát hiện sau khi
-      // train xong. `file_name` để Python đếm "file nào chứa nhiều hàm": cách v1
-      // định nghĩa việc đó bằng `cpg.file.name(fname).method.l.size` — gọi step
-      // có tham số, chưa từng được xác nhận là hợp lệ, nên bỏ; Python tự gom từ
-      // `file_name` thay vì đoán trong Scala.
-      val missing = List("AST", "CFG", "CALL", "REF", "ARGUMENT", "TARG",
-                         "PARAMETER_OUT", "REACHING_DEF", "EVAL_ORDER")
+      // `.meta`: chẩn đoán từng hàm. `edge_types_missing` liệt kê loại cạnh vắng
+      // **so với hợp đồng DEC-027** (6 loại). CALL/REF/REACHING_DEF không còn
+      // là "thiếu" mà là "không thuộc hợp đồng" — xem schema.py + decision log.
+      // `file_name` để Python đếm "file nào chứa nhiều hàm": cách v1 định nghĩa
+      // việc đó bằng `cpg.file.name(fname).method.l.size` — gọi step có tham số,
+      // chưa từng được xác nhận là hợp lệ, nên bỏ; Python tự gom từ `file_name`
+      // thay vì đoán trong Scala.
+      val missing = List("AST", "CFG", "ARGUMENT", "TARG",
+                         "PARAMETER_OUT", "EVAL_ORDER")
         .filter(k => !uniq.exists(_._3 == k)).mkString(";")
       // Histogram PHẢI tính riêng cho hàm này. `edgeHist` ở trên là map cộng dồn
       // toàn lô (dùng cho dòng tổng kết cuối cùng); nếu ghi nó vào `.meta` thì hàm

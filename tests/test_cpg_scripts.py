@@ -280,7 +280,9 @@ def test_meta_stats_reports_which_edge_types_exist(tmp_path):
     s = _meta_stats(tmp_path, ["a", "b"])
     assert s["edge_types_present"] == ["AST", "CFG", "REACHING_DEF"]
     assert s["edge_type_totals"]["AST"] == 27
-    assert "CALL" in s["edge_types_never_produced"]
+    # DEC-027: CALL đã bỏ khỏi hợp đồng nên không còn trong never_produced —
+    # thay bằng loại thuộc hợp đồng mới mà fixture không có.
+    assert "ARGUMENT" in s["edge_types_never_produced"]
     # Chỉ 1/2 hàm có data-flow → tỉ lệ thiếu phải lộ ra, không được gộp mất.
     assert s["edge_types_missing_ratio"]["REACHING_DEF"] == 0.5
     assert s["nodes_per_cpg_mean"] == 15.0
@@ -327,17 +329,18 @@ def test_export_cpg_avoids_constructs_that_failed_to_compile():
     assert not re.search(r"\bm\.l\b", src)
     # Chỉ được GHI loại cạnh đã xác minh. `CALL`/`REF` xuyên hàm (node đích nằm
     # ngoài `m.ast` → cạnh dangling) và `REACHING_DEF` cần dataflow frontend, nên
-    # ghi chúng là sinh dữ liệu bịa. Regression: trước đây test này chỉ kiểm
-    # "tên cạnh có xuất hiện trong file" nên không phân biệt được ghi ra với
-    # kê tường minh trong `.meta`.
+    # ghi chúng là sinh dữ liệu bịa. DEC-027 đã bỏ hẳn 3 loại này khỏi hợp đồng
+    # (schema.py) — `.meta` missing chỉ còn 6 loại, không liệt kê thứ không
+    # thuộc hợp đồng nữa.
     written = set(re.findall(r'add\([^)]*"([A-Z_]+)"\)', src))
     assert written == {"AST", "CFG", "ARGUMENT", "PARAMETER_OUT",
                        "TARG", "EVAL_ORDER"}, written
-    # Loại chưa ghi thì phải nằm trong `edge_types_missing` của `.meta`.
+    # Loại trong hợp đồng mà chưa ghi thì phải nằm trong `edge_types_missing`.
     missing_list = re.search(r"List\((.*?)\)\s*\.filter", src, re.S)
     assert missing_list, "phai con list 'missing' khai bao loai canh thieu"
-    for kind in ("CALL", "REF", "REACHING_DEF"):
-        assert kind in missing_list.group(1), kind
+    kinds = set(re.findall(r'"([A-Z_]+)"', missing_list.group(1)))
+    assert kinds == {"AST", "CFG", "ARGUMENT", "TARG",
+                     "PARAMETER_OUT", "EVAL_ORDER"}, kinds
 
 
 def test_export_cpg_param_comparison_is_identity_not_structural():

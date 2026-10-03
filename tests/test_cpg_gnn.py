@@ -47,7 +47,7 @@ def make_synthetic_graph(rng: np.random.Generator, n_nodes: int = 12) -> dict:
                       "n_args": int(rng.integers(0, 5)) if label == "CALL" else -1})
     nodes[0]["label"] = "METHOD"
     nodes[0]["n_args"] = -1
-    edge_labels = ["AST", "CFG", "CALL", "REF", "REACHING_DEF"]
+    edge_labels = ["AST", "CFG", "ARGUMENT", "TARG", "PARAMETER_OUT", "EVAL_ORDER"]
     edges = []
     for i in range(1, n_nodes):
         edges.append({"src": int(rng.integers(0, i)), "dst": i, "label": "AST"})
@@ -84,6 +84,15 @@ def test_unknown_node_label_falls_back_not_raises():
 
 def test_unknown_edge_label_is_dropped():
     assert edge_type_id("INCLUDES") == -1
+
+
+def test_removed_edge_labels_are_dropped():
+    """DEC-027: CALL/REF/REACHING_DEF không còn thuộc hợp đồng → -1 (bỏ),
+    như mọi nhãn lạ khác."""
+    assert edge_type_id("CALL") == -1
+    assert edge_type_id("REF") == -1
+    assert edge_type_id("REACHING_DEF") == -1
+    assert N_EDGE_TYPES == 6
 
 
 def test_arg_count_feature_is_bounded_and_monotonic():
@@ -198,8 +207,10 @@ def test_graph_stats_exposes_missing_edge_types():
     )
     s = graph_stats([ast_only])
     assert s["edge_type_counts"] == {"AST": 1, "CFG": 1}
-    assert "REACHING_DEF" in s["edge_types_missing"]
-    assert "CALL" in s["edge_types_missing"]
+    # DEC-027: hợp đồng chỉ còn 6 loại — thiếu phải là loại trong hợp đồng mới,
+    # không phải CALL/REACHING_DEF đã bỏ.
+    assert "ARGUMENT" in s["edge_types_missing"]
+    assert "TARG" in s["edge_types_missing"]
     assert "AST" not in s["edge_types_missing"]
 
 

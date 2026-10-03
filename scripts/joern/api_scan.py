@@ -232,6 +232,19 @@ CANDIDATES: list[dict] = [
     {"name": "call_assignment_target_via_iterator", "setup": "val c = cpg.call.l.head",
      "expr": "Iterator(c).assignment.target.l.size", "expect": "ok"},
 
+    # === VÒNG 6: PARAMETER_OUT khớp tên (DEC-027) =============================
+    # Exporter cũ so identity (METHOD_PARAMETER_IN khai báo vs argument biểu
+    # thức — hai object khác nhau nên containsKey luôn false, đo 0/500).
+    # Fix: khớp theo tên (đối số `g(x)` tham chiếu tới tham số `x`). Cần biết
+    # step nào đọc được tên/code của parameter và code của argument.
+    {"name": "parameter.name", "setup": "val p = cpg.method.parameter.l.head",
+     "expr": "Iterator(p).name.l.size", "expect": "ok"},
+    {"name": "parameter.code", "setup": "val p = cpg.method.parameter.l.head",
+     "expr": "Iterator(p).code.l.size", "expect": "ok"},
+    {"name": "argument.code",
+     "setup": "val a = cpg.call.l.head; val g = Iterator(a).argument.l.head",
+     "expr": "Iterator(g).code.l.size", "expect": "ok"},
+
     # --- ĐỐI CHỨNG: hai cái này chắc chắn hỏng, đã bác ở các lần chạy trước ----
     # Giữ **nguyên tên** để api_scan nhận cache và không chạy lại (tiết kiệm 20s).
     {"name": "call.ref", "expr": "cpg.call.ref.l.size", "expect": "fail"},
