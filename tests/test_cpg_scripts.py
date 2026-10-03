@@ -343,16 +343,16 @@ def test_export_cpg_avoids_constructs_that_failed_to_compile():
                      "PARAMETER_OUT", "EVAL_ORDER"}, kinds
 
 
-def test_export_cpg_param_comparison_is_identity_not_structural():
-    """Regression: `m.parameter.l.toSet` dùng `equals` cấu trúc, còn node Joern là
-    case class → `contains` không bao giờ trúng node thật. Đo được PARAMETER_OUT=0
-    trên 500/500 hàm. Phải dùng IdentityHashMap như bảng `idx`."""
+def test_export_cpg_parameter_out_matches_by_name():
+    """Regression DEC-027: so identity (METHOD_PARAMETER_IN khai báo vs argument
+    biểu thức — hai object khác nhau) không bao giờ trúng → PARAMETER_OUT 0/500.
+    Phải khớp theo tên (`g(x)` với `x` là tham số)."""
     raw = Path("scripts/joern/export_cpg.sc").read_text(encoding="utf-8")
     src = "\n".join(l.split("//", 1)[0] for l in raw.splitlines())
-    assert "params.containsKey" in src
-    assert "params.contains(" not in src
-    # Bảng tra đối chiếu danh tính phải là IdentityHashMap, không phải Set/Map cấu trúc.
-    assert re.search(r"val params = new java\.util\.IdentityHashMap", src)
+    assert "m.parameter.name.l.toSet" in src
+    assert "params.containsKey" not in src
+    assert "IdentityHashMap[Any, java.lang.Boolean]" not in src
+    # Bảng idx (IdentityHashMap[Any, Integer]) vẫn giữ — nó đánh id node, đúng.
 
 
 def test_export_cpg_eval_order_uses_drop_not_tail():

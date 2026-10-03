@@ -28,10 +28,9 @@
 //   n.id, n.label, n.code, n.order, Iterator(n).astChildren, Iterator(n).astParent
 //   Iterator(c).argument, Iterator(c).cfgNext, Iterator(cn).callee.name
 //
-// BẢN NÀY PHÁT 5/6 LOẠI CẠNH THEO HỢP ĐỒNG DEC-027: AST, CFG, ARGUMENT, TARG,
-// EVAL_ORDER — đều qua step đã kiểm chứng. PARAMETER_OUT đang 0/500 (logic so
-// identity không bao giờ trúng — xem khối ARGUMENT + PARAMETER_OUT + TARG),
-// chờ fix khớp tên sau khi cell 5 xác nhận `parameter.name`/`parameter.code`.
+// BẢN NÀY PHÁT 6/6 LOẠI CẠNH THEO HỢP ĐỒNG DEC-027: AST, CFG, ARGUMENT, TARG,
+// EVAL_ORDER, PARAMETER_OUT (khớp tên `m.parameter.name` vs `argument.code` —
+// cả hai đã xác nhận ở cell 5 vòng 6). Mọi step đều qua compiler kiểm chứng.
 //
 // ⚠ CALL / REF / REACHING_DEF ĐÃ BỎ KHỎI HỢP ĐỒNG (DEC-027), không phải "thiếu":
 //   - CALL / REF: **xuyên hàm**. Node đích (METHOD được gọi) nằm ngoài `m.ast`
@@ -180,19 +179,21 @@
       // `n_args` là feature duy nhất của node (FEATURE_DIM=1): số đối số đã
 // chuẩn hoá log1p — tín hiệu ngữ nghĩa mà node type không nắm được.
       //
-      // ⚠ `m.parameter.l.toSet` là **sai âm thầm**: `Set` so sánh cấu trúc
-      // (`equals`), còn node Joern là case class nên hai node khác nhau có thể
-      // bằng nhau mọi trường. Đo trước đó: PARAMETER_OUT = 0 trên 500/500 hàm
-      // dù không có hàm nào thực sự thiếu cạnh — `contains` không bao giờ trúng
-      // node thật. Dùng IdentityHashMap như `idx` ở trên.
-      val params = new java.util.IdentityHashMap[Any, java.lang.Boolean]()
-      m.parameter.l.foreach(p => params.put(p, java.lang.Boolean.TRUE))
+      // ⚠ PARAMETER_OUT khớp theo TÊN, không so identity: METHOD_PARAMETER_IN
+      // (node khai báo) và argument (node biểu thức) không bao giờ là cùng
+      // object nên `IdentityHashMap.containsKey` luôn false — đo 0/500 hàm
+      // (DEC-027). `g(x)` với `x` là tham số → cạnh CALL—PARAMETER_OUT.
+      // `m.parameter.name` + `Iterator(a).code` đã xác nhận ở cell 5 (vòng 6).
+      val paramNames = m.parameter.name.l.toSet
       val nArgsByCall = mutable.Map.empty[Any, Integer]
       m.call.l.toList.foreach { c =>
         val args = Iterator(c).argument.l.toList
         nArgsByCall.put(c, Integer.valueOf(args.size))
         args.foreach(a => add(c, a, "ARGUMENT"))
-        args.foreach(a => if (params.containsKey(a)) add(c, a, "PARAMETER_OUT"))
+        args.foreach { a =>
+          val aname = Iterator(a).code.l.headOption.getOrElse("")
+          if (aname.nonEmpty && paramNames.contains(aname)) add(c, a, "PARAMETER_OUT")
+        }
         // TARG: gánh kết quả của lời gọi hàm vào biến đích (`x = f(...)`).
         // Cả hai vế đều nằm trong `m.ast` nên cạnh này **nội hàm**, ngược với
         // CALL — đây là cạnh data-flow duy nhất lấy được mà không cần stub.
