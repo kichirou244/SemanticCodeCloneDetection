@@ -35,7 +35,11 @@ preprocessing:
 # LR 1e-3 vì mô hình nhỏ, train từ scratch (không có pretrained encoder).
 training:
   seed: 42
-  epochs: 3
+  # 20 là TRẦN, không phải mục tiêu: val F1 3 epoch đầu còn dốc
+  # (0,643 → 0,677 → 0,720) nên cho chạy tiếp; early stopping (patience 2)
+  # tự dừng khi plateau. Scheduler co giãn theo tổng step (warmup_ratio),
+  # nên đổi mỗi số này là đủ, không cần đụng LR.
+  epochs: 20
   batch_size: 32
   learning_rate: 0.001
   weight_decay: 0.0
