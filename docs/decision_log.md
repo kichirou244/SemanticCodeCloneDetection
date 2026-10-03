@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.19.0 |
+| **Phiên bản** | 1.20.0 |
 | **Ngày cập nhật** | 2026-10-03 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -699,3 +699,5 @@
 - **PARAMETER_OUT 0/500 là bug exporter, không phải dữ liệu:** `m.parameter` (METHOD_PARAMETER_IN khai báo) và argument (biểu thức) không bao giờ là cùng object nên `IdentityHashMap.containsKey` luôn false. Fix: khớp theo tên (`g(x)` tham chiếu tới tham số `x`) — cần cell 5 xác nhận `parameter.name`/`parameter.code` + `argument.code` trước (vòng 6, ~40s), không đoán.
 - **Hệ quả:** M4 mất data-flow xuyên hàm; TARG (kết quả gọi hàm → biến đích, nội hàm) là tín hiệu data-flow duy nhất giữ được. Gần ASTNN hơn nhưng vẫn hơn ở CFG + ARGUMENT + TARG + EVAL_ORDER.
 - **Chưa Save Version:** đúng theo notebook — schema và exporter chưa xong thì chưa Save.
+- **Kiểm chứng fix (2026-10-03, cell 5 vòng 6 + chạy lại cell 7/8/9):** `parameter.name`, `parameter.code`, `argument.code` cả 3 OK. PARAMETER_OUT 0→67 cạnh trên 500 hàm (`never_produced` còn `[]`); `edges_total` tăng đúng +67, không đụng gì khác. Hiếm (`missing_ratio` 0,992) là do dữ liệu — chỉ 17 `METHOD_PARAMETER_IN` node/500 hàm (POJ-104 đọc stdin, ít hàm có tham số). Gate mới: `Gate AST+CFG: PASS` + `Gate PARAMETER_OUT: PASS`, `edge_types_missing: []`. Số chốt Save: 4,416 hàm/s; est 3,27 giờ; error 0; nodes/code 354,6; đủ 6 loại cạnh.
+| 21 | 1.20.0 | 2026-10-03 | DEC-027 kiểm chứng xong: vòng 6 cả 3 OK; PARAMETER_OUT 0→67 (+67 đúng bằng tăng `edges_total`); gate mới PASS hết, `missing: []`. Số chốt Save: 4,416 hàm/s, est 3,27h, error 0, 354,6 nodes/code, đủ 6 loại cạnh. |
