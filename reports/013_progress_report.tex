@@ -72,28 +72,30 @@ Test       & 11.000 & 5.500  & báo cáo kết quả cuối \\
       siêu tham số CodeBERT.
 \item \textbf{ASTNN}. Câu cú pháp rút gọn thành đồ thị câu lệnh, qua mạng đệ quy
       và mạng hai chiều. Huấn luyện từ đầu.
-\item \textbf{CPG-GNN}. Đồ thị thuộc tính dạng code property graph. Đang xây dựng,
-      chưa có kết quả.
+\item \textbf{CPG-GNN}. Đồ thị thuộc tính dạng code property graph (6 loại cạnh),
+      qua mạng GAT 3 tầng rồi đầu MLP như ba phương pháp trên. Huấn luyện từ đầu.
 \end{itemize}
 
 \section{Cấu hình huấn luyện}
 
 \begin{itemize}
-\item CodeBERT, GraphCodeBERT, ASTNN: Kaggle, một GPU Tesla T4, 3 epoch, seed 42.
+\item Kaggle GPU Tesla T4, seed 42. Số epoch: CodeBERT 3, GraphCodeBERT 3,
+      ASTNN 7, CPG-GNN 5.
 \item MOSS: không huấn luyện.
 \end{itemize}
 
 {\small
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccc@{}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccc@{}}
 \toprule
-\textbf{Cấu hình} & \textbf{CodeBERT} & \textbf{GraphCodeBERT} & \textbf{ASTNN} \\
+\textbf{Cấu hình} & \textbf{CodeBERT} & \textbf{GraphCodeBERT} & \textbf{ASTNN} &
+\textbf{CPG-GNN} \\
 \midrule
-Mô hình có sẵn & codebert-base & graphcodebert-base & không, từ đầu \\
-Độ dài đầu vào & 256 token & 256 token & không cắt \\
-Learning rate & 2e-5 & 2e-5 & 1e-3 \\
-Batch size & 16 & 16 & 32 \\
-Số tham số & 126.416.641 & 126.416.641 & 428.001 \\
-Thời gian & 7,0 giờ & 6,9 giờ & 40 phút \\
+Mô hình có sẵn & codebert-base & graphcodebert-base & không, từ đầu & không, từ đầu \\
+Độ dài đầu vào & 256 token & 256 token & không cắt & tối đa 1500 node \\
+Learning rate & 2e-5 & 2e-5 & 1e-3 & 1e-3 \\
+Batch size & 16 & 16 & 32 & 16 \\
+Số tham số & 126.416.641 & 126.416.641 & 428.001 & 203.649 \\
+Thời gian & 7,0 giờ & 6,9 giờ & 40 phút & 57 phút \\
 \bottomrule
 \end{tabular*}\par}
 
@@ -109,6 +111,8 @@ CodeBERT      & \textbf{0,9191} & \textbf{0,9191} & 0,9116 & 7,0 h & đã quá t
 GraphCodeBERT & \textbf{0,9155} & 0,9138 & 0,9108 & 6,9 h & đã quá tay \\
 ASTNN         & 0,7890 & 0,8141 & 0,8414 & 40 phút &
               tốt nhất \textbf{0,8530} ở epoch 4; dừng epoch 7 \\
+CPG-GNN       & 0,7798 & 0,7955 & 0,8004 & 57 phút &
+              tốt nhất \textbf{0,8194} ở epoch 5; còn tăng \\
 \bottomrule
 \end{tabular*}\par}
 
@@ -129,6 +133,7 @@ MOSS          & 0,646 & 0,722 & 0,682 ± 0,005 & 0,731 & 2.177 \\
 CodeBERT      & 0,931 & 0,890 & 0,910 ± 0,003 & 0,973 & 363 \\
 GraphCodeBERT & 0,883 & 0,933 & 0,907 ± 0,003 & 0,971 & 682 \\
 ASTNN         & 0,760 & 0,894 & 0,822 ± 0,004 & 0,889 & 2.138 \\
+CPG-GNN       & 0,695 & 0,885 & 0,779 ± 0,004 & 0,864 & 2.768 \\
 \bottomrule
 \end{tabular*}\par}
 
@@ -137,6 +142,7 @@ ASTNN         & 0,760 & 0,894 & 0,822 ± 0,004 & 0,889 & 2.138 \\
 \begin{itemize}
 \item Mỗi phương pháp chạy một lần với seed 42.
 \item ASTNN dừng ở epoch 7 (early stopping, tốt nhất epoch 4).
+\item CPG-GNN dừng ở epoch 5 (hết epoch, val F1 còn tăng).
 \item CodeBERT, GraphCodeBERT cắt hàm còn 256 token; 78,6\% hàm trong tập train bị
       cắt.
 \end{itemize}
@@ -146,7 +152,6 @@ ASTNN         & 0,760 & 0,894 & 0,822 ± 0,004 & 0,889 & 2.138 \\
 \begin{itemize}
 \item Chạy lại CodeBERT, GraphCodeBERT vài seed.
 \item Thử độ dài đầu vào 512 token.
-\item Tiếp tục CPG-GNN.
 \end{itemize}
 
 \end{document}

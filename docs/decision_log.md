@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.21.0 |
+| **Phiên bản** | 1.22.0 |
 | **Ngày cập nhật** | 2026-10-03 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -702,3 +702,4 @@
 - **Kiểm chứng fix (2026-10-03, cell 5 vòng 6 + chạy lại cell 7/8/9):** `parameter.name`, `parameter.code`, `argument.code` cả 3 OK. PARAMETER_OUT 0→67 cạnh trên 500 hàm (`never_produced` còn `[]`); `edges_total` tăng đúng +67, không đụng gì khác. Hiếm (`missing_ratio` 0,992) là do dữ liệu — chỉ 17 `METHOD_PARAMETER_IN` node/500 hàm (POJ-104 đọc stdin, ít hàm có tham số). Gate mới: `Gate AST+CFG: PASS` + `Gate PARAMETER_OUT: PASS`, `edge_types_missing: []`. Số chốt Save: 4,416 hàm/s; est 3,27 giờ; error 0; nodes/code 354,6; đủ 6 loại cạnh.
 | 21 | 1.20.0 | 2026-10-03 | DEC-027 kiểm chứng xong: vòng 6 cả 3 OK; PARAMETER_OUT 0→67 (+67 đúng bằng tăng `edges_total`); gate mới PASS hết, `missing: []`. Số chốt Save: 4,416 hàm/s, est 3,27h, error 0, 354,6 nodes/code, đủ 6 loại cạnh. |
 | 22 | 1.21.0 | 2026-10-04 | ASTNN train tiếp trần 20 epoch (early stopping patience 2), train từ đầu: dừng epoch 7, tốt nhất epoch 4 (val F1 0,853). Test P/R/F1 0,760/0,894/0,822±0,004, ROC-AUC 0,889, thr 0,42; ~40 phút T4. Lưu ý: schedule 20-epoch khác schedule cũ nên epoch đầu đã khác (0,789 vs 0,643) — chỉ so best, không so từng epoch. Báo cáo cập nhật hàng ASTNN, bỏ “chưa train đủ”. Đính chính số ở dòng 21: 354,6 nodes/code chỉ là 500 hàm train đầu (samples.jsonl xếp theo nhóm nên không đại diện); TB thật cả 51.991 hàm ~150 (train ~148, val ~188, test ~141). |
+| 23 | 1.22.0 | 2026-10-04 | M4 train xong (5 epoch, ~57 phút T4): val F1 còn tăng tới epoch cuối (0,800→0,817→0,819) nên dừng vì hết epoch chứ không plateau — như ASTNN lúc trước. Test P/R/F1 0,695/0,885/0,779±0,004, ROC-AUC 0,864, thr 0,42. Kém CodeBERT 0,131 (CI [-0,140;-0,122], có ý nghĩa), hơn MOSS 0,097. Báo cáo thêm hàng CPG-GNN (5 phương pháp), bỏ “Tiếp tục CPG-GNN”. |

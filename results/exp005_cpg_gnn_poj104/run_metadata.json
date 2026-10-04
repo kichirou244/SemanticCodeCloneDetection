@@ -1,0 +1,32 @@
+{
+  "python": "3.12.13",
+  "os": "Linux-6.18.48+-x86_64-with-glibc2.35",
+  "cpu": "x86_64",
+  "device": "cpu",
+  "config_sha256": "0e43139d97cf1a82153545d5708ef12c41121c400b2bd69939a26d80cc9cef40",
+  "manifest_sha256": "909615d87ef2222747914d6708ed09fba9e4b81763b34e463bf3f5494ebaf84e",
+  "versions": {
+    "sklearn": "1.6.1",
+    "numpy": "2.0.2",
+    "torch": "2.10.0+cu128",
+    "transformers": "5.0.0"
+  },
+  "git": "28a92efde6c77cd60891bbbf7c15dce3b3a572ca",
+  "device_requested": "cuda",
+  "device_actual": "cuda:0",
+  "model_device": "cuda:0",
+  "cuda_available": true,
+  "cuda_device_name": "Tesla T4",
+  "cuda_device_count": 2,
+  "gpu_memory_allocated": 20533248,
+  "gpu_memory_reserved": 260046848,
+  "scheduler": "linear_warmup_per_update_step (DEC-017)",
+  "wall_clock": "2026-10-04T17:33:58+00:00",
+  "training_time_s": 3418.113760108,
+  "best_epoch": 4,
+  "best_val_f1": 0.8194415284484569,
+  "total_optimizer_steps": 103750,
+  "stopped_reason": "epochs_exhausted",
+  "epochs_completed": 5,
+  "time_budget_s": 39600
+}

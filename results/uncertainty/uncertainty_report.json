@@ -154,6 +154,42 @@
           0.828741261705307
         ]
       }
+    },
+    "exp005_cpg_gnn_poj104": {
+      "point": {
+        "precision": 0.694920091324201,
+        "recall": 0.8854545454545455,
+        "f1": 0.778701630956188,
+        "threshold": 0.42000000000000004,
+        "n": 11000
+      },
+      "n_boot": 2000,
+      "seed": 42,
+      "alpha": 0.05,
+      "precision": {
+        "mean": 0.6950747108512856,
+        "sd": 0.005570665913444576,
+        "sd_ci95": [
+          0.6840740148278046,
+          0.7052614262078126
+        ]
+      },
+      "recall": {
+        "mean": 0.8854346846598785,
+        "sd": 0.004203497184780975,
+        "sd_ci95": [
+          0.8773219732904224,
+          0.8937551100598338
+        ]
+      },
+      "f1": {
+        "mean": 0.7787768667414667,
+        "sd": 0.00410105558241749,
+        "sd_ci95": [
+          0.7706326670761061,
+          0.7866860689462218
+        ]
+      }
     }
   },
   "paired_vs_reference": {
@@ -233,6 +269,33 @@
         "a_wrong_b_correct": 1833,
         "discordant": 2497,
         "p_value": 1.3761013211927773e-125,
+        "threshold_a": 0.42000000000000004,
+        "threshold_b": 0.59,
+        "note": "p_value < 0.05 => hai mo hinh sai khac nhau co y nghia. Dung cung nguoi bao cao nay thay cho so hai cot +-SD."
+      }
+    },
+    "exp005_cpg_gnn_poj104": {
+      "bootstrap": {
+        "delta_f1_point": -0.13121749147571682,
+        "delta_f1_mean": -0.13111506381290802,
+        "delta_f1_sd": 0.004580247763858851,
+        "delta_f1_ci95": [
+          -0.14007233683902026,
+          -0.12223558304816251
+        ],
+        "threshold_a": 0.42000000000000004,
+        "threshold_b": 0.59,
+        "significant": true,
+        "n_boot": 2000,
+        "seed": 42,
+        "alpha": 0.05,
+        "note": "CI cua delta F1 theo bootstrap ghep tren cung mot tap test, moi mo hinh o nguong da ghim cua no. Khong chua 0 => khac biet co y nghia o muc alpha."
+      },
+      "mcnemar": {
+        "a_correct_b_wrong": 707,
+        "a_wrong_b_correct": 2506,
+        "discordant": 3213,
+        "p_value": 6.075863723449795e-234,
         "threshold_a": 0.42000000000000004,
         "threshold_b": 0.59,
         "note": "p_value < 0.05 => hai mo hinh sai khac nhau co y nghia. Dung cung nguoi bao cao nay thay cho so hai cot +-SD."

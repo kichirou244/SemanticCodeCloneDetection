@@ -1,0 +1,2 @@
+epoch,train_loss,val_loss,val_f1,val_roc_auc,lr,n_nodes_train,epoch_time_s,elapsed_s,global_step
+0,0.7381783872842789,0.7212672233581543,0.6521739130434783,0.296875,0.0,13722,1.6,1.6,4
