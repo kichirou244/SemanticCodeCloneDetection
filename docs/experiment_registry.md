@@ -26,8 +26,8 @@
 | EXP-013 | POJ-104 | B0 MOSS (Winnowing) | COMPLETED | **Baseline chính của báo cáo.** Test P/R/F1 0.646/0.722/0.682, ROC-AUC 0.731, thr chọn trên validation. Dò (k,w) trên validation: `k=20,w=5` thắng; tham số gốc `k=50,w=100` **không dùng được** trên POJ-104 (hàm quá ngắn ⇒ mỗi hàm chỉ ~6 fingerprint, F1 rơi về 0.667 = dự đoán toàn bộ dương) | scripts/eval_moss.py |
 | EXP-002 | POJ-104 | M1 CodeBERT | COMPLETED | Test P/R/F1 0.931/0.890/0.910 ± 0.003, ROC-AUC 0.973, thr 0.59 (val-selected), best epoch 1/3, 7,03h T4 | reports/011_codebert_results.md |
 | EXP-003 | POJ-104 | M2 GraphCodeBERT | COMPLETED | Test P/R/F1 0.883/0.933/0.907 ± 0.003, ROC-AUC 0.971, thr 0.43 (val-selected); 3 epoch, val F1 **còn đang tăng** ⇒ số có thể còn tăng | reports/012_m1_m2_m3_summary.pdf |
-| EXP-004 | POJ-104 | M3 ASTNN | COMPLETED (tạm) | Test P/R/F1 0.641/0.903/0.750 ± 0.004, ROC-AUC 0.795; val F1 0.643→0.720 sau 3 epoch, **chưa train đủ** | reports/012_m1_m2_m3_summary.pdf |
-| EXP-005 | POJ-104 | M4 CPG-GNN | BLOCKED_ON_JOERN | Schema + ingest + store + model GAT (204.801 tham số) **đã xong, 33 test local không cần Joern** (DEC-024); còn thiếu CPG thật — cài Joern **trên Kaggle** (`notebooks/exp005_cpg_extract_kaggle.ipynb`), đo 500 hàm trước khi cam kết 5–17h | - |
+| EXP-004 | POJ-104 | M3 ASTNN | COMPLETED | Test P/R/F1 0.760/0.894/0.822 ± 0.004, ROC-AUC 0.889, thr 0.42 (val-selected); train tiếp trần 20 epoch, early stopping dừng ở epoch 7 (tốt nhất epoch 4: val F1 0.853), ~40 phút T4 | reports/012_m1_m2_m3_summary.pdf |
+| EXP-005 | POJ-104 | M4 CPG-GNN | READY_FOR_KAGGLE_TRAIN | Schema DEC-027 (6 loại cạnh); extraction full xong (51.991 hàm, gate FULL PASS, est 3,3h); runner train + notebook bước 2 đã có, smoke/diag PASS trên Kaggle (203.649 tham số); chờ train full ~2,5h | - |
 | EXP-006 | POJ-104 | M5 Hybrid | PLANNED | - | - |
 | EXP-007 | CodeNet Python | B1 TF-IDF | CANCELLED | - | DEC-019 |
 | EXP-008 | CodeNet Python | M1 CodeBERT | CANCELLED | - | DEC-019 |

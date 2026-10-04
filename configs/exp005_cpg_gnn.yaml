@@ -35,9 +35,10 @@ preprocessing:
   export_dir: artifacts/cpg_export   # JSON từng hàm do Joern sinh
   cache_dir: artifacts/cpg_cache
   extractor: joern
-  # Số node/hàm trung bình phải đo trên dữ liệu thật, chưa có ở đây — điền sau
-  # khi chạy benchmark. Giá trị hiện tại là số dùng để chọn batch_size tạm.
-  est_nodes_per_function: 400
+  # Số node/hàm trung bình đo trên dữ liệu thật: ~150 toàn dataset
+  # (train ~148, val ~188, test ~141 — đếm trên 51.991 JSON đã trích).
+  # Con số 354,6 trước đây chỉ là 500 hàm train đầu (không đại diện).
+  est_nodes_per_function: 150
 
 training:
   seed: 42

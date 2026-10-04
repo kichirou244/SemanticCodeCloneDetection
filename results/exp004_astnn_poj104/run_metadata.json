@@ -1,9 +1,9 @@
 {
   "python": "3.12.13",
-  "os": "Linux-6.12.90+-x86_64-with-glibc2.35",
+  "os": "Linux-6.18.48+-x86_64-with-glibc2.35",
   "cpu": "x86_64",
   "device": "cpu",
-  "config_sha256": "828a7ea38f7af932470decdca92d575c8f81565613931859ac4fd879a43fbd2b",
+  "config_sha256": "51e543f20a29a2319a4ec20397734672b2bf98d04d53789f94026b4714e1c227",
   "manifest_sha256": "909615d87ef2222747914d6708ed09fba9e4b81763b34e463bf3f5494ebaf84e",
   "versions": {
     "sklearn": "1.6.1",
@@ -11,7 +11,7 @@
     "torch": "2.10.0+cu128",
     "transformers": "5.0.0"
   },
-  "git": "77301db0c288c72bcd5354e74d64269ed250f28d",
+  "git": "5baa537b248f4fb51122235f227a9b74ef08154c",
   "device_requested": "cuda",
   "device_actual": "cuda:0",
   "model_device": "cuda:0",
@@ -21,12 +21,12 @@
   "gpu_memory_allocated": 23237632,
   "gpu_memory_reserved": 100663296,
   "scheduler": "linear_warmup_per_update_step (DEC-017)",
-  "wall_clock": "2026-09-28T06:20:42+00:00",
-  "training_time_s": 1019.935440793,
-  "best_epoch": 2,
-  "best_val_f1": 0.7198923060992026,
-  "total_optimizer_steps": 31125,
-  "stopped_reason": "epochs_exhausted",
-  "epochs_completed": 3,
-  "time_budget_s": 2700
+  "wall_clock": "2026-10-04T03:06:34+00:00",
+  "training_time_s": 2413.408068021,
+  "best_epoch": 3,
+  "best_val_f1": 0.8530139562506186,
+  "total_optimizer_steps": 72625,
+  "stopped_reason": "early_stopping",
+  "epochs_completed": 7,
+  "time_budget_s": 10800
 }

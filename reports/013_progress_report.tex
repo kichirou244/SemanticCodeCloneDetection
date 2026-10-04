@@ -93,7 +93,7 @@ Mô hình có sẵn & codebert-base & graphcodebert-base & không, từ đầu \
 Learning rate & 2e-5 & 2e-5 & 1e-3 \\
 Batch size & 16 & 16 & 32 \\
 Số tham số & 126.416.641 & 126.416.641 & 428.001 \\
-Thời gian & 7,0 giờ & 6,9 giờ & 17 phút \\
+Thời gian & 7,0 giờ & 6,9 giờ & 40 phút \\
 \bottomrule
 \end{tabular*}\par}
 
@@ -107,7 +107,8 @@ Thời gian & 7,0 giờ & 6,9 giờ & 17 phút \\
 \midrule
 CodeBERT      & \textbf{0,9191} & \textbf{0,9191} & 0,9116 & 7,0 h & đã quá tay \\
 GraphCodeBERT & \textbf{0,9155} & 0,9138 & 0,9108 & 6,9 h & đã quá tay \\
-ASTNN         & 0,6430 & 0,6774 & \textbf{0,7199} & 17 phút & chưa train đủ \\
+ASTNN         & 0,7890 & 0,8141 & 0,8414 & 40 phút &
+              tốt nhất \textbf{0,8530} ở epoch 4; dừng epoch 7 \\
 \bottomrule
 \end{tabular*}\par}
 
@@ -127,7 +128,7 @@ ASTNN         & 0,6430 & 0,6774 & \textbf{0,7199} & 17 phút & chưa train đủ
 MOSS          & 0,646 & 0,722 & 0,682 ± 0,005 & 0,731 & 2.177 \\
 CodeBERT      & 0,931 & 0,890 & 0,910 ± 0,003 & 0,973 & 363 \\
 GraphCodeBERT & 0,883 & 0,933 & 0,907 ± 0,003 & 0,971 & 682 \\
-ASTNN         & 0,641 & 0,903 & 0,750 ± 0,004 & 0,795 & 2.780 \\
+ASTNN         & 0,760 & 0,894 & 0,822 ± 0,004 & 0,889 & 2.138 \\
 \bottomrule
 \end{tabular*}\par}
 
@@ -135,7 +136,7 @@ ASTNN         & 0,641 & 0,903 & 0,750 ± 0,004 & 0,795 & 2.780 \\
 
 \begin{itemize}
 \item Mỗi phương pháp chạy một lần với seed 42.
-\item ASTNN chưa train đủ.
+\item ASTNN dừng ở epoch 7 (early stopping, tốt nhất epoch 4).
 \item CodeBERT, GraphCodeBERT cắt hàm còn 256 token; 78,6\% hàm trong tập train bị
       cắt.
 \end{itemize}
@@ -143,7 +144,6 @@ ASTNN         & 0,641 & 0,903 & 0,750 ± 0,004 & 0,795 & 2.780 \\
 \section{Kế hoạch tiếp theo}
 
 \begin{itemize}
-\item Train thêm epoch cho ASTNN.
 \item Chạy lại CodeBERT, GraphCodeBERT vài seed.
 \item Thử độ dài đầu vào 512 token.
 \item Tiếp tục CPG-GNN.
