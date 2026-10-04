@@ -1,18 +1,13 @@
-# EXP-005 — M4 CPG-GNN trên POJ-104 (C++). Trạng thái: BLOCKED (thiếu Joern).
+# EXP-005 — M4 CPG-GNN trên POJ-104 (C++). Trạng thái: READY_FOR_KAGGLE_TRAIN.
 #
-# Trạng thái này **không phải** "chưa ai làm" mà là "đã làm hết phần không phụ thuộc
-# Joern": schema + ingest + store + model đã có test local; phần còn lại chỉ chờ
-# một phép đo (`ham/giay`) trên Kaggle. Xem DEC-024 và reports/005.
+# Extraction xong (DEC-027 verified, gate FULL PASS, dataset M4 đã publish).
+# Train trong notebooks/exp005_cpg_gnn_kaggle.ipynb (GPU).
 
 experiment:
   id: EXP-005
   name: cpg_gnn_poj104
-  status: BLOCKED_ON_JOERN
+  status: READY_FOR_KAGGLE_TRAIN
   seed: 42
-  # Tại sao chưa READY: Joern cần JVM, máy local không có Java (DEC-023).
-  # Cài **trên Kaggle** trong notebooks/exp005_cpg_extract_kaggle.ipynb, không
-  # cài vào máy — xem `where_to_install` trong src/representations/cpg/build.py.
-  blocked_by: [java, joern]
 
 dataset:
   name: poj104
