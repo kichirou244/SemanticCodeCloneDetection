@@ -1,0 +1,78 @@
+experiment:
+  id: EXP-004
+  name: astnn_poj104
+  status: READY_FOR_KAGGLE_TRAIN
+  seed: 42
+
+dataset:
+  name: poj104
+  language: cpp
+  manifest: data/manifests/poj104.json
+  pairs_dir: data/pairs/poj104
+  processed: data/processed/poj104/samples.jsonl
+
+model:
+  id: M3
+  type: astnn
+  language: cpp
+  # 200 = giá trị trong bài gốc (Zhang et al. 2019). Đổi sẽ hỏng khả năng
+  # đối chiếu với kết quả gốc nên giữ nguyên.
+  hidden_size: 200
+  pair_architecture: concat_hA_hB_absdiff_mlp
+
+# ASTNN không tokenize và không truncate: giữ toàn bộ cây statement.
+preprocessing:
+  # Chặn trên để cây quá khổ (POJ-104 max ~1.9k dòng; con số này chỉ là lưới an toàn).
+  # Đổi giá trị này là đổi feature → cache path đã tách theo cap để không dùng nhầm.
+  max_code_chars: 20000
+  cache_dir: artifacts/ast_cache
+  parser: tree-sitter-cpp
+
+# Vì sao khác EXP-002/003: đây là mô hình khác hẳn về họ (GRU nhỏ, 428k tham số
+# so với 126M của transformer) nên KHÔNG buộc phải giống hyperparameter. Chỉ giữ
+# chung seed, số epoch, warmup ratio, early stopping và cách chọn threshold để
+# phép so sánh vẫn công bằng ở mức protocol.
+# LR 1e-3 vì mô hình nhỏ, train từ scratch (không có pretrained encoder).
+training:
+  seed: 42
+  epochs: 3
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 0.0
+  warmup_ratio: 0.1
+  gradient_accumulation_steps: 1
+  max_grad_norm: 5.0
+  dropout: 0.2
+  # Tắt: cuDNN GRU không ổn định với fp16, và mô hình chỉ 428k tham số nên fp32
+  # không phải nút thắt. Bật chỉ khi đã đo và thấy đúng.
+  mixed_precision: false
+
+# Số optimizer step đo thật để ngoại suy thời gian (dùng trong `diagnostic`).
+# Phải chạy lại trên Kaggle T4 trước khi báo cáo thời gian.
+diagnostic:
+  bench_steps: 20
+
+early_stopping:
+  enabled: true
+  monitor: val_f1
+  patience: 2
+  mode: max
+
+inference:
+  pair_batch_size: 64
+
+threshold:
+  method: validation_f1
+  grid_step: 0.01
+
+evaluation:
+  metrics: [precision, recall, f1, roc_auc, pr_auc, accuracy]
+
+error_analysis:
+  top_k: 100
+
+runtime:
+  device: cuda
+
+output:
+  directory: results/exp004_astnn_poj104

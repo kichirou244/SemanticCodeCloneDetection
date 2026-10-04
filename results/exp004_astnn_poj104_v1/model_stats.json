@@ -1,0 +1,7 @@
+{
+  "architecture": "ASTNN: RvNN tr\u00ean c\u00e2y statement + Bi-GRU tr\u00ean statement c\u1ea5p 1 + [hA; hB; |hA-hB|] + MLP(Tanh) \u2014 DEC-016",
+  "hidden_size": 200,
+  "param_count": 428001,
+  "language": "cpp",
+  "truncation": "none"
+}
