@@ -101,6 +101,55 @@ class AstnnScorer(BaseScorer):
             "batched": True,
         }) for i, p in enumerate(probs)]
 
+    def evidence(self, code_a: str, code_b: str) -> dict | None:
+        """Cặp câu lệnh giống nhau nhất LẪN NHAU (cosine trên vector RvNN).
+
+        Mỗi statement i phía A tìm bạn giống nhất phía B và ngược lại; chỉ giữ
+        cặp hai chiều đều chọn nhau (mutual best) — không ngưỡng số nào, không
+        ngẫu nhiên. Bỏ gốc (index 0, span cả hàm — highlight vô nghĩa) và cặp
+        cosine <= 0. Vector RvNN (chưa qua GRU) để không phải mổ model.
+        """
+        if not self.ensure_loaded():
+            return None
+        assert self._model is not None and self._parser is not None
+        assert self._device is not None
+        import torch
+
+        from src.models.astnn.model import to_device
+
+        codes = (code_a, code_b)
+        trees = []
+        for code in codes:
+            trees.append(extract_tree(_cap(code, self.max_code_chars),
+                                      self._parser, self.language))
+        batches = [to_device(collate_trees([compile_tree(t)]), self._device)
+                   for t in trees]
+        with torch.no_grad():
+            vecs = [self._model.rvnn(b) for b in batches]
+        # mask statement (bỏ lá): thứ tự DFS của extract khớp đúng thứ tự hàng
+        # compiled (stmt_nodes giữ nguyên thứ tự) nên spans lọc theo mask này.
+        spans = []
+        for t in trees:
+            mask = (t["is_leaf"] == 0)
+            spans.append([(int(s), int(e)) for s, e in zip(
+                t["span_start"][mask], t["span_end"][mask])])
+        pairs = []
+        na = _unit_rows(vecs[0][1:]) if vecs[0].shape[0] > 1 else vecs[0][:0]
+        nb = _unit_rows(vecs[1][1:]) if vecs[1].shape[0] > 1 else vecs[1][:0]
+        if na.shape[0] and nb.shape[0]:
+            cos = na @ nb.T
+            best_b = cos.argmax(dim=1)
+            best_a = cos.argmax(dim=0)
+            for i in range(cos.shape[0]):
+                j = int(best_b[i])
+                if int(best_a[j]) == i and float(cos[i, j]) > 0:
+                    pairs.append((i + 1, j + 1))  # +1 vì đã bỏ gốc
+        out_a = [_byte_span_to_char(codes[0], spans[0][i]) for i, _ in pairs]
+        out_b = [_byte_span_to_char(codes[1], spans[1][j]) for _, j in pairs]
+        return {"spans_a": out_a, "spans_b": out_b, "n_shared": len(pairs),
+                "kind": "stmt",
+                "note": "cặp câu lệnh giống nhau nhất lẫn nhau (cosine RvNN)"}
+
     def _infer(self, code_a: str, code_b: str) -> tuple[float, dict]:
         assert self._model is not None and self._parser is not None
         assert self._device is not None
@@ -128,3 +177,23 @@ class AstnnScorer(BaseScorer):
 
 def _cap(code: str, max_chars: int) -> str:
     return code if len(code) <= max_chars else code[:max_chars]
+
+
+def _unit_rows(h):
+    """Chuẩn hoá từng hàng về unit vector (hàng 0 giữ 0 → không bao giờ khớp)."""
+    import torch
+
+    return h.float() / h.float().norm(dim=1, keepdim=True).clamp(min=1e-9)
+
+
+def _byte_span_to_char(code: str, span: tuple[int, int]) -> list[int]:
+    """Đổi span byte (tree-sitter) sang span ký tự (Python str).
+
+    Biên node luôn rơi vào biên ký tự hợp lệ nên decode prefix là chính xác;
+    `errors="ignore"` chỉ là lưới an toàn (không bao giờ kích hoạt đúng ra).
+    """
+    raw = code.encode("utf-8")
+    s, e = span
+    cs = len(raw[:max(s, 0)].decode("utf-8", errors="ignore"))
+    ce = len(raw[:max(e, 0)].decode("utf-8", errors="ignore"))
+    return [cs, ce]

@@ -7,7 +7,7 @@
  */
 
 import { $, el } from './utils/dom.js';
-import { getStatus, analyze, uploadZip, scanUpload } from './api/demoApi.js';
+import { getStatus, analyze, uploadZip, scanUpload, evidenceFor } from './api/demoApi.js';
 import { createStore } from './state/store.js';
 import { renderScoreStrip } from './components/scoreStrip.js';
 import { renderDiff } from './components/diffPane.js';
@@ -88,7 +88,7 @@ function renderEmpty() {
 function renderResult(data, labelA, labelB) {
   const { alignment, models, meta } = data;
   state.set({ alignment, results: models, meta });
-  evByModel = Object.fromEntries((models || []).map((m) => [m.model_id, m.evidence || null]));
+  evByModel = {};
   evSelected = null;
 
   if (alignment) {
@@ -125,6 +125,7 @@ function emitBlockFocus(blockId) {
 }
 
 async function runAnalyze(codeA, codeB, labelA, labelB) {
+  currentPair = { a: codeA, b: codeB };
   setToast(`Đang chấm cặp ${labelA} ↔ ${labelB}…`);
   state.set({ error: null });
   try {
@@ -140,6 +141,7 @@ async function runAnalyze(codeA, codeB, labelA, labelB) {
 
 let evByModel = {};
 let evSelected = null;
+let currentPair = null;
 
 function applyEvidence() {
   const grid = $('.diff__grid', refs.diffView);
@@ -161,17 +163,37 @@ function applyEvidence() {
   }
 }
 
-function selectModelForEvidence(modelId) {
-  const ev = evByModel[modelId];
-  if (!ev || !(ev.tok_a || []).length && !(ev.tok_b || []).length) {
+async function selectModelForEvidence(modelId) {
+  if (evSelected === modelId) {
     evSelected = null;
     applyEvidence();
-    setToast(modelId + ' chưa có evidence vị trí riêng — đang hiện căn chỉnh chung.');
     return;
   }
-  evSelected = evSelected === modelId ? null : modelId;
+  // Fetch riêng theo click (không tính trong analyze): evidence M1/M2 tốn
+  // forward+backward riêng, gộp vào analyze là mỗi lần chấm gánh thêm.
+  if (!(modelId in evByModel)) {
+    if (!currentPair) return;
+    setToast(`Đang lấy evidence ${modelId}…`);
+    try {
+      const res = await evidenceFor({
+        code_a: currentPair.a, code_b: currentPair.b, model_id: modelId,
+      });
+      evByModel[modelId] = res.evidence || null;
+    } catch (error) {
+      setToast(`Không lấy được evidence: ${error.message}`, 'error');
+      return;
+    }
+  }
+  const ev = evByModel[modelId];
+  if (!ev || (!(ev.tok_a || []).length && !(ev.tok_b || []).length)) {
+    evSelected = null;
+    applyEvidence();
+    setToast(`${modelId} chưa có evidence vị trí riêng — đang hiện căn chỉnh chung.`);
+    return;
+  }
+  evSelected = modelId;
   applyEvidence();
-  if (evSelected) setToast(`${modelId}: ${ev.note || 'đang hiện vị trí model này thấy'}.`);
+  setToast(`${modelId}: ${ev.note || 'đang hiện vị trí model này thấy'}.`);
 }
 
 /* ------------------------------------------------- quét zip đa model */

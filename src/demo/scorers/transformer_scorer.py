@@ -104,6 +104,83 @@ class TransformerScorer(BaseScorer):
             }))
         return out
 
+    def evidence(self, code_a: str, code_b: str) -> dict | None:
+        """Token ảnh hưởng mạnh tới logit (gradient × input, mỗi phía riêng).
+
+        Forward cặp như lúc chấm (không đụng trọng số), backward một lần rồi
+        lấy độ lớn gradient tại embedding mỗi token: token nào đổi là logit đổi
+        nhiều thì quan trọng với quyết định. Giữ token trên trung bình, gom
+        subword theo từ. Đây là "model dựa vào đâu để quyết", KHÔNG phải
+        "đoạn nào khớp nhau" — note ghi rõ để UI không nói quá.
+
+        Vì sao không đọc attention: backend mặc định (`sdpa`) không trả
+        attention; ép eager thì tốn thêm cả mô hình trong RAM (đã OOM chết
+        server một lần). Saliency chạy được mọi backend, tốn thêm đúng một
+        backward transient.
+        """
+        if not self.ensure_loaded():
+            return None
+        assert self._model is not None and self._tokenizer is not None
+        assert self._device is not None
+        model = self._model
+        was_training = model.training
+        model.eval()
+        # Đóng grad trọng số (chỉ cần grad tại embedding): vừa nhẹ RAM
+        # (~500MB grad trọng số khỏi cần), vừa không làm bẩn .grad của model.
+        frozen = [p for p in model.parameters() if p.requires_grad]
+        try:
+            for p in frozen:
+                p.requires_grad_(False)
+            enc = self._tokenizer(
+                [code_a, code_b], padding=True, truncation=True,
+                max_length=self.max_length, return_tensors="pt",
+                return_offsets_mapping=True,
+            )
+            offsets = enc.pop("offset_mapping").tolist()
+            word_ids = [enc.word_ids(batch_index=i) for i in range(2)]
+            inputs = {k: v.to(self._device) for k, v in enc.items()}
+            with torch.enable_grad():
+                # Detach + requires_grad: graph mới rooted tại embedding (trọng
+                # số freeze nên backward CHỈ tích vào đây, không phình 500MB grad
+                # trọng số). Mirror đúng forward() (eval nên dropout là identity).
+                emb = model.encoder.embeddings(input_ids=inputs["input_ids"])
+                emb = emb.detach().requires_grad_(True)
+                out = model.encoder(inputs_embeds=emb,
+                                    attention_mask=inputs["attention_mask"])
+                cls = out.last_hidden_state[:, 0, :]
+                ha, hb = cls[0:1], cls[1:2]
+                pair = torch.cat([ha, hb, torch.abs(ha - hb)], dim=-1)
+                logit = model.head(pair).squeeze(-1)
+                logit.backward()
+                grad = emb.grad
+                assert grad is not None
+                sal = (emb.detach() * grad.detach()).abs().sum(-1).cpu()
+            out_spans = []
+            for side in range(2):
+                by_word: dict[int, list] = {}
+                off, wid = offsets[side], word_ids[side]
+                for i, (w, (s, e)) in enumerate(zip(wid, off)):
+                    if w is None or e <= s:
+                        continue
+                    by_word.setdefault(w, []).append(
+                        (float(sal[side, i]), s, e))
+                scored = [(max(w for w, _, _ in v),
+                           min(s for _, s, _ in v), max(e for _, _, e in v))
+                          for v in by_word.values()]
+                if not scored:
+                    out_spans.append([])
+                    continue
+                mean = sum(w for w, _, _ in scored) / len(scored)
+                out_spans.append([[s, e] for w, s, e in scored if w > mean])
+        finally:
+            for p in frozen:
+                p.requires_grad_(True)
+            model.train(was_training)
+        return {"spans_a": out_spans[0], "spans_b": out_spans[1],
+                "n_shared": len(out_spans[0]) + len(out_spans[1]),
+                "kind": "saliency",
+                "note": "token ảnh hưởng mạnh tới logit (mỗi phía riêng)"}
+
     def _infer(self, code_a: str, code_b: str) -> tuple[float, dict]:
         assert self._model is not None and self._tokenizer is not None
         assert self._device is not None

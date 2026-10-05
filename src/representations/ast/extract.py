@@ -127,6 +127,11 @@ def extract_tree(
       parent  int16  — chỉ số statement cha gần nhất; node gốc trỏ về chính nó
       is_leaf uint8  — 1 nếu node là lá
       n_leaf  int16  — số lá trong cây con (chỉ statement node có giá trị > 0)
+      span_start int32 — byte offset bắt đầu node trong code gốc (tree-sitter)
+      span_end   int32 — byte offset kết thúc (không bao gồm)
+    Hai mảng span CHỈ phục vụ highlight evidence ở demo (map vector ngược ra
+    code); pipeline train (compile/collate/store) đọc key tường minh nên thêm
+    key không ảnh hưởng gì.
     """
     parser = parser or get_parser(language)
     root = parser.parse(code.encode("utf-8")).root_node
@@ -135,6 +140,8 @@ def extract_tree(
     parents: list[int] = []
     is_leaf: list[int] = []
     n_leaf: list[int] = []
+    span_start: list[int] = []
+    span_end: list[int] = []
 
     def visit(node: Node, parent_idx: int) -> int:
         """Trả về số lá nằm trong node này; node giữ lại sẽ được append."""
@@ -144,6 +151,8 @@ def extract_tree(
             parents.append(parent_idx)
             is_leaf.append(0)
             n_leaf.append(0)
+            span_start.append(node.start_byte)
+            span_end.append(node.end_byte)
             got = 0
             for child in node.children:
                 got += visit(child, idx)
@@ -162,6 +171,8 @@ def extract_tree(
                 parents.append(parent_idx)
                 is_leaf.append(1)
                 n_leaf.append(1)
+                span_start.append(node.start_byte)
+                span_end.append(node.end_byte)
                 got = 1
         return got
 
@@ -169,16 +180,20 @@ def extract_tree(
         visit(root, 0)
     else:  # root hiếm (vd file chỉ có comment) → node ảo làm gốc
         labels, parents, is_leaf, n_leaf = [0], [0], [0], [0]
+        span_start, span_end = [0], [0]
         for child in root.children:
             visit(child, 0)
 
     if not labels:  # code rỗng
         labels, parents, is_leaf, n_leaf = [0], [0], [0], [0]
+        span_start, span_end = [0], [0]
     return {
         "label": np.asarray(labels, dtype=np.int16),
-        "parent": np.asarray(parents, dtype=np.int16),
-        "is_leaf": np.asarray(is_leaf, dtype=np.uint8),
+        "parent": np.asarray(parents, dtype=np.int64),
+        "is_leaf": np.asarray(is_leaf, dtype=np.int64),
         "n_leaf": np.asarray(n_leaf, dtype=np.int16),
+        "span_start": np.asarray(span_start, dtype=np.int64),
+        "span_end": np.asarray(span_end, dtype=np.int64),
     }
 
 

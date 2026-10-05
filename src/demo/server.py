@@ -21,7 +21,7 @@ from fastapi.staticfiles import StaticFiles
 
 from src.demo.registry import DEFAULT_CONFIG, ModelRegistry
 from src.demo.samples import BUILTIN_SAMPLES, sample_to_dict
-from src.demo.schemas import AnalyzeRequest, PreloadRequest, ScanRequest
+from src.demo.schemas import AnalyzeRequest, EvidenceRequest, PreloadRequest, ScanRequest
 from src.demo.service import DemoService, InputTooLarge
 
 WEB_DIR = Path(__file__).parent / "web"
@@ -85,6 +85,18 @@ def create_app(service: DemoService | None = None, config_path: Path | str = DEF
     @app.post("/api/preload")
     def api_preload(req: PreloadRequest) -> dict:
         return svc.registry.preload(req.models)
+
+    @app.post("/api/evidence")
+    def api_evidence(req: EvidenceRequest) -> dict:
+        """Evidence vị trí của một model cho một cặp (fetch riêng khi bấm card).
+
+        Tách khỏi `/api/analyze` vì evidence M1/M2 tốn forward+backward riêng —
+        gộp vào analyze là mỗi lần chấm gánh thêm giây + RAM transient.
+        """
+        try:
+            return svc.evidence_for(req.model_id, req.code_a, req.code_b)
+        except KeyError as exc:
+            raise HTTPException(404, str(exc)) from exc
 
     @app.post("/api/uploads")
     async def api_upload(file: UploadFile = File(...)) -> dict:

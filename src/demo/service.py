@@ -165,16 +165,12 @@ class DemoService:
     def _score_all(
         self, code_a: str, code_b: str, model_ids: list[str] | None
     ) -> list[dict]:
-        from src.demo.alignment.lexer import lex_code
-
-        lines_a, lines_b = lex_code(code_a), lex_code(code_b)
+        # KHÔNG tính evidence ở đây: evidence M1/M2 tốn forward+backward riêng,
+        # nhét vào analyze là mỗi lần chấm gánh thêm giây + RAM transient
+        # (đã OOM chết server một lần). Evidence fetch riêng khi bấm card.
         out = []
         for scorer in self.registry.selected(model_ids):
             result = scorer.score(code_a, code_b)
-            try:
-                ev = scorer.evidence(code_a, code_b)
-            except Exception:  # noqa: BLE001 — không có evidence vẫn trả điểm
-                ev = None
             out.append(
                 {
                     "model_id": scorer.model_id,
@@ -182,11 +178,29 @@ class DemoService:
                     "state": scorer.state,
                     "hint": scorer.checkpoint_hint(),
                     **result.to_dict(),
-                    "evidence": _attach_token_indices(
-                        ev, lines_a, lines_b, code_a, code_b),
                 }
             )
         return out
+
+    def evidence_for(self, model_id: str, code_a: str, code_b: str) -> dict:
+        """Evidence vị trí của một model cho một cặp (fetch riêng theo click).
+
+        Trả `{"model_id", "evidence": {...} | None}` — None nghĩa là model này
+        chưa có evidence riêng (M4: cần exporter thêm vị trí dòng), UI giữ
+        nguyên highlight chung và báo rõ, thay vì đoán.
+        """
+        from src.demo.alignment.lexer import lex_code
+
+        scorer = self.registry.get(model_id)
+        lines_a, lines_b = lex_code(code_a), lex_code(code_b)
+        try:
+            ev = scorer.evidence(code_a, code_b)
+        except Exception as exc:  # noqa: BLE001 — lỗi evidence không sập request
+            return {"model_id": model_id, "evidence": None,
+                    "error": f"{type(exc).__name__}: {exc}"[:200]}
+        return {"model_id": model_id,
+                "evidence": _attach_token_indices(
+                    ev, lines_a, lines_b, code_a, code_b)}
 
     # ------------------------------------------------------------------ cặp mẫu
     def real_pairs(self, split: str = "test", limit: int | None = None) -> list[dict]:

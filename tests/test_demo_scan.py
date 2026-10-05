@@ -307,9 +307,9 @@ def test_moss_evidence_spans_are_within_bounds():
     assert BaseScorer.evidence.__doc__ is not None
 
 
-def test_analyze_attaches_token_indices_for_moss():
-    """analyze() gan tok_a/tok_b (chi so token de frontend to) cho model co
-    evidence, None cho model khong co."""
+def test_evidence_for_returns_token_indices():
+    """evidence_for() (fetch riêng, không nằm trong analyze): B1 có tok,
+    model lạ thì KeyError (endpoint map thành 404)."""
     from src.demo.registry import ModelRegistry
     from src.demo.service import DemoService
 
@@ -319,11 +319,16 @@ def test_analyze_attaches_token_indices_for_moss():
     long_a = ("int bubble_sort(int arr[], int n) { int i = 0; "
               "while (i < n) { arr[i] = arr[i] + 1; i = i + 1; } return n; }")
     long_b = long_a.replace("arr", "a").replace("bubble_sort", "sort")
-    out = svc.analyze(long_a, long_b, model_ids=["B1"])
-    assert len(out["models"]) == 1
-    ev = out["models"][0]["evidence"]
+    out = svc.evidence_for("B1", long_a, long_b)
+    assert out["model_id"] == "B1"
+    ev = out["evidence"]
     assert ev is not None and ev["tok_a"] and ev["tok_b"]
     assert all(isinstance(i, int) and i >= 0 for i in ev["tok_a"])
+    try:
+        svc.evidence_for("M9", long_a, long_b)
+    except KeyError:
+        return
+    raise AssertionError("phải KeyError với id lạ (→ 404)")
 
 
 def test_spans_to_indices_mapping_is_exact():
@@ -340,3 +345,70 @@ def test_spans_to_indices_mapping_is_exact():
     got = _spans_to_indices(lines, code, [(s, s + 2)])
     assert got == [i_ab], (got, i_ab)
     assert _spans_to_indices(lines, code, [(9999, 99999)]) == []
+
+
+LONG_A = ("int bubble_sort(int arr[], int n) { int i = 0; "
+          "while (i < n) { arr[i] = arr[i] + 1; i = i + 1; } return n; }")
+LONG_B = LONG_A.replace("arr", "a").replace("bubble_sort", "sort")
+
+
+def _reg():
+    from src.demo.registry import ModelRegistry
+
+    root = Path(__file__).resolve().parents[1]
+    return ModelRegistry.from_yaml(root / "configs" / "demo_web.yaml", root=root)
+
+
+@pytest.mark.parametrize("mid", ["M1", "M2"])
+def test_transformer_evidence_spans_are_words(mid):
+    """Saliency (gradient×input): spans nam trong code, khong rong tren clones."""
+    reg = _reg()
+    m = reg.get(mid)
+    if not m.checkpoint.exists():
+        pytest.skip("thieu checkpoint %s" % mid)
+    ev = m.evidence(LONG_A, LONG_B)
+    assert ev is not None and ev["kind"] == "saliency"
+    assert ev["spans_a"] and ev["spans_b"]
+    for s, e in ev["spans_a"]:
+        assert 0 <= s < e <= len(LONG_A)
+    for s, e in ev["spans_b"]:
+        assert 0 <= s < e <= len(LONG_B)
+    ev2 = m.evidence(LONG_A, LONG_B)
+    assert ev["spans_a"] == ev2["spans_a"]
+
+
+def test_astnn_evidence_mutual_best_statements():
+    """Statement cosine mutual-best: spans hop le, on dinh, khong rong."""
+    reg = _reg()
+    m = reg.get("M3")
+    if not m.checkpoint.exists():
+        pytest.skip("thieu checkpoint M3")
+    ev = m.evidence(LONG_A, LONG_B)
+    assert ev is not None and ev["kind"] == "stmt"
+    assert ev["n_shared"] > 0
+    assert len(ev["spans_a"]) == len(ev["spans_b"]) == ev["n_shared"]
+    for s, e in ev["spans_a"]:
+        assert 0 <= s < e <= len(LONG_A)
+    ev2 = m.evidence(LONG_A, LONG_B)
+    assert ev["spans_a"] == ev2["spans_a"]
+
+
+def test_evidence_endpoint_returns_mapped_spans():
+    """POST /api/evidence: B1 có tok, id lạ 404."""
+    from fastapi.testclient import TestClient
+
+    from src.demo.server import create_app
+
+    reg = _reg()
+    from src.demo.service import DemoService
+
+    client = TestClient(create_app(service=DemoService(reg)))
+    r = client.post("/api/evidence",
+                    json={"code_a": LONG_A, "code_b": LONG_B, "model_id": "B1"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["model_id"] == "B1"
+    assert body["evidence"]["tok_a"]
+    r2 = client.post("/api/evidence",
+                     json={"code_a": LONG_A, "code_b": LONG_B, "model_id": "M9"})
+    assert r2.status_code == 404

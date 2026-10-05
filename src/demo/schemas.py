@@ -30,3 +30,9 @@ class ScanRequest(BaseModel):
         default=None, ge=0.0, le=1.0,
         description="None = dùng ngưỡng đóng băng từng model; cho số = áp chung",
     )
+
+
+class EvidenceRequest(BaseModel):
+    code_a: str = Field(min_length=1, description="mã nguồn phía A")
+    code_b: str = Field(min_length=1, description="mã nguồn phía B")
+    model_id: str = Field(min_length=1, description="model cần lấy evidence")

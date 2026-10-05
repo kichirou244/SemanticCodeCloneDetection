@@ -93,3 +93,10 @@ export const scanUpload = async (payload, onProgress) => {
   if (!result) throw new Error('server ngắt giữa chừng, không có kết quả');
   return result;
 };
+
+export const evidenceFor = (payload) =>
+  request('/api/evidence', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
