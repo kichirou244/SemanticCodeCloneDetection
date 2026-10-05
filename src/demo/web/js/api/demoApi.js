@@ -55,9 +55,41 @@ export const uploadZip = (file) => {
   return request('/api/uploads', { method: 'POST', body: form });
 };
 
-export const scanUpload = (payload) =>
-  request('/api/scan', {
+export const scanUpload = async (payload, onProgress) => {
+  const resp = await fetch('/api/scan', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
+  if (!resp.ok) {
+    let detail = `${resp.status} ${resp.statusText}`;
+    try {
+      const body = await resp.json();
+      if (body && body.detail) detail = body.detail;
+    } catch {
+      /* body không phải JSON — giữ nguyên detail gốc */
+    }
+    throw new Error(detail);
+  }
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  let result = null;
+  for (;;) {
+    const chunk = await reader.read();
+    if (chunk.done) break;
+    buf += decoder.decode(chunk.value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, idx).trim();
+      buf = buf.slice(idx + 1);
+      if (!line) continue;
+      const msg = JSON.parse(line);
+      if (msg.event === 'progress' && onProgress) onProgress(msg);
+      else if (msg.event === 'result') result = msg.data;
+      else if (msg.event === 'error') throw new Error(msg.message);
+    }
+  }
+  if (!result) throw new Error('server ngắt giữa chừng, không có kết quả');
+  return result;
+};

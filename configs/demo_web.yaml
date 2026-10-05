@@ -52,9 +52,9 @@ data:
 
 scan:
   # Quét file .zip upload bằng CẢ 5 model (khác library scan chỉ dùng MOSS).
-  # 20 file = 190 cặp; M1 ~1s/cặp trên CPU nên hơn nữa là chờ quá lâu cho demo.
-  max_files: 20
-  # Tổng bytes sau giải nén — chống zip bomb.
+  # KHÔNG giới hạn số file: 62 file = 1891 cặp, M1 ~1s/cặp nên mất hàng chục
+  # phút — tiến độ báo live từng cặp qua NDJSON để không phải chờ mù.
+  # Tổng bytes sau giải nén — chống zip bomb (giữ lại, đây mới là rào an toàn).
   max_bytes: 10485760
   # File dài hơn thì BỎ QUA (ghi vào skipped), không cắt ngầm — cắt sẽ ra điểm
   # không còn là của file gốc.

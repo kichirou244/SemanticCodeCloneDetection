@@ -64,7 +64,6 @@ class DemoService:
         self._library_max_chars = int(data_cfg.get("library_max_chars", 20000))
         self._library_default_threshold = float(data_cfg.get("library_default_threshold", 0.5))
         scan_cfg = self.registry.config.get("scan", {})
-        self._scan_max_files = int(scan_cfg.get("max_files", 20))
         self._scan_max_bytes = int(scan_cfg.get("max_bytes", 10485760))
         self._scan_max_file_chars = int(scan_cfg.get("max_file_chars", 20000))
         self._upload_root = self.registry.root / "artifacts" / "scan_uploads"
@@ -272,8 +271,8 @@ class DemoService:
 
         Không tin tên file trong zip (chống `../../etc`): chỉ giữ basename,
         trùng tên thì thêm hậu tố. File không phải code / quá dài / lỗi decode
-        thì BỎ QUA có ghi nhận (không fail cả upload). Quá giới hạn số file
-        hoặc tổng bytes thì fail rõ ràng.
+        thì BỎ QUA có ghi nhận (không fail cả upload). Không giới hạn số file —
+        chỉ chặn tổng bytes (zip bomb); quét lâu thì tiến độ báo live từng cặp.
         """
         try:
             zf = zipfile.ZipFile(io.BytesIO(data))
@@ -311,10 +310,6 @@ class DemoService:
                     base = f"{stem}_{i}{Path(name).suffix}"
                     i += 1
                 entries[base] = code
-        if len(entries) > self._scan_max_files:
-            raise ValueError(
-                f"{len(entries)} file, vượt giới hạn {self._scan_max_files} "
-                "file/lần quét — tách zip nhỏ hơn rồi thử lại")
         if not entries:
             raise ValueError("zip không chứa file code nào "
                              f"(nhận: {sorted(_LIBRARY_EXTS)})")
@@ -328,22 +323,17 @@ class DemoService:
             "files": [{"name": n, "chars": len(c), "code": c}
                       for n, c in entries.items()],
             "skipped": skipped,
-            "limits": {"max_files": self._scan_max_files,
-                       "max_bytes": self._scan_max_bytes,
+            "limits": {"max_bytes": self._scan_max_bytes,
                        "max_file_chars": self._scan_max_file_chars},
         }
 
-    def scan_upload(
-        self,
-        upload_id: str,
-        model_ids: list[str] | None = None,
-        threshold: float | None = None,
-    ) -> dict:
-        """Chấm all-pairs các file đã upload bằng model được chọn.
+    def scan_upload_events(self, upload_id, model_ids=None, threshold=None):
+        """Generator quét all-pairs: yield `("progress", {...})` từng chặng rồi
+        `("result", {...})` cuối cùng.
 
-        `threshold=None` ⇒ dùng ngưỡng đóng băng từng model (đúng protocol báo
-        cáo); cho số ⇒ áp chung cho mọi model. Cặp được giữ nếu CÓ ÍT NHẤT một
-        model đạt ngưỡng, xếp giảm dần theo điểm cao nhất.
+        Setup (đọc upload, chọn model) nằm TRƯỚC yield đầu nên lỗi `KeyError` /
+        `ValueError` ném ngay — endpoint mồi một `next()` để trả đúng 404/400.
+        Lỗi giữa chừng (hiếm) thành event `"error"` chứ không sập stream.
         """
         from src.demo.scorers.base import read_threshold
 
@@ -363,46 +353,55 @@ class DemoService:
         }
         names = sorted(files)
         pair_keys = [(a, b) for i, a in enumerate(names) for b in names[i + 1 :]]
-        raw: dict[str, dict[tuple[str, str], tuple[float | None, dict]]] = {}
+        total = len(pair_keys)
+        step = max(1, total // 200)
         from src.demo.scorers.cpg_scorer import CpgScorer
 
+        raw: dict[str, dict[tuple[str, str], tuple[float | None, dict]]] = {}
         for s in scorers:
             if isinstance(s, CpgScorer) and pair_keys:
                 raw[s.model_id] = s.score_all_pairs([(n, files[n]) for n in names])
             else:
-                per = {}
-                for a, b in pair_keys:
-                    try:
-                        r = s.score(files[a], files[b])
-                        per[(a, b)] = (r.score, {})
-                    except Exception as exc:  # noqa: BLE001 — model lỗi thì ô đó lỗi
-                        per[(a, b)] = (None, {"error": f"{type(exc).__name__}: {exc}"[:200]})
-                raw[s.model_id] = per
+                raw[s.model_id] = {}
         pairs = []
-        for a, b in pair_keys:
-            cells = {}
-            best: float | None = None
-            for s in scorers:
-                score, detail = raw[s.model_id][(a, b)]
-                thr = thr_of[s.model_id]
-                verdict = ("unknown" if (score is None or thr is None)
-                           else ("clone" if score >= thr else "not_clone"))
-                cells[s.model_id] = {
-                    "score": None if score is None else round(float(score), 6),
-                    "verdict": verdict,
-                    "threshold": thr,
-                    "error": detail.get("error"),
-                }
-                if score is not None and (best is None or score > best):
-                    best = score
-            keep = any(
-                cells[s.model_id]["verdict"] == "clone" for s in scorers
-            )
-            if keep:
-                pairs.append({"a": a, "b": b, "scores": cells,
-                              "max_score": round(float(best), 6)})
+        try:
+            for idx, (a, b) in enumerate(pair_keys, 1):
+                cells = {}
+                best: float | None = None
+                for s in scorers:
+                    if (a, b) not in raw[s.model_id]:
+                        try:
+                            r = s.score(files[a], files[b])
+                            raw[s.model_id][(a, b)] = (r.score, {})
+                        except Exception as exc:  # noqa: BLE001 — model lỗi thì ô đó lỗi
+                            raw[s.model_id][(a, b)] = (
+                                None, {"error": f"{type(exc).__name__}: {exc}"[:200]})
+                    score, detail = raw[s.model_id][(a, b)]
+                    thr = thr_of[s.model_id]
+                    verdict = ("unknown" if (score is None or thr is None)
+                               else ("clone" if score >= thr else "not_clone"))
+                    cells[s.model_id] = {
+                        "score": None if score is None else round(float(score), 6),
+                        "verdict": verdict,
+                        "threshold": thr,
+                        "error": detail.get("error"),
+                    }
+                    if score is not None and (best is None or score > best):
+                        best = score
+                keep = any(
+                    cells[s.model_id]["verdict"] == "clone" for s in scorers
+                )
+                if keep:
+                    pairs.append({"a": a, "b": b, "scores": cells,
+                                  "max_score": round(float(best), 6)})
+                if idx % step == 0 or idx == total:
+                    yield ("progress", {"done": idx, "total": total,
+                                        "kept": len(pairs)})
+        except Exception as exc:  # noqa: BLE001 — stream đang mở, chỉ còn cách event lỗi
+            yield ("error", {"message": f"{type(exc).__name__}: {exc}"[:300]})
+            return
         pairs.sort(key=lambda r: r["max_score"], reverse=True)
-        return {
+        yield ("result", {
             "upload_id": upload_id,
             "n_files": len(files),
             "models": [s.model_id for s in scorers],
@@ -411,7 +410,22 @@ class DemoService:
             "n_kept": len(pairs),
             "pairs": pairs,
             "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
-        }
+        })
+
+    def scan_upload(
+        self,
+        upload_id: str,
+        model_ids: list[str] | None = None,
+        threshold: float | None = None,
+    ) -> dict:
+        """Bản đồng bộ của `scan_upload_events` (giữ cho test + tương thích):
+        gom tới event `result`, gặp `error` thì ném."""
+        for kind, payload in self.scan_upload_events(upload_id, model_ids, threshold):
+            if kind == "result":
+                return payload
+            if kind == "error":
+                raise RuntimeError(payload["message"])
+        raise RuntimeError("unreachable")
 
     # ------------------------------------------------------------------ kiểm tra
     def _validate(self, code: str, field: str) -> None:

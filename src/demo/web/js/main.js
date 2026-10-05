@@ -163,12 +163,12 @@ async function onZipScan() {
     renderZipState(refs.zipResults, 'error', 'Chọn ít nhất 1 model để chấm.');
     return;
   }
-  renderZipState(refs.zipResults, null,
-    'Đang chấm tất cả các cặp (M1 chậm nhất, vài phút với ~200 cặp)…');
+  renderZipState(refs.zipResults, null, 'Bắt đầu chấm…');
   try {
     const results = await scanUpload({
       upload_id: zipState.uploadId, models: sel.models, threshold: sel.threshold,
-    });
+    }, (prog) => renderZipState(refs.zipResults, null,
+      `Đang chấm cặp ${prog.done}/${prog.total} (giữ lại ${prog.kept})…`));
     state.set({ zipScan: results });
     renderZipResults(refs.zipResults, results, sel.models, pickZipPair, onDownloadReport);
   } catch (error) {
