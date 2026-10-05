@@ -279,3 +279,4 @@ body {
   .app-layout { grid-template-columns: minmax(0, 1fr); }
   .rail { position: static; max-height: none; }
 }
+.app-layout--single { grid-template-columns: minmax(0, 1fr); }

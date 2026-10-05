@@ -121,7 +121,7 @@ function renderRow(pair, rank, modelIds, onPick) {
 }
 
 /** Vẽ kết quả quét đa model. `modelIds` fix thứ tự cột theo lựa chọn lúc quét. */
-export function renderZipResults(container, results, modelIds, onPick) {
+export function renderZipResults(container, results, modelIds, onPick, onDownload) {
   clear(container);
   if (!results || !results.pairs || !results.pairs.length) {
     container.append(el('p', {
@@ -146,6 +146,16 @@ export function renderZipResults(container, results, modelIds, onPick) {
     class: 'scan-meta',
     text: `${results.n_kept}/${results.n_pairs} cặp đạt · ${ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`} · bấm hàng để nạp vào ô phân tích.`,
   }));
+  if (typeof onDownload === 'function') {
+    const bar = el('div', { class: 'zip-download' }, [
+      el('button', { type: 'button', class: 'btn', text: 'Tải báo cáo JSON' }),
+      el('button', { type: 'button', class: 'btn', text: 'Tải báo cáo Markdown' }),
+    ]);
+    const [btnJson, btnMd] = bar.querySelectorAll('button');
+    btnJson.addEventListener('click', () => onDownload('json'));
+    btnMd.addEventListener('click', () => onDownload('md'));
+    container.append(bar);
+  }
 }
 
 export function renderZipState(container, kind, message) {
@@ -154,4 +164,46 @@ export function renderZipState(container, kind, message) {
     class: kind === 'error' ? 'scan-empty is-error' : 'scan-empty',
     text: message,
   }));
+}
+
+/** Bao cao JSON day du: file + tung cap + diem tung model. */
+export function buildJsonReport({ files, results }) {
+  return JSON.stringify({
+    tool: 'SemanticCodeCloneDetection zip-scan',
+    generated_at: new Date().toISOString(),
+    n_files: files.length,
+    files: files.map((f) => ({ name: f.name, chars: f.chars, code: f.code })),
+    threshold_applied: results.threshold_applied ?? null,
+    duration_ms: results.duration_ms ?? null,
+    n_pairs: results.n_pairs ?? 0,
+    n_kept: results.n_kept ?? 0,
+    pairs: results.pairs ?? [],
+  }, null, 2);
+}
+
+/** Bao cao Markdown gon de doc. */
+export function buildMarkdownReport({ files, results }) {
+  const lines = [];
+  lines.push('# Bao cao quet trung lap code');
+  lines.push('');
+  lines.push('- Thoi gian: ' + new Date().toISOString());
+  lines.push('- So file: ' + files.length);
+  lines.push('- Tong cap: ' + (results.n_pairs ?? 0)
+    + ' · Dat nguong: ' + (results.n_kept ?? 0));
+  lines.push('- Nguong ap dung: ' + JSON.stringify(results.threshold_applied ?? null));
+  lines.push('');
+  lines.push('## File (' + files.length + ')');
+  for (const f of files) lines.push('- ' + f.name + ' (' + f.chars + ' ky tu)');
+  lines.push('');
+  lines.push('## Cap dat nguong');
+  for (const p of results.pairs ?? []) {
+    lines.push('- ' + p.a + ' <-> ' + p.b + ' (max ' + p.max_score + ')');
+    for (const [mid, c] of Object.entries(p.scores ?? {})) {
+      const s = c.score === null || c.score === undefined ? 'loi' : c.score;
+      lines.push('  - ' + mid + ': ' + s + ' (' + c.verdict
+        + ', nguong ' + c.threshold + ')');
+    }
+  }
+  lines.push('');
+  return lines.join('\n');
 }
