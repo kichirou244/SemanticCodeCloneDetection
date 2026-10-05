@@ -47,6 +47,7 @@ sys.path.insert(0, str(ROOT))
 
 from scripts.build_cpg_export import (  # noqa: E402
     SMOKE_CODE,
+    _param_value,
     joern_missing_reason,
 )
 
@@ -283,7 +284,8 @@ def build_script(cand: dict, project: str) -> str:
 def run_one(joern_cmd: list[str], cand: dict, src: Path, sc_path: Path,
             timeout_s: int, project: str) -> dict:
     sc_path.write_text(build_script(cand, project), encoding="utf-8")
-    cmd = joern_cmd + ["--script", str(sc_path), "--param", f"srcFile={src}"]
+    cmd = joern_cmd + ["--script", str(sc_path),
+                         "--param", _param_value(f"srcFile={src}")]
     t0 = time.perf_counter()
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s)

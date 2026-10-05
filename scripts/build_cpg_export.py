@@ -77,13 +77,40 @@ int classify(int n) {
 def _as_argv(joern_cmd: str | list[str]) -> list[str]:
     """Chuẩn hoá lệnh Joern thành argv.
 
-    Nhận cả chuỗi lẫn list: chuỗi thì tách bằng `shlex` (đúng trên Linux/Kaggle),
-    list thì giữ nguyên — cách duy nhất chạy được trên Windows, nơi `shlex`
-    posix phá đường dẫn có dấu cách.
+    Nhận cả chuỗi lẫn list. Chuỗi thì tách bằng `shlex` với `posix` đúng theo
+    platform (posix trên Windows ăn mất backslash: `D:\\Code` thành `D:Code`).
+    Trên Windows, `.bat`/`.cmd` không chạy trực tiếp qua CreateProcess được
+    nên phải bọc `cmd /d /c` — kể cả khi gọi bằng tên trần mà `which` trỏ tới
+    file `.bat` (đúng trường hợp `joern` -> `joern.bat` trong PATH).
     """
     if isinstance(joern_cmd, (list, tuple)):
-        return [str(c) for c in joern_cmd]
-    return shlex.split(joern_cmd)
+        argv = [str(c) for c in joern_cmd]
+    else:
+        argv = shlex.split(joern_cmd, posix=(sys.platform != "win32"))
+    if sys.platform == "win32" and argv:
+        exe = argv[0]
+        needs_cmd = exe.lower().endswith((".bat", ".cmd"))
+        if not needs_cmd and "." not in os.path.basename(exe):
+            found = shutil.which(exe)
+            needs_cmd = bool(found) and found.lower().endswith((".bat", ".cmd"))
+        if needs_cmd:
+            comspec = os.environ.get("COMSPEC", r"C:\Windows\System32\cmd.exe")
+            argv = [comspec, "/d", "/c", *argv]
+    return argv
+
+
+def _param_value(text: str) -> str:
+    """Bọc value `--param` trong ngoặc kép trên Windows.
+
+    Launcher `.bat` của Joern tách tham số bằng `%n`/`shift`, mà `%n` cắt ở
+    dấu `=` (đã chứng minh: `srcDir=C:\\x` tới mainargs chỉ còn `srcDir`).
+    Bọc `"k=v"` thì `%n` giữ nguyên khối, JVM lột ngoặc khi parse argv và
+    mainargs nhận đúng `k=v` (đã chứng minh bằng probe `PROBE_GOT` sạch).
+    Linux giữ nguyên (không bọc) để đường Kaggle không đổi gì.
+    """
+    if sys.platform == "win32" and "=" in text:
+        return f'"{text}"'
+    return text
 
 
 def joern_or_die() -> str:
@@ -175,7 +202,8 @@ def run_smoke(code: str, work_dir: Path, joern_cmd: str, timeout_s: int) -> str:
     work_dir.mkdir(parents=True, exist_ok=True)
     src = work_dir / "smoke.cpp"
     src.write_text(code, encoding="utf-8")
-    cmd = _as_argv(joern_cmd) + ["--script", str(SMOKE_SCRIPT), "--param", f"srcFile={src}"]
+    cmd = _as_argv(joern_cmd) + ["--script", str(SMOKE_SCRIPT),
+                                   "--param", _param_value(f"srcFile={src}")]
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s)
     _log(work_dir, "joern_smoke", cmd, proc)
     return proc.stdout + ("\n--- stderr ---\n" + proc.stderr if proc.stderr else "")
@@ -196,7 +224,8 @@ def run_probe(joern_cmd: str, work_dir: Path, timeout_s: int) -> str:
     work_dir.mkdir(parents=True, exist_ok=True)
     src = work_dir / "probe.cpp"
     src.write_text(SMOKE_CODE, encoding="utf-8")
-    cmd = _as_argv(joern_cmd) + ["--script", str(PROBE_SCRIPT), "--param", f"srcFile={src}"]
+    cmd = _as_argv(joern_cmd) + ["--script", str(PROBE_SCRIPT),
+                                   "--param", _param_value(f"srcFile={src}")]
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s)
     _log(work_dir, "joern_probe", cmd, proc)
     return proc.stdout + ("\n--- stderr ---\n" + proc.stderr if proc.stderr else "")
@@ -207,8 +236,9 @@ def run_batch(samples: list[dict], out_dir: Path, work_dir: Path, joern_cmd: str
     """Một lần khởi động Joern cho cả lô. Trả về (số OK, số lỗi)."""
     index = write_batch(samples, batch_dir)
     cmd = _as_argv(joern_cmd) + ["--script", str(EXPORT_SCRIPT),
-           "--param", f"srcDir={batch_dir}", "--param", f"indexFile={index}",
-           "--param", f"outDir={out_dir}"]
+           "--param", _param_value(f"srcDir={batch_dir}"),
+           "--param", _param_value(f"indexFile={index}"),
+           "--param", _param_value(f"outDir={out_dir}")]
     t0 = time.perf_counter()
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s)

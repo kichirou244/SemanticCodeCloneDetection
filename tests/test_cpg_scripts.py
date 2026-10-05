@@ -38,7 +38,12 @@ argv = sys.argv[1:]
 i = 0
 while i < len(argv):
     if argv[i] == "--param":
-        k, _, v = argv[i + 1].partition("=")
+        kv = argv[i + 1]
+        # Mô phỏng JVM: lớp ngoặc ngoài của value (do `_param_value` bọc trên
+        # Windows để batch `%n` không cắt ở `=`) bị lột khi parse argv.
+        if len(kv) >= 2 and kv[0] == '"' and kv[-1] == '"':
+            kv = kv[1:-1]
+        k, _, v = kv.partition("=")
         params[k] = v
         i += 2
     elif argv[i] == "--script":
@@ -568,6 +573,60 @@ def test_joern_or_die_falls_back_to_install_paths(monkeypatch, tmp_path):
     monkeypatch.setattr(mod.shutil, "which", lambda _: None)
     monkeypatch.setattr(mod, "JOERN_FALLBACK_PATHS", (tmp_path / "nope", fake))
     assert mod.joern_or_die() == str(fake)
+
+
+def test_as_argv_windows_keeps_backslashes_and_wraps_bat(monkeypatch):
+    """Regression: `shlex.split` mặc định (posix) ăn mất backslash Windows
+    (`D:\\Code` thành `D:Code`) khiến mọi lệnh Joern local chết. Trên Windows
+    còn phải bọc `cmd /d /c` vì CreateProcess không chạy `.bat` trực tiếp."""
+    import sys as _sys
+
+    import scripts.build_cpg_export as mod
+
+    monkeypatch.setattr(_sys, "platform", "win32")
+    argv = mod._as_argv(r"D:\Code\SDK\joern\joern-cli\joern.bat")
+    assert argv[1:3] == ["/d", "/c"]
+    assert argv[3] == r"D:\Code\SDK\joern\joern-cli\joern.bat"
+
+
+def test_as_argv_windows_bare_name_resolving_to_bat(monkeypatch):
+    """Gọi `joern` trần mà `which` trỏ tới `.bat` thì cũng phải bọc cmd."""
+    import sys as _sys
+
+    import scripts.build_cpg_export as mod
+
+    monkeypatch.setattr(_sys, "platform", "win32")
+    monkeypatch.setattr(mod.shutil, "which", lambda _: r"C:\Tools\joern.bat")
+    argv = mod._as_argv("joern")
+    assert argv[1:3] == ["/d", "/c"]
+    assert argv[3] == "joern"
+
+
+def test_as_argv_linux_untouched(monkeypatch):
+    """Linux/Kaggle: giữ nguyên hành vi cũ, không bọc cmd."""
+    import sys as _sys
+
+    import scripts.build_cpg_export as mod
+
+    monkeypatch.setattr(_sys, "platform", "linux")
+    assert mod._as_argv("joern --script x.sc") == ["joern", "--script", "x.sc"]
+    assert mod._as_argv(["joern", "a b"]) == ["joern", "a b"]
+
+
+def test_param_value_quoted_on_windows_only(monkeypatch):
+    """Regression Windows: batch `%n` của Joern cắt value ở dấu `=` nên
+    mainargs chỉ thấy key (`unable to parse param input srcDir`). Bọc `"k=v"`
+    thì `%n` giữ nguyên khối, JVM lột ngoặc — đã chứng minh bằng probe thật
+    (`PROBE_GOT` sạch, rc=0). Linux không bọc để đường Kaggle y nguyên."""
+    import sys as _sys
+
+    import scripts.build_cpg_export as mod
+
+    monkeypatch.setattr(_sys, "platform", "win32")
+    assert mod._param_value("srcDir=C:\\x") == '"srcDir=C:\\x"'
+    assert mod._param_value("plain") == "plain"
+    monkeypatch.setattr(_sys, "platform", "linux")
+    assert mod._param_value("srcDir=/x") == "srcDir=/x"
 
 
 def test_script_help_runs_without_joern():

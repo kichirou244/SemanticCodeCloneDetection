@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from src.demo.registry import ModelRegistry
 from src.demo.scorers.base import ScorerState
 from src.demo.scorers.cpg_scorer import CpgScorer
@@ -40,12 +42,11 @@ def test_moss_scores_end_to_end_with_real_threshold():
     assert res.verdict in ("clone", "not_clone")  # có ngưỡng thật, không unknown
 
 
-def test_cpg_scorer_fails_gracefully_without_java():
-    """Máy này không có Java (DEC-023) — đúng môi trường để kiểm tra M4 báo
-    hỏng êm thay vì kéo sập request."""
-    import shutil
-
-    assert shutil.which("java") is None, "máy này có Java thì test mất ý nghĩa"
+def test_cpg_scorer_fails_gracefully_without_toolchain(tmp_path, monkeypatch):
+    """Giả lập máy thiếu Joern (JOERN_BIN trỏ chỗ không tồn tại): M4 phải báo
+    hỏng êm với lý do rõ ràng, không kéo sập request. Deterministic mọi máy
+    (không phụ thuộc Java có cài hay không)."""
+    monkeypatch.setenv("JOERN_BIN", str(tmp_path / "joern-khong-co"))
     reg = ModelRegistry.from_yaml(YAML, root=ROOT)
     m4 = reg.get("M4")
     assert m4.ensure_loaded() is False
@@ -53,6 +54,37 @@ def test_cpg_scorer_fails_gracefully_without_java():
     assert m4.status()["error"] and "Joern" in m4.status()["error"]
     res = m4.score(CODE_A, CODE_B)
     assert res.ok is False and res.error
+
+
+def test_cpg_scorer_loads_with_real_toolchain():
+    """Máy có đủ Java + Joern + checkpoint + torch_geometric thì M4 nạp được.
+    Thiếu thứ gì thì skip (máy CI không có Java)."""
+    pytest.importorskip("torch_geometric")
+    from scripts.build_cpg_export import joern_missing_reason, joern_or_die
+
+    if joern_missing_reason(joern_or_die()):
+        pytest.skip("cần Java+Joern để nạp M4 thật")
+    reg = ModelRegistry.from_yaml(YAML, root=ROOT)
+    m4 = reg.get("M4")
+    assert m4.ensure_loaded() is True, m4.status()["error"]
+    assert m4.state == ScorerState.READY
+
+
+def test_cpg_scorer_scores_real_pair_with_joern():
+    """Bằng chứng cuối: Joern thật dựng CPG cho 2 hàm rồi GAT chấm ra số.
+    Tốn ~1-3 phút (JVM). Skip khi thiếu toolchain."""
+    pytest.importorskip("torch_geometric")
+    from scripts.build_cpg_export import joern_missing_reason, joern_or_die
+
+    if joern_missing_reason(joern_or_die()):
+        pytest.skip("cần Java+Joern để chấm M4 thật")
+    reg = ModelRegistry.from_yaml(YAML, root=ROOT)
+    res = reg.get("M4").score(CODE_A, CODE_B)
+    assert res.ok, res.error
+    assert res.threshold is not None
+    assert 0.0 <= res.score <= 1.0
+    assert res.verdict in ("clone", "not_clone")
+    assert res.detail.get("n_nodes_a", 0) > 10
 
 
 def test_unknown_model_id_raises_keyerror():
