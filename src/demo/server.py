@@ -44,6 +44,19 @@ def create_app(service: DemoService | None = None, config_path: Path | str = DEF
     app = FastAPI(title="Semantic Code Clone Detection — Demo", version="1.0.0")
     app.state.service = svc
 
+    @app.middleware("http")
+    async def no_cache_static(request, call_next):
+        """Demo chạy local: tắt cache trình duyệt cho file tĩnh.
+
+        Không có middleware này, mỗi lần sửa JS/CSS là một lần vật lộn
+        Ctrl+Shift+R (đã dính 3 lần: nút Tải lên chết im, tên file không hiện).
+        Server local tải lại tức thì nên không-cache chẳng tốn gì.
+        """
+        response = await call_next(request)
+        if request.url.path == "/" or request.url.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-store"
+        return response
+
     @app.get("/api/status")
     def api_status() -> dict:
         return svc.status()
