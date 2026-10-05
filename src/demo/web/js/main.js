@@ -260,7 +260,10 @@ async function pickZipPair(pair) {
 function initZipScan() {
   const statuses = state.get().status?.models ?? [];
   renderZipModels(refs.zipModels, statuses);
-  bindZipUpload({ inputEl: refs.zipFile, btnEl: refs.btnUpload, onUpload: onZipUpload });
+  const noFile = () => renderZipState(
+    refs.zipResults, 'error', 'Chưa chọn file .zip nào — bấm “Chọn .zip” trước.',
+  );
+  bindZipUpload({ inputEl: refs.zipFile, btnEl: refs.btnUpload, onUpload: onZipUpload, onEmpty: noFile });
   bindZipScan({
     btnEl: refs.btnZipScan, sliderEl: refs.zipThreshold,
     valueEl: refs.zipThresholdValue, frozenEl: refs.zipFrozen, onScan: onZipScan,

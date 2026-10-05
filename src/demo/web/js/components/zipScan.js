@@ -63,10 +63,11 @@ export function renderZipFiles(container, files, skipped) {
   if (skips) container.append(el('p', { class: 'scan-meta', text: `Bỏ qua — ${skips}.` }));
 }
 
-export function bindZipUpload({ inputEl, btnEl, onUpload }) {
+export function bindZipUpload({ inputEl, btnEl, onUpload, onEmpty }) {
   btnEl.addEventListener('click', () => {
     const file = inputEl.files && inputEl.files[0];
     if (!file) {
+      onEmpty();
       inputEl.focus();
       return;
     }
