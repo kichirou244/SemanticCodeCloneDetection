@@ -88,6 +88,8 @@ function renderEmpty() {
 function renderResult(data, labelA, labelB) {
   const { alignment, models, meta } = data;
   state.set({ alignment, results: models, meta });
+  evByModel = Object.fromEntries((models || []).map((m) => [m.model_id, m.evidence || null]));
+  evSelected = null;
 
   if (alignment) {
     refs.emptyState.remove();
@@ -104,6 +106,7 @@ function renderResult(data, labelA, labelB) {
     renderEmpty();
   }
   renderScores();
+  applyEvidence();
 }
 
 function focusBlock(grid, blockId) {
@@ -131,6 +134,44 @@ async function runAnalyze(codeA, codeB, labelA, labelB) {
     setToast(`Phân tích thất bại: ${error.message}`, 'error');
     renderScores();
   }
+}
+
+/* ------------------------------------------- highlight riêng từng model */
+
+let evByModel = {};
+let evSelected = null;
+
+function applyEvidence() {
+  const grid = $('.diff__grid', refs.diffView);
+  if (grid) {
+    grid.querySelectorAll('.tok-ev').forEach((n) => n.classList.remove('tok-ev'));
+  }
+  refs.scoreStrip.querySelectorAll('.score-card').forEach((c) => {
+    c.classList.toggle('is-sel', !!evSelected && c.dataset.model === evSelected);
+  });
+  const ev = evSelected ? evByModel[evSelected] : null;
+  if (!grid || !ev) return;
+  const sides = [['.diff__pane--a', 'tok_a'], ['.diff__pane--b', 'tok_b']];
+  for (const [paneSel, key] of sides) {
+    const set = new Set(ev[key] || []);
+    if (!set.size) continue;
+    grid.querySelectorAll(`${paneSel} .tok[data-ti]`).forEach((n) => {
+      if (set.has(Number(n.dataset.ti))) n.classList.add('tok-ev');
+    });
+  }
+}
+
+function selectModelForEvidence(modelId) {
+  const ev = evByModel[modelId];
+  if (!ev || !(ev.tok_a || []).length && !(ev.tok_b || []).length) {
+    evSelected = null;
+    applyEvidence();
+    setToast(modelId + ' chưa có evidence vị trí riêng — đang hiện căn chỉnh chung.');
+    return;
+  }
+  evSelected = evSelected === modelId ? null : modelId;
+  applyEvidence();
+  if (evSelected) setToast(`${modelId}: ${ev.note || 'đang hiện vị trí model này thấy'}.`);
 }
 
 /* ------------------------------------------------- quét zip đa model */
@@ -220,6 +261,11 @@ function initZipScan() {
   const noFile = () => renderZipState(
     refs.zipResults, 'error', 'Chưa chọn file .zip nào — bấm “Chọn .zip” trước.',
   );
+  // Bấm thẻ điểm = đổi highlight sang evidence riêng của model đó.
+  refs.scoreStrip.addEventListener('click', (e) => {
+    const card = e.target.closest('[data-model]');
+    if (card) selectModelForEvidence(card.dataset.model);
+  });
   bindZipUpload({ inputEl: refs.zipFile, btnEl: refs.btnUpload, nameEl: refs.zipFileName, onUpload: onZipUpload, onEmpty: noFile });
   bindZipScan({
     btnEl: refs.btnZipScan, sliderEl: refs.zipThreshold,

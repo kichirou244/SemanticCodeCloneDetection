@@ -137,6 +137,15 @@ class BaseScorer(ABC):
     def checkpoint_hint(self) -> str:
         return ""
 
+    def evidence(self, code_a: str, code_b: str) -> dict | None:
+        """Bằng chứng vị trí cho highlight riêng từng model.
+
+        Mặc định None (chưa có). MOSS override: spans k-gram chung (tọa độ code
+        gốc). Service map spans → chỉ số token rồi gắn vào response; frontend
+        tô theo model đang chọn. Model neural (M1/M2/M3/M4) làm sau.
+        """
+        return None
+
     # ------------------------------------------------------------------ gọi
     def ensure_loaded(self) -> bool:
         """Nạp nếu chưa nạp. Trả `False` nếu hỏng (đã ghi lý do vào `_error`)."""

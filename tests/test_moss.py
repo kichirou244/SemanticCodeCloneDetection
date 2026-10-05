@@ -10,9 +10,11 @@ from src.models.baseline.moss import (
     DEFAULT_K,
     FingerprintDoc,
     fingerprints,
+    fingerprints_with_spans,
     kgrams,
     normalize,
     scan_pairwise,
+    shared_spans,
     similarity,
 )
 
@@ -220,3 +222,38 @@ def test_similarity_commutative_for_equal_lengths():
     fa = fingerprints(CODE_A)
     fb = fingerprints(CODE_UNRELATED)
     assert similarity(fa, fb) == similarity(fb, fa)
+
+
+def test_spans_match_plain_fingerprints():
+    """Bat bien: bo span di phai ra dung fingerprints() — tren nhieu dang code."""
+    from src.models.baseline.moss import _normalize_parts
+
+    samples = [CODE_A, CODE_B_RENAMED, CODE_UNRELATED, "", "int x;",
+               "/* comment only */", "printf(\"%d\\n\", x);"]
+    for code in samples:
+        for k, w in ((5, 5), (20, 5)):
+            plain = fingerprints(code, k, w)
+            with_spans = fingerprints_with_spans(code, k, w)
+            assert [h for h, _, _ in with_spans] == plain, (code[:30], k, w)
+    joined = "".join(t for t, _, _ in _normalize_parts(CODE_A))
+    assert joined == normalize(CODE_A)
+
+
+def test_shared_spans_cover_clone_not_unrelated():
+    from src.models.baseline.moss import _normalize_parts  # noqa
+
+    fa = fingerprints_with_spans(CODE_A, 5, 5)
+    fb = fingerprints_with_spans(CODE_B_RENAMED, 5, 5)
+    sa, sb, n = shared_spans(fa, fb)
+    assert n > 0 and sa and sb
+    for s, e in sa + sb:
+        assert 0 <= s < e
+    assert all(e <= len(CODE_A) for _, e in sa)
+    # khong chong lan sau khi gop
+    flat = sorted(sa)
+    assert all(b[0] >= a[1] for a, b in zip(flat, flat[1:]))
+    fu = fingerprints_with_spans(CODE_UNRELATED, 5, 5)
+    _, _, n2 = shared_spans(fa, fu)
+    # Hai file deu co dong #include<...> (chuan hoa giong het) nen van chung
+    # vai hash — tinh chat dung la: clone chung NHIEU hon khong-clone.
+    assert 0 <= n2 < n

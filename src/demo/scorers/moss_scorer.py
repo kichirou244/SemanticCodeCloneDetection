@@ -14,7 +14,14 @@ from __future__ import annotations
 from pathlib import Path
 
 from src.demo.scorers.base import BaseScorer
-from src.models.baseline.moss import DEFAULT_K, DEFAULT_W, fingerprints, similarity
+from src.models.baseline.moss import (
+    DEFAULT_K,
+    DEFAULT_W,
+    fingerprints,
+    fingerprints_with_spans,
+    shared_spans,
+    similarity,
+)
 
 
 class MossScorer(BaseScorer):
@@ -50,3 +57,18 @@ class MossScorer(BaseScorer):
             "k": self.k,
             "w": self.w,
         }
+
+    def evidence(self, code_a: str, code_b: str) -> dict | None:
+        """Vị trí các k-gram chung: MOSS thấy trùng KHỚP Ở ĐÂU, tọa độ code gốc.
+        Tính lại fingerprints (ms, rẻ) thay vì cache vì demo chấm 1 cặp/lần."""
+        fa = fingerprints_with_spans(code_a, k=self.k, w=self.w)
+        fb = fingerprints_with_spans(code_b, k=self.k, w=self.w)
+        sa, sb, n = shared_spans(fa, fb)
+        if not n:
+            return {"spans_a": [], "spans_b": [], "n_shared": 0,
+                    "kind": "kgram",
+                    "note": "không có k-gram chung (k=%d, w=%d)" % (self.k, self.w)}
+        return {"spans_a": [[s, e] for s, e in sa],
+                "spans_b": [[s, e] for s, e in sb],
+                "n_shared": n, "kind": "kgram",
+                "note": "%d k-gram chung (k=%d, w=%d)" % (n, self.k, self.w)}

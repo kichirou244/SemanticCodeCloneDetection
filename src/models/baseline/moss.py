@@ -27,6 +27,7 @@ theo nội dung, đủ chống đụng độ cho demo, nhanh và không cần ro
 
 from __future__ import annotations
 
+import bisect
 import re
 import zlib
 from collections import Counter
@@ -50,6 +51,26 @@ _TOKEN_RE = re.compile(
 )
 
 
+def _normalize_parts(code: str) -> list[tuple[str, int, int]]:
+    """Tách code thành pieces `(text, src_start, src_end)` — `normalize()` chỉ
+    là join các piece, nên output hai hàm giống nhau từng byte (có test khóa)."""
+    parts: list[tuple[str, int, int]] = []
+    for match in _TOKEN_RE.finditer(code):
+        kind = match.lastgroup
+        s, e = match.span()
+        if kind == "comment":
+            continue
+        if kind == "word":
+            parts.append(("id", s, e))
+        elif kind == "num":
+            parts.append(("num", s, e))
+        elif kind == "str":
+            parts.append(("str", s, e))
+        else:  # punct: giữ nguyên symbol
+            parts.append((match.group(), s, e))
+    return parts
+
+
 def normalize(code: str) -> str:
     """Chuẩn hoá code thành một chuỗi không khoảng trắng theo quy tắc MOSS.
 
@@ -57,20 +78,7 @@ def normalize(code: str) -> str:
     toàn; chuỗi literal và số chỉ còn là "str"/"num" nên copy-and-paste đổi
     hằng số vẫn bắt được.
     """
-    out: list[str] = []
-    for match in _TOKEN_RE.finditer(code):
-        kind = match.lastgroup
-        if kind == "comment":
-            continue
-        if kind == "word":
-            out.append("id")
-        elif kind == "num":
-            out.append("num")
-        elif kind == "str":
-            out.append("str")
-        else:  # punct: giữ nguyên symbol
-            out.append(match.group())
-    return "".join(out)
+    return "".join(text for text, _, _ in _normalize_parts(code))
 
 
 def kgrams(stream: str, k: int = DEFAULT_K) -> list[str]:
@@ -110,6 +118,74 @@ def fingerprints(
         if not out or out[-1] != v:
             out.append(v)
     return out
+
+
+def fingerprints_with_spans(
+    code: str, k: int = DEFAULT_K, w: int = DEFAULT_W
+) -> list[tuple[int, int, int]]:
+    """Như `fingerprints()` nhưng mỗi hash kèm span nguồn `(start, end)` trên
+    code GỐC. Bất biến: bỏ span đi phải ra đúng `fingerprints()` (có test khóa).
+
+    Span của một k-gram = từ đầu piece chứa ký tự đầu tới cuối piece chứa ký tự
+    cuối (piece có thể dài hơn 1 ký tự gốc, ví dụ `variable` → `id`).
+    """
+    parts = _normalize_parts(code)
+    stream = "".join(text for text, _, _ in parts)
+    grams = kgrams(stream, k)
+    if not grams:
+        return []
+    # Biên piece trong tọa độ stream: (stream_start, src_start, src_end).
+    bounds: list[tuple[int, int, int]] = []
+    pos = 0
+    for text, s, e in parts:
+        bounds.append((pos, s, e))
+        pos += len(text)
+    starts = [b[0] for b in bounds]
+
+    def span_of(gi: int) -> tuple[int, int]:
+        lo, hi = gi, gi + k - 1
+        i = bisect.bisect_right(starts, lo) - 1
+        j = bisect.bisect_right(starts, hi) - 1
+        return bounds[i][1], bounds[j][2]
+
+    win = min(w, max(1, len(grams)))
+    hashes = [_stable_hash(g) for g in grams]
+    out: list[tuple[int, int, int]] = []
+    for i in range(len(grams) - win + 1):
+        window = hashes[i : i + win]
+        best = min(window)
+        gi = i + window.index(best)  # gram ĐẦU đạt min — giống `min()` của bản gốc
+        if not out or out[-1][0] != best:
+            s, e = span_of(gi)
+            out.append((best, s, e))
+    return out
+
+
+def _merge_spans(spans: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    ordered = sorted(spans)
+    merged: list[list[int]] = []
+    for s, e in ordered:
+        if merged and s <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], e)
+        else:
+            merged.append([s, e])
+    return [(s, e) for s, e in merged]
+
+
+def shared_spans(
+    fa: list[tuple[int, int, int]], fb: list[tuple[int, int, int]]
+) -> tuple[list[tuple[int, int]], list[tuple[int, int]], int]:
+    """Span các đoạn chung giữa hai phía (theo hash fingerprint).
+
+    Trả `(spans_a, spans_b, n_shared)` — spans đã gộp chỗ chồng lấn để highlight
+    gọn. `n_shared` = số hash chung (khác 0 ⇔ similarity > 0 với cùng k/w).
+    """
+    hb = {h for h, _, _ in fb}
+    ha = {h for h, _, _ in fa}
+    shared = ha & hb
+    spans_a = _merge_spans([(s, e) for h, s, e in fa if h in shared])
+    spans_b = _merge_spans([(s, e) for h, s, e in fb if h in shared])
+    return spans_a, spans_b, len(shared)
 
 
 def similarity(

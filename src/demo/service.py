@@ -39,6 +39,46 @@ def _count_lines(path: Path) -> int:
         return sum(1 for _ in f)
 
 
+def _spans_to_indices(lines: list, code: str, spans) -> list[int]:
+    """Map spans ký tự (code gốc) → chỉ số token phẳng (đúng thứ tự payload).
+
+    Tính ở backend vì chỉ backend có đồng thời code + token đã lex — frontend
+    đoán offset (nhất là `\r\n`) sẽ lệch. Token nào giao spans thì dính.
+    """
+    starts: list[int] = []
+    pos = 0
+    for line in code.split("\n"):
+        starts.append(pos)
+        pos += len(line) + 1
+    out: list[int] = []
+    flat = 0
+    for li, tokens in enumerate(lines):
+        base = starts[li] if li < len(starts) else None
+        for tok in tokens:
+            if base is not None:
+                s = base + tok.col
+                e = s + len(tok.text)
+                if any(ss < e and s < se for ss, se in spans):
+                    out.append(flat)
+            flat += 1
+    return out
+
+
+def _attach_token_indices(ev, lines_a, lines_b, code_a, code_b):
+    """Gắn `tok_a/tok_b` (chỉ số token để frontend tô) vào evidence spans."""
+    if not ev:
+        return None
+    return {
+        "kind": ev.get("kind"),
+        "note": ev.get("note"),
+        "n_shared": ev.get("n_shared"),
+        "spans_a": ev.get("spans_a", []),
+        "spans_b": ev.get("spans_b", []),
+        "tok_a": _spans_to_indices(lines_a, code_a, ev.get("spans_a", [])),
+        "tok_b": _spans_to_indices(lines_b, code_b, ev.get("spans_b", [])),
+    }
+
+
 class InputTooLarge(ValueError):
     """Input vượt giới hạn — client sửa được, nên trả 4xx chứ không phải 500."""
 
@@ -125,9 +165,16 @@ class DemoService:
     def _score_all(
         self, code_a: str, code_b: str, model_ids: list[str] | None
     ) -> list[dict]:
+        from src.demo.alignment.lexer import lex_code
+
+        lines_a, lines_b = lex_code(code_a), lex_code(code_b)
         out = []
         for scorer in self.registry.selected(model_ids):
             result = scorer.score(code_a, code_b)
+            try:
+                ev = scorer.evidence(code_a, code_b)
+            except Exception:  # noqa: BLE001 — không có evidence vẫn trả điểm
+                ev = None
             out.append(
                 {
                     "model_id": scorer.model_id,
@@ -135,6 +182,8 @@ class DemoService:
                     "state": scorer.state,
                     "hint": scorer.checkpoint_hint(),
                     **result.to_dict(),
+                    "evidence": _attach_token_indices(
+                        ev, lines_a, lines_b, code_a, code_b),
                 }
             )
         return out

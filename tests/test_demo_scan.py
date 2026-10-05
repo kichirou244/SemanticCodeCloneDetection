@@ -284,3 +284,59 @@ def test_batched_matches_per_pair(tmp_path, mid):
     assert all(s is not None for s, _ in batched), "batch chua chay?"
     for (s1, _), (s2, _) in zip(per, batched):
         assert abs(s1 - s2) < 1e-5, (s1, s2)
+
+
+def test_moss_evidence_spans_are_within_bounds():
+    from src.demo.scorers.moss_scorer import MossScorer
+
+    # Fixture A/B/C qua ngan cho k=20 (0 k-gram) — dung ham that.
+    long_a = ("int bubble_sort(int arr[], int n) { int i = 0; "
+              "while (i < n) { arr[i] = arr[i] + 1; i = i + 1; } return n; }")
+    long_b = long_a.replace("arr", "a").replace("bubble_sort", "sort")
+    m = MossScorer("B1", "moss", Path("."), k=20, w=5)
+    ev = m.evidence(long_a, long_b)
+    assert ev["n_shared"] > 0 and ev["spans_a"] and ev["spans_b"]
+    for s, e in ev["spans_a"]:
+        assert 0 <= s < e <= len(long_a)
+    for s, e in ev["spans_b"]:
+        assert 0 <= s < e <= len(long_b)
+    ev2 = m.evidence(A, "int main() { completely different zebra; }")
+    assert ev2["n_shared"] == 0
+    assert ev2["spans_a"] == [] and ev2["spans_b"] == []
+    from src.demo.scorers.base import BaseScorer
+    assert BaseScorer.evidence.__doc__ is not None
+
+
+def test_analyze_attaches_token_indices_for_moss():
+    """analyze() gan tok_a/tok_b (chi so token de frontend to) cho model co
+    evidence, None cho model khong co."""
+    from src.demo.registry import ModelRegistry
+    from src.demo.service import DemoService
+
+    root = Path(__file__).resolve().parents[1]
+    reg = ModelRegistry.from_yaml(root / "configs" / "demo_web.yaml", root=root)
+    svc = DemoService(reg)
+    long_a = ("int bubble_sort(int arr[], int n) { int i = 0; "
+              "while (i < n) { arr[i] = arr[i] + 1; i = i + 1; } return n; }")
+    long_b = long_a.replace("arr", "a").replace("bubble_sort", "sort")
+    out = svc.analyze(long_a, long_b, model_ids=["B1"])
+    assert len(out["models"]) == 1
+    ev = out["models"][0]["evidence"]
+    assert ev is not None and ev["tok_a"] and ev["tok_b"]
+    assert all(isinstance(i, int) and i >= 0 for i in ev["tok_a"])
+
+
+def test_spans_to_indices_mapping_is_exact():
+    from src.demo.alignment.lexer import lex_code
+    from src.demo.service import _spans_to_indices
+
+    code = "int ab = 1;\nint cd = 2;"
+    lines = lex_code(code)
+    flat = [t for line in lines for t in line]
+    texts = [t.text for t in flat]
+    i_ab = texts.index("ab")
+    tok = flat[i_ab]
+    s = code.split("\n")[0].index("ab")
+    got = _spans_to_indices(lines, code, [(s, s + 2)])
+    assert got == [i_ab], (got, i_ab)
+    assert _spans_to_indices(lines, code, [(9999, 99999)]) == []

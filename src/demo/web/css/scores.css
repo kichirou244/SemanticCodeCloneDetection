@@ -136,3 +136,5 @@
   from { background-position: 100% 0; }
   to   { background-position: 0 0; }
 }
+.score-card { cursor: pointer; }
+.score-card.is-sel { outline: 2px solid hsl(210 90% 55% / 70%); outline-offset: 2px; }
