@@ -581,12 +581,14 @@ def test_script_help_runs_without_joern():
 
 
 def test_config_declares_blocked_status():
-    """Config phải nói rõ đang bị chặn bởi gì, thay vì trông như sẵn sàng chạy."""
+    """Config phải nói rõ trạng thái thật. Từng là BLOCKED_ON_JOERN khi chưa có
+    CPG; từ khi extraction xong (DEC-027 verified) thì trạng thái là
+    READY_FOR_KAGGLE_TRAIN và không còn `blocked_by`."""
     import yaml
 
     cfg = yaml.safe_load((ROOT / "configs" / "exp005_cpg_gnn.yaml").read_text(encoding="utf-8"))
-    assert cfg["experiment"]["status"] == "BLOCKED_ON_JOERN"
-    assert set(cfg["experiment"]["blocked_by"]) == {"java", "joern"}
+    assert cfg["experiment"]["status"] == "READY_FOR_KAGGLE_TRAIN"
+    assert "blocked_by" not in cfg["experiment"]
     assert cfg["model"]["hidden_size"] % cfg["model"]["heads"] == 0
 
 

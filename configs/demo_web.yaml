@@ -11,7 +11,7 @@ demo:
   id: EXP-DEMO-001
   name: clone_demo_web
   # Thứ tự hiển thị trên UI: baseline trước, rồi theo họ đại diện.
-  order: [B1, M1, M2, M3]
+  order: [B1, M1, M2, M3, M4]
 
   limits:
     # Chặn input khổng lồ: demo là công cụ xem trực quan, không phải batch job.
@@ -25,7 +25,7 @@ server:
   port: 8000
   # Số model nạp trước khi server báo sẵn sàng. 0 = không nạp, model nạp lười
   # (lazy) ở request đầu tiên tương ứng.
-  preload: [M1, M2, M3]
+  preload: [M1, M2, M3, M4]
 
 runtime:
   # auto = cuda nếu torch thấy GPU, ngược lại cpu. Demo chạy 1 cặp/req nên
@@ -59,7 +59,7 @@ alignment:
   ignore_kinds: [com, str]
   # Khối khớp ngắn hơn ngưỡng này thì không tô màu (tránh rác highlight do
   # `;`, `)`, `{` trùng nhau rải rác).
-  min_block_tokens: 2
+  min_block_tokens: 3
   # Số màu để tô chuỗi các khối khớp (bảng màu tuần hoàn trong `web/css`).
   n_block_colors: 6
 
@@ -68,11 +68,12 @@ models:
     label: B1 · MOSS (winnowing)
     family: baseline
     kind: moss
-    # Baseline = MOSS, thay TF-IDF (EXP-001). Threshold/F1 đọc từ EXP-006; k/w
-    # giữ đúng mặc định MOSS (k=50, w=100) để con số khớp báo cáo.
-    results_dir: results/exp006_moss_poj104
-    k: 50
-    w: 100
+    # Baseline = MOSS EXP-013 (k=20, w=5) — đúng số báo cáo. Tham số gốc
+    # (k=50, w=100) đã chứng minh suy biến trên POJ-104 (F1 rơi về 0,667 =
+    # dự đoán toàn bộ dương), nên KHÔNG dùng ở đây.
+    results_dir: results/exp013_moss_poj104
+    k: 20
+    w: 5
 
   M1:
     label: M1 · CodeBERT
@@ -104,3 +105,16 @@ models:
     dropout: 0.2
     language: cpp
     checkpoint: results/exp004_astnn_poj104/best_checkpoint.pt
+
+  M4:
+    label: M4 · CPG-GNN
+    family: cpg
+    kind: cpg
+    results_dir: results/exp005_cpg_gnn_poj104
+    hidden_size: 128
+    num_layers: 3
+    heads: 4
+    dropout: 0.2
+    max_nodes: 1500
+    # best_checkpoint.pt nhẹ (~2,5MB: model + optimizer + scheduler).
+    checkpoint: results/exp005_cpg_gnn_poj104/best_checkpoint.pt

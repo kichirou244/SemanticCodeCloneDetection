@@ -16,9 +16,11 @@ về tọa độ để tô màu.
 nên không đáng kể; nếu sau này cho phép file lớn thì đây là chỗ phải đổi sang
 token-LCS theo hash bucket, không phải chỗ khác.
 
-Hai điều kiện lọc quyết định chất lượng hình ảnh:
+Hai điều kiện lọc quyết định chất lượng hình ảnh (áp dụng trong `align`):
 
-- `min_block_tokens` — khối chỉ gồm `;`/`)`/`{` rải rác thì bôi màu ra rác.
+- `min_block_tokens` — đếm trên token NỘI DUNG, không phải độ dài thô. Khối
+  chỉ gồm `;`/`)`/`{` (0 token thật) thì bôi màu ra rác dù dài bao nhiêu, còn
+  `int` lẻ 1 token thật vẫn là bằng chứng khi ngưỡng là 1.
 - `SKIP_KINDS` — comment và chuỗi literal loại khỏi so khớp (xem `lexer`).
 """
 
@@ -31,6 +33,12 @@ from src.demo.alignment.lexer import SKIP_KINDS, Token
 
 #: `(line, col, col_end)` — vị trí của một token trong danh sách phẳng.
 Pos = tuple[int, int, int]
+
+#: Kind không mang nội dung (dấu câu, khoảng trắng). Chúng không được tính vào
+#: ngưỡng `min_block_tokens`: khối `() { ; ; ; }` dài 12 token nhưng 0 token
+#: thật thì vẫn là rác trực quan, còn `int` lẻ 1 token thật vẫn là bằng chứng
+#: (xem test `test_min_block_tokens_removes_junk_blocks`).
+_JUNK_KINDS = frozenset({"op", "ws"})
 
 
 @dataclass(frozen=True)
@@ -104,10 +112,11 @@ def align(
     lines_a: list[list[Token]],
     lines_b: list[list[Token]],
     mode: str = "abstract",
-    min_block_tokens: int = 2,
+    min_block_tokens: int = 3,
 ) -> AlignmentResult:
     """Căn chỉnh hai phía theo `mode`, trả `AlignmentResult`."""
     keys_a, keys_b = _keys(lines_a, mode), _keys(lines_b, mode)
+    kinds_a, kinds_b = _kinds(lines_a), _kinds(lines_b)
     result = AlignmentResult(mode=mode, n_tokens_a=len(keys_a), n_tokens_b=len(keys_b))
     if not keys_a or not keys_b:
         return result
@@ -115,7 +124,12 @@ def align(
     pos_a, pos_b = _positions(lines_a), _positions(lines_b)
     matcher = difflib.SequenceMatcher(None, keys_a, keys_b, autojunk=False)
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        if tag != "equal" or (i2 - i1) < min_block_tokens:
+        if tag != "equal":
+            continue
+        # Ngưỡng đếm trên token NỘI DUNG (không phải độ dài thô): `() { ; ; ; }`
+        # dài 12 nhưng 0 token thật → rác; `int` lẻ 1 token thật → bằng chứng.
+        content = sum(1 for k in kinds_a[i1:i2] if k not in _JUNK_KINDS)
+        if content < min_block_tokens:
             continue
         result.blocks.append(
             MatchBlock(
@@ -141,6 +155,20 @@ def _keys(lines: list[list[Token]], mode: str) -> list[str]:
     """
     return [
         tok.key(mode)
+        for tokens in lines
+        for tok in tokens
+        if tok.kind not in SKIP_KINDS
+    ]
+
+
+def _kinds(lines: list[list[Token]]) -> list[str]:
+    """Kind của các token tham gia so khớp, đúng thứ tự với `_keys`.
+
+    Dùng để lọc khối rác (toàn dấu câu) — kind không phụ thuộc `mode` nên
+    không cần dàn lại theo chế độ.
+    """
+    return [
+        tok.kind
         for tokens in lines
         for tok in tokens
         if tok.kind not in SKIP_KINDS

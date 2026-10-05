@@ -14,6 +14,7 @@ from pathlib import Path
 from src.common.config import load_config
 from src.demo.scorers.astnn_scorer import AstnnScorer
 from src.demo.scorers.base import BaseScorer
+from src.demo.scorers.cpg_scorer import CpgScorer
 from src.demo.scorers.moss_scorer import MossScorer
 from src.demo.scorers.transformer_scorer import TransformerScorer
 from src.models.baseline.moss import DEFAULT_K, DEFAULT_W
@@ -25,6 +26,7 @@ _BUILDERS = {
     "moss": MossScorer,
     "transformer": TransformerScorer,
     "astnn": AstnnScorer,
+    "cpg": CpgScorer,
 }
 
 
@@ -104,6 +106,16 @@ def _build(spec: dict, model_id: str, root: Path, device: str) -> BaseScorer:
             checkpoint=_p(root, spec["checkpoint"]),
             hf_id=spec["hf_id"],
             max_length=int(spec.get("max_length", 256)),
+        )
+    if kind == "cpg":
+        return CpgScorer(
+            **common,
+            checkpoint=_p(root, spec["checkpoint"]),
+            hidden_size=int(spec.get("hidden_size", 128)),
+            num_layers=int(spec.get("num_layers", 3)),
+            heads=int(spec.get("heads", 4)),
+            dropout=float(spec.get("dropout", 0.2)),
+            max_nodes=int(spec.get("max_nodes", 1500)),
         )
     return AstnnScorer(
         **common,

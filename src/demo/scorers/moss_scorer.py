@@ -1,12 +1,12 @@
 """B1 — MOSS (winnowing fingerprinting) làm baseline.
 
-Thay TF-IDF: cùng thuật toán fingerprinting của MOSS (Sleator & Bernstein 2003),
+Cùng thuật toán fingerprinting của MOSS (Sleator & Bernstein 2003),
 triển khai local tại `src/models/baseline/moss.py`, dùng chung cho cả nghiên cứu
-(EXP-006) lẫn demo scan — nên con số trên UI đồng nhất với F1 trong báo cáo.
+(EXP-013: k=20, w=5) lẫn demo — nên con số trên UI đồng nhất với F1 trong báo cáo.
 
 Khác các scorer neural, MOSS không cần nạp model: `_load` là no-op, `score` trả
-ngay. Threshold vẫn đọc từ `threshold.json` (EXP-006 chọn trên validation). Chỉ
-khi chưa chạy EXP-006 thì verdict về `unknown`, không tự bịa ngưỡng.
+ngay. Threshold vẫn đọc từ `threshold.json` (EXP-013 chọn trên validation). Chỉ
+khi chưa chạy EXP-013 thì verdict về `unknown`, không tự bịa ngưỡng.
 """
 
 from __future__ import annotations

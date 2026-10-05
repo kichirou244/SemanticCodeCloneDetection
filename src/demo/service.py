@@ -88,7 +88,7 @@ class DemoService:
         code_b: str,
         model_ids: list[str] | None = None,
         mode: str = "abstract",
-        min_block_tokens: int = 2,
+        min_block_tokens: int = 3,
     ) -> dict:
         """Trả về `{alignment, models, meta}` cho một cặp code."""
         self._validate(code_a, "code_a")

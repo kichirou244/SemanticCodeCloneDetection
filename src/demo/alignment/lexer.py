@@ -107,10 +107,13 @@ def classify(text: str) -> str:
         return "num"
     if text[0].isalpha() or text[0] == "_":
         low = text.lower()
-        if low in _KEYWORDS:
-            return "kw"
+        # Thứ tự QUAN TRỌNG: kiểu nguyên thủy nằm trong cả hai danh sách
+        # (`int` vừa là keyword C++ vừa là primitive) — kiểm primitives trước
+        # để tô màu kiểu đúng, nếu không mọi kiểu đều thành "kw".
         if low in _PRIMITIVES:
             return "type"
+        if low in _KEYWORDS:
+            return "kw"
         return "id"
     return "op"
 
@@ -126,7 +129,8 @@ def lex_line(line_text: str, line: int, in_block: bool) -> tuple[list[Token], bo
         if close == -1:
             return [Token(line_text, "com", line, 0)], True
         tokens = [Token(line_text[: close + 2], "com", line, 0)]
-        tokens.extend(_lex_with_blocks(line_text[close + 2 :], line, close + 2))
+        rest, _ = _lex_with_blocks(line_text[close + 2 :], line, close + 2)
+        tokens.extend(rest)
         return tokens, False
     if _PREPROCESSOR_RE.match(line_text):
         return [Token(line_text, "pp", line, 0)], False
