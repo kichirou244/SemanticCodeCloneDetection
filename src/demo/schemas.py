@@ -19,3 +19,14 @@ class AnalyzeRequest(BaseModel):
 
 class PreloadRequest(BaseModel):
     models: list[str] = Field(description="danh sách model_id cần nạp trước")
+
+
+class ScanRequest(BaseModel):
+    upload_id: str = Field(min_length=1, description="id từ POST /api/uploads")
+    models: list[str] | None = Field(
+        default=None, description="rỗng = chấm tất cả model trong registry"
+    )
+    threshold: float | None = Field(
+        default=None, ge=0.0, le=1.0,
+        description="None = dùng ngưỡng đóng băng từng model; cho số = áp chung",
+    )

@@ -14,13 +14,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from src.demo.registry import DEFAULT_CONFIG, ModelRegistry
 from src.demo.samples import BUILTIN_SAMPLES, sample_to_dict
-from src.demo.schemas import AnalyzeRequest, PreloadRequest
+from src.demo.schemas import AnalyzeRequest, PreloadRequest, ScanRequest
 from src.demo.service import DemoService, InputTooLarge
 
 WEB_DIR = Path(__file__).parent / "web"
@@ -71,6 +71,22 @@ def create_app(service: DemoService | None = None, config_path: Path | str = DEF
     @app.post("/api/preload")
     def api_preload(req: PreloadRequest) -> dict:
         return svc.registry.preload(req.models)
+
+    @app.post("/api/uploads")
+    async def api_upload(file: UploadFile = File(...)) -> dict:
+        try:
+            return svc.upload_zip(await file.read(), file.filename or "upload.zip")
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+
+    @app.post("/api/scan")
+    def api_scan(req: ScanRequest) -> dict:
+        try:
+            return svc.scan_upload(req.upload_id, req.models, req.threshold)
+        except KeyError as exc:
+            raise HTTPException(404, str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
 
     @app.get("/api/library")
     def api_library() -> dict:

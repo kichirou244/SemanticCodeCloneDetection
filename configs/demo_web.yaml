@@ -50,6 +50,16 @@ data:
   # Ngưỡng mặc định cho thanh trượt % trên UI (0..1).
   library_default_threshold: 0.5
 
+scan:
+  # Quét file .zip upload bằng CẢ 5 model (khác library scan chỉ dùng MOSS).
+  # 20 file = 190 cặp; M1 ~1s/cặp trên CPU nên hơn nữa là chờ quá lâu cho demo.
+  max_files: 20
+  # Tổng bytes sau giải nén — chống zip bomb.
+  max_bytes: 10485760
+  # File dài hơn thì BỎ QUA (ghi vào skipped), không cắt ngầm — cắt sẽ ra điểm
+  # không còn là của file gốc.
+  max_file_chars: 20000
+
 alignment:
   # Đơn vị so khớp: token (không phải dòng) — đoạn khớp nằm giữa dòng vẫn
   # bắt được, và đây cũng là thứ ta muốn nhìn thấy.

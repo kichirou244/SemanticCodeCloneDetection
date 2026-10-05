@@ -15,7 +15,6 @@ trạng thái lỗi chứ không kéo sập request.
 from __future__ import annotations
 
 import tempfile
-import time
 from pathlib import Path
 
 from scripts.build_cpg_export import (
@@ -26,9 +25,6 @@ from scripts.build_cpg_export import (
 )
 from src.demo.scorers.base import BaseScorer, resolve_device
 from src.representations.cpg.ingest import parse_cpg_file
-
-#: Joern cho 2 hàm nhỏ xong trong ~1 phút; quá số này là treo chứ không phải chậm.
-JOERN_TIMEOUT_S = 300
 
 
 class CpgScorer(BaseScorer):
@@ -92,42 +88,64 @@ class CpgScorer(BaseScorer):
         self._joern_cmd = joern_cmd
 
     def _infer(self, code_a: str, code_b: str) -> tuple[float, dict]:
-        assert self._model is not None and self._device is not None
+        out = self.score_all_pairs([("a", code_a), ("b", code_b)])
+        score, detail = out[("a", "b")]
+        if score is None:
+            raise RuntimeError(detail.get("error") or "Joern không ra đồ thị")
+        return score, detail
+
+    def score_all_pairs(
+        self, items: list[tuple[str, str]]
+    ) -> dict[tuple[str, str], tuple[float | None, dict]]:
+        """Chấm all-pairs với MỘT lần chạy Joern: dựng CPG mỗi file một lần rồi
+        ghép cặp từ đồ thị đã có. Gọi `_infer` từng cặp ở đây sẽ là N² lần khởi
+        động JVM (mỗi lần hàng chục giây)."""
         import torch
 
         from src.models.cpg_gnn.model import to_device
         from src.representations.cpg.graph import collate_pyg
+        from src.representations.cpg.ingest import parse_cpg_file
 
+        names = [name for name, _ in items]
+        keys = [(a, b) for i, a in enumerate(names) for b in names[i + 1 :]]
+        if not self.ensure_loaded():
+            err = self._error or "load failed"
+            return {k: (None, {"error": err}) for k in keys}
+        assert self._model is not None and self._device is not None
         samples = [
-            {"code": code_a, "sample_id": "demo_a"},
-            {"code": code_b, "sample_id": "demo_b"},
+            {"code": code, "sample_id": f"scan_{i}"}
+            for i, (_, code) in enumerate(items)
         ]
-        t0 = time.perf_counter()
-        with tempfile.TemporaryDirectory(prefix="cpg_demo_") as tmp:
+        with tempfile.TemporaryDirectory(prefix="cpg_scan_") as tmp:
             work = Path(tmp)
             batch_dir = work / "batch"
             out_dir = work / "out"
             out_dir.mkdir(parents=True, exist_ok=True)
             write_batch(samples, batch_dir)
+            timeout_s = max(300, 15 * len(items))
             n_ok, _ = run_batch(samples, out_dir, work, self._joern_cmd,
-                                batch_dir, JOERN_TIMEOUT_S)
-            if n_ok < 2:
-                raise RuntimeError(
-                    "Joern không ra JSON cho cả 2 phía — xem log server "
-                    "(thường là lỗi compile Scala hoặc thiếu Java)")
-            graphs = []
-            for sid in ("demo_a", "demo_b"):
-                g, _ = parse_cpg_file(out_dir / f"{sid}.json", self.max_nodes)
-                graphs.append(g)
-        joern_ms = round((time.perf_counter() - t0) * 1000, 1)
-        batch_a = to_device(collate_pyg([graphs[0]]), self._device)
-        batch_b = to_device(collate_pyg([graphs[1]]), self._device)
+                                batch_dir, timeout_s)
+            graphs: dict[str, object] = {}
+            for (name, _), s in zip(items, samples):
+                path = out_dir / f"{s['sample_id']}.json"
+                if not path.exists():
+                    graphs[name] = None
+                    continue
+                g, _ = parse_cpg_file(path, self.max_nodes)
+                graphs[name] = g
+        results: dict[tuple[str, str], tuple[float | None, dict]] = {}
         with torch.no_grad():
-            logit = self._model(batch_a, batch_b)
-            prob = torch.sigmoid(logit).item()
-        return prob, {
-            "n_nodes_a": int(graphs[0].n_nodes),
-            "n_nodes_b": int(graphs[1].n_nodes),
-            "joern_ms": joern_ms,
-            "device": str(self._device),
-        }
+            for a, b in keys:
+                ga, gb = graphs[a], graphs[b]
+                if ga is None or gb is None:
+                    results[(a, b)] = (None, {"error": "Joern không ra JSON"})
+                    continue
+                ba = to_device(collate_pyg([ga]), self._device)
+                bb = to_device(collate_pyg([gb]), self._device)
+                prob = torch.sigmoid(self._model(ba, bb)).item()
+                results[(a, b)] = (float(prob), {
+                    "n_nodes_a": int(ga.n_nodes),
+                    "n_nodes_b": int(gb.n_nodes),
+                    "device": str(self._device),
+                })
+        return results

@@ -90,6 +90,34 @@
       </div>
     </section>
 
+    <section class="cover" id="zip-panel" aria-label="Quét file zip bằng mọi model">
+      <div class="scan-panel">
+        <div class="scan-toolbar">
+          <h2 class="scan-toolbar__title">Quét file .zip (5 models)</h2>
+          <div class="scan-toolbar__controls">
+            <label class="btn btn-file">Chọn .zip<input type="file" id="zip-file" accept=".zip" hidden></label>
+            <button type="button" class="btn" id="btn-upload">Tải lên</button>
+          </div>
+        </div>
+        <div class="zip-models" id="zip-models"></div>
+        <div class="scan-toolbar__controls">
+          <label class="scan-threshold">
+            <span>Ngưỡng</span>
+            <b id="zip-threshold-value">50%</b>
+            <input type="range" id="zip-threshold" min="0" max="100" step="1" value="50"
+                   aria-label="Ngưỡng điểm để giữ cặp">
+          </label>
+          <label class="zip-frozen">
+            <input type="checkbox" id="zip-frozen" checked>
+            Ngưỡng từng model (đúng báo cáo)
+          </label>
+          <button type="button" class="btn btn--primary" id="btn-zip-scan">Quét tất cả cặp</button>
+        </div>
+        <div class="scan-results" id="zip-results"></div>
+        <p class="scan-meta" id="zip-note"></p>
+      </div>
+    </section>
+
     <section class="panel panel--flush">
       <div class="alignment-bar">
         <div class="alignment-bar__stats" id="alignment-stats"></div>

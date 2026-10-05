@@ -48,3 +48,16 @@ export const scanLibrary = (threshold) =>
   request(`/api/library/scan?threshold=${encodeURIComponent(threshold)}`, {
     method: 'POST',
   });
+
+export const uploadZip = (file) => {
+  const form = new FormData();
+  form.append('file', file, file.name);
+  return request('/api/uploads', { method: 'POST', body: form });
+};
+
+export const scanUpload = (payload) =>
+  request('/api/scan', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });

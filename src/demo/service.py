@@ -11,7 +11,10 @@ ra con số lệch với báo cáo:
 
 from __future__ import annotations
 
+import io
 import time
+import uuid
+import zipfile
 from pathlib import Path
 
 from src.demo.alignment.aligner import align
@@ -60,6 +63,11 @@ class DemoService:
         self._library_max_files = int(data_cfg.get("library_max_files", 300))
         self._library_max_chars = int(data_cfg.get("library_max_chars", 20000))
         self._library_default_threshold = float(data_cfg.get("library_default_threshold", 0.5))
+        scan_cfg = self.registry.config.get("scan", {})
+        self._scan_max_files = int(scan_cfg.get("max_files", 20))
+        self._scan_max_bytes = int(scan_cfg.get("max_bytes", 10485760))
+        self._scan_max_file_chars = int(scan_cfg.get("max_file_chars", 20000))
+        self._upload_root = self.registry.root / "artifacts" / "scan_uploads"
 
     def _maybe_code_index(self) -> CodeIndex | None:
         """Chỉ tạo `CodeIndex` khi `samples.jsonl` thật sự tồn tại.
@@ -232,8 +240,8 @@ class DemoService:
         moss_cfg = self.registry.config.get("models", {}).get(
             "B1", {}
         )
-        k = int(moss_cfg.get("k", 50))
-        w = int(moss_cfg.get("w", 100))
+        k = int(moss_cfg.get("k", 20))
+        w = int(moss_cfg.get("w", 5))
 
         from src.models.baseline.moss import FingerprintDoc, scan_pairwise
 
@@ -256,6 +264,153 @@ class DemoService:
             "w": w,
             "duration_ms": duration_ms,
             "pairs": pairs,
+        }
+
+    # ------------------------------------------------------- quét zip upload
+    def upload_zip(self, data: bytes, filename: str) -> dict:
+        """Nhận file .zip, bung các file code ra thư mục tạm, trả `upload_id`.
+
+        Không tin tên file trong zip (chống `../../etc`): chỉ giữ basename,
+        trùng tên thì thêm hậu tố. File không phải code / quá dài / lỗi decode
+        thì BỎ QUA có ghi nhận (không fail cả upload). Quá giới hạn số file
+        hoặc tổng bytes thì fail rõ ràng.
+        """
+        try:
+            zf = zipfile.ZipFile(io.BytesIO(data))
+        except zipfile.BadZipFile as exc:
+            raise ValueError(f"{filename} không phải file .zip hợp lệ") from exc
+        entries: dict[str, str] = {}
+        skipped: dict[str, int] = {"non_code": 0, "too_long": 0, "undecodable": 0,
+                                   "dirs": 0}
+        total_bytes = 0
+        with zf:
+            for info in zf.infolist():
+                if info.is_dir():
+                    skipped["dirs"] += 1
+                    continue
+                name = Path(info.filename).name
+                if Path(name).suffix.lower() not in _LIBRARY_EXTS:
+                    skipped["non_code"] += 1
+                    continue
+                try:
+                    code = zf.read(info.filename).decode("utf-8")
+                except (UnicodeDecodeError, RuntimeError):
+                    skipped["undecodable"] += 1
+                    continue
+                total_bytes += len(code)
+                if len(code) > self._scan_max_file_chars:
+                    skipped["too_long"] += 1
+                    continue
+                if total_bytes > self._scan_max_bytes:
+                    raise ValueError(
+                        f"tổng dung lượng vượt {self._scan_max_bytes:,} bytes "
+                        "— chia nhỏ zip rồi thử lại")
+                base, i = name, 2
+                while base in entries:
+                    stem = Path(name).stem
+                    base = f"{stem}_{i}{Path(name).suffix}"
+                    i += 1
+                entries[base] = code
+        if len(entries) > self._scan_max_files:
+            raise ValueError(
+                f"{len(entries)} file, vượt giới hạn {self._scan_max_files} "
+                "file/lần quét — tách zip nhỏ hơn rồi thử lại")
+        if not entries:
+            raise ValueError("zip không chứa file code nào "
+                             f"(nhận: {sorted(_LIBRARY_EXTS)})")
+        upload_id = uuid.uuid4().hex[:12]
+        dest = self._upload_root / upload_id
+        dest.mkdir(parents=True, exist_ok=True)
+        for name, code in entries.items():
+            (dest / name).write_text(code, encoding="utf-8")
+        return {
+            "upload_id": upload_id,
+            "files": [{"name": n, "chars": len(c), "code": c}
+                      for n, c in entries.items()],
+            "skipped": skipped,
+            "limits": {"max_files": self._scan_max_files,
+                       "max_bytes": self._scan_max_bytes,
+                       "max_file_chars": self._scan_max_file_chars},
+        }
+
+    def scan_upload(
+        self,
+        upload_id: str,
+        model_ids: list[str] | None = None,
+        threshold: float | None = None,
+    ) -> dict:
+        """Chấm all-pairs các file đã upload bằng model được chọn.
+
+        `threshold=None` ⇒ dùng ngưỡng đóng băng từng model (đúng protocol báo
+        cáo); cho số ⇒ áp chung cho mọi model. Cặp được giữ nếu CÓ ÍT NHẤT một
+        model đạt ngưỡng, xếp giảm dần theo điểm cao nhất.
+        """
+        from src.demo.scorers.base import read_threshold
+
+        if threshold is not None:
+            threshold = max(0.0, min(1.0, float(threshold)))
+        upload_dir = self._upload_root / upload_id
+        if not upload_dir.is_dir():
+            raise KeyError(f"không có upload {upload_id!r} — upload lại file .zip")
+        files = {p.name: p.read_text(encoding="utf-8")
+                 for p in sorted(upload_dir.glob("*")) if p.is_file()}
+        scorers = self.registry.selected(model_ids)
+        t0 = time.perf_counter()
+        thr_of = {
+            s.model_id: (threshold if threshold is not None
+                         else read_threshold(s.results_dir))
+            for s in scorers
+        }
+        names = sorted(files)
+        pair_keys = [(a, b) for i, a in enumerate(names) for b in names[i + 1 :]]
+        raw: dict[str, dict[tuple[str, str], tuple[float | None, dict]]] = {}
+        from src.demo.scorers.cpg_scorer import CpgScorer
+
+        for s in scorers:
+            if isinstance(s, CpgScorer) and pair_keys:
+                raw[s.model_id] = s.score_all_pairs([(n, files[n]) for n in names])
+            else:
+                per = {}
+                for a, b in pair_keys:
+                    try:
+                        r = s.score(files[a], files[b])
+                        per[(a, b)] = (r.score, {})
+                    except Exception as exc:  # noqa: BLE001 — model lỗi thì ô đó lỗi
+                        per[(a, b)] = (None, {"error": f"{type(exc).__name__}: {exc}"[:200]})
+                raw[s.model_id] = per
+        pairs = []
+        for a, b in pair_keys:
+            cells = {}
+            best: float | None = None
+            for s in scorers:
+                score, detail = raw[s.model_id][(a, b)]
+                thr = thr_of[s.model_id]
+                verdict = ("unknown" if (score is None or thr is None)
+                           else ("clone" if score >= thr else "not_clone"))
+                cells[s.model_id] = {
+                    "score": None if score is None else round(float(score), 6),
+                    "verdict": verdict,
+                    "threshold": thr,
+                    "error": detail.get("error"),
+                }
+                if score is not None and (best is None or score > best):
+                    best = score
+            keep = any(
+                cells[s.model_id]["verdict"] == "clone" for s in scorers
+            )
+            if keep:
+                pairs.append({"a": a, "b": b, "scores": cells,
+                              "max_score": round(float(best), 6)})
+        pairs.sort(key=lambda r: r["max_score"], reverse=True)
+        return {
+            "upload_id": upload_id,
+            "n_files": len(files),
+            "models": [s.model_id for s in scorers],
+            "threshold_applied": thr_of,
+            "n_pairs": len(pair_keys),
+            "n_kept": len(pairs),
+            "pairs": pairs,
+            "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
         }
 
     # ------------------------------------------------------------------ kiểm tra

@@ -10,13 +10,14 @@
  */
 
 import { $, el } from './utils/dom.js';
-import { getStatus, getSamples, getRealPairs, getRealSample, analyze, getLibrary, getLibraryFile, scanLibrary } from './api/demoApi.js';
+import { getStatus, getSamples, getRealPairs, getRealSample, analyze, getLibrary, getLibraryFile, scanLibrary, uploadZip, scanUpload } from './api/demoApi.js';
 import { createStore } from './state/store.js';
 import { renderScoreStrip } from './components/scoreStrip.js';
 import { renderDiff } from './components/diffPane.js';
 import { mountSampleRail, mountRealRail } from './components/sampleRail.js';
 import { mountAlignmentBar } from './components/alignmentBar.js';
 import { bindScanControls, renderScan, setOnPickPair } from './components/scanPanel.js';
+import { bindZipUpload, bindZipScan, readZipSelection, renderZipFiles, renderZipModels, renderZipResults, renderZipState } from './components/zipScan.js';
 
 const state = createStore({
   status: null,
@@ -52,6 +53,15 @@ const refs = {
   scanSlider: $('#scan-threshold'),
   scanThresholdValue: $('#scan-threshold-value'),
   btnScan: $('#btn-scan'),
+  zipFile: $('#zip-file'),
+  btnUpload: $('#btn-upload'),
+  zipModels: $('#zip-models'),
+  zipThreshold: $('#zip-threshold'),
+  zipThresholdValue: $('#zip-threshold-value'),
+  zipFrozen: $('#zip-frozen'),
+  btnZipScan: $('#btn-zip-scan'),
+  zipResults: $('#zip-results'),
+  zipNote: $('#zip-note'),
 };
 
 function setToast(message, kind = 'info') {
@@ -191,6 +201,73 @@ async function pickRealPair(pair) {
   }
 }
 
+/* ------------------------------------------------- quét zip đa model */
+
+const zipState = { uploadId: null, filesByName: {} };
+
+async function onZipUpload(file) {
+  renderZipState(refs.zipResults, null, 'Đang tải zip lên…');
+  try {
+    const up = await uploadZip(file);
+    zipState.uploadId = up.upload_id;
+    zipState.filesByName = Object.fromEntries(up.files.map((f) => [f.name, f.code]));
+    renderZipFiles(refs.zipNote, up.files, up.skipped);
+    renderZipState(refs.zipResults, null,
+      `Đã nạp ${up.files.length} file — chọn models rồi bấm Quét tất cả cặp.`);
+  } catch (error) {
+    renderZipState(refs.zipResults, 'error', error.message);
+  }
+}
+
+async function onZipScan() {
+  if (!zipState.uploadId) {
+    renderZipState(refs.zipResults, 'error', 'Chưa tải file .zip lên.');
+    return;
+  }
+  const sel = readZipSelection({
+    modelsEl: refs.zipModels, sliderEl: refs.zipThreshold, frozenEl: refs.zipFrozen,
+  });
+  if (!sel.models.length) {
+    renderZipState(refs.zipResults, 'error', 'Chọn ít nhất 1 model để chấm.');
+    return;
+  }
+  renderZipState(refs.zipResults, null,
+    'Đang chấm tất cả các cặp (M1 chậm nhất, vài phút với ~200 cặp)…');
+  try {
+    const results = await scanUpload({
+      upload_id: zipState.uploadId, models: sel.models, threshold: sel.threshold,
+    });
+    state.set({ zipScan: results });
+    renderZipResults(refs.zipResults, results, sel.models, pickZipPair);
+  } catch (error) {
+    renderZipState(refs.zipResults, 'error', error.message);
+  }
+}
+
+async function pickZipPair(pair) {
+  const a = zipState.filesByName[pair.a];
+  const b = zipState.filesByName[pair.b];
+  if (a === undefined || b === undefined) {
+    setToast('Không còn nội dung file trong trang — tải zip lại.', 'error');
+    return;
+  }
+  refs.inputA.value = a;
+  refs.inputB.value = b;
+  setToast(`Đã nạp cặp ${pair.a} ↔ ${pair.b} — bắt đầu chấm điểm.`);
+  await runAnalyze();
+}
+
+function initZipScan() {
+  const statuses = state.get().status?.models ?? [];
+  renderZipModels(refs.zipModels, statuses);
+  bindZipUpload({ inputEl: refs.zipFile, btnEl: refs.btnUpload, onUpload: onZipUpload });
+  bindZipScan({
+    btnEl: refs.btnZipScan, sliderEl: refs.zipThreshold,
+    valueEl: refs.zipThresholdValue, frozenEl: refs.zipFrozen, onScan: onZipScan,
+  });
+  renderZipState(refs.zipResults, null, 'Chọn file .zip rồi Tải lên trước.');
+}
+
 /* ---------------------------------------------------------------- quét database */
 
 function renderScanNote(lib) {
@@ -306,6 +383,7 @@ async function init() {
   }
 
   initLibrary(); // nóng — không chặn UI, lỗi tự báo toast trong hàm
+  initZipScan();
   renderScores();
 }
 
