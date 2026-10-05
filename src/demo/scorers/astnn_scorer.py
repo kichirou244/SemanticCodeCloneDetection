@@ -69,6 +69,38 @@ class AstnnScorer(BaseScorer):
         self._parser = get_parser(self.language)
         self._device = device
 
+    def score_batch(
+        self, items: list[tuple[str, str]]
+    ) -> list[tuple[float | None, dict]]:
+        """Parse từng cặp (rẻ, ~ms) rồi forward GỘP 2 phía một lần — đúng cách
+        `run_batches` của runner làm. Giữ thứ tự để tách logit theo cặp."""
+        if not self.ensure_loaded():
+            return [(None, {"error": self._error}) for _ in items]
+        assert self._model is not None and self._parser is not None
+        assert self._device is not None
+        trees_a, trees_b, capped = [], [], False
+        for code_a, code_b in items:
+            ta = compile_tree(
+                extract_tree(_cap(code_a, self.max_code_chars), self._parser, self.language))
+            tb = compile_tree(
+                extract_tree(_cap(code_b, self.max_code_chars), self._parser, self.language))
+            trees_a.append(ta)
+            trees_b.append(tb)
+            capped = capped or (len(code_a) >= self.max_code_chars
+                                or len(code_b) >= self.max_code_chars)
+        batch_a = to_device(collate_trees(trees_a), self._device)
+        batch_b = to_device(collate_trees(trees_b), self._device)
+        with torch.no_grad():
+            logits = self._model(batch_a, batch_b)
+            probs = torch.sigmoid(logits).cpu().tolist()
+        return [(float(p), {
+            "n_stmt_a": int(trees_a[i]["n_stmt"]),
+            "n_stmt_b": int(trees_b[i]["n_stmt"]),
+            "capped": capped,
+            "device": str(self._device),
+            "batched": True,
+        }) for i, p in enumerate(probs)]
+
     def _infer(self, code_a: str, code_b: str) -> tuple[float, dict]:
         assert self._model is not None and self._parser is not None
         assert self._device is not None

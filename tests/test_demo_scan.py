@@ -37,6 +37,9 @@ class StubScorer:
         s = self._table.get((a, b), self._table.get((b, a), 0.0))
         return ScoreResult(ok=True, score=s, threshold=None, verdict="unknown")
 
+    def score_batch(self, items):
+        return [(self.score(a, b).score, {}) for a, b in items]
+
 
 class StubRegistry:
     def __init__(self, config, scorers):
@@ -258,3 +261,26 @@ def test_api_scan_override_threshold(tmp_path):
         "upload_id": uid, "threshold": 0.4}))
     assert r40["n_kept"] == 1
     assert r40["threshold_applied"] == {"M1": 0.4, "M2": 0.4}
+
+
+@pytest.mark.parametrize("mid", ["M1", "M2", "M3"])
+def test_batched_matches_per_pair(tmp_path, mid):
+    """Forward gop phai cho cung so voi tung cap (padding mask che phan dem).
+    Can checkpoint that (1.5GB) — thieu thi skip."""
+    pytest.importorskip("transformers")
+    from src.demo.registry import ModelRegistry
+
+    root = Path(__file__).resolve().parents[1]
+    reg = ModelRegistry.from_yaml(root / "configs" / "demo_web.yaml", root=root)
+    scorer = reg.get(mid)
+    if not scorer.checkpoint.exists():
+        pytest.skip("thieu checkpoint %s" % mid)
+    pairs = [(A, B), (A, C), (B, C), (C, A)]
+    per = [scorer.score_raw(a, b) for a, b in pairs]
+    batched = scorer.score_batch(pairs)
+    assert len(batched) == len(pairs)
+    # Chống tương đương rỗng: model phải nạp được thật (không skip lặng).
+    assert all(s is not None for s, _ in per), "model chua load?"
+    assert all(s is not None for s, _ in batched), "batch chua chay?"
+    for (s1, _), (s2, _) in zip(per, batched):
+        assert abs(s1 - s2) < 1e-5, (s1, s2)

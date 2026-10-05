@@ -231,7 +231,7 @@ def run_probe(joern_cmd: str, work_dir: Path, timeout_s: int) -> str:
     return proc.stdout + ("\n--- stderr ---\n" + proc.stderr if proc.stderr else "")
 
 
-def run_batch(samples: list[dict], out_dir: Path, work_dir: Path, joern_cmd: str,
+def run_batch(samples: list[dict], out_dir: Path, work_dir: Path, joern_cmd: str | list[str],
               batch_dir: Path, timeout_s: int) -> tuple[int, int]:
     """Một lần khởi động Joern cho cả lô. Trả về (số OK, số lỗi)."""
     index = write_batch(samples, batch_dir)

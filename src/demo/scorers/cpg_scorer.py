@@ -40,7 +40,10 @@ class CpgScorer(BaseScorer):
         dropout: float = 0.2,
         max_nodes: int = 1500,
         device: str = "auto",
+        jvm_xmx: str = "2g",
     ):
+        """`jvm_xmx` giới hạn heap JVM khi dựng CPG demo (mặc định 2g là thừa
+        cho vài file nhỏ; Joern mặc định đòi ~8g và OOM trên máy RAM chật)."""
         super().__init__(model_id, label, results_dir, device)
         self.checkpoint = checkpoint
         self.hidden_size = hidden_size
@@ -48,9 +51,10 @@ class CpgScorer(BaseScorer):
         self.heads = heads
         self.dropout = dropout
         self.max_nodes = max_nodes
+        self.jvm_xmx = jvm_xmx
         self._model = None
         self._device = None
-        self._joern_cmd = ""
+        self._joern_cmd: str | list[str] = ""
 
     def checkpoint_hint(self) -> str:
         return f"{self.checkpoint.name} · gat{self.num_layers}x{self.heads}"
@@ -85,7 +89,9 @@ class CpgScorer(BaseScorer):
         model.to(device).eval()
         self._model = model
         self._device = device
-        self._joern_cmd = joern_cmd
+        # JVM flag đi KÈM binary (dạng list): `-J*` được joern.bat forward
+        # thẳng tới JVM. Không nhét vào chuỗi lệnh (shlex sẽ cắt sai).
+        self._joern_cmd = [joern_cmd, f"-J-Xmx{self.jvm_xmx}"]
 
     def _infer(self, code_a: str, code_b: str) -> tuple[float, dict]:
         out = self.score_all_pairs([("a", code_a), ("b", code_b)])

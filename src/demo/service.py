@@ -24,6 +24,10 @@ from src.demo.samples import CodeIndex
 
 VALID_MODES = ("literal", "abstract")
 
+#: Số cặp mỗi chunk khi quét: đủ lớn để scorer nặng forward gộp hiệu quả,
+#: đủ nhỏ để tiến độ báo đều (1900 cặp → ~240 lần cập nhật).
+SCAN_CHUNK_PAIRS = 8
+
 #: Loại file được quét trong chế độ "database". Không nhận .txt — tránh nhiễu.
 _LIBRARY_EXTS = frozenset({
     ".c", ".h", ".cpp", ".cc", ".cxx", ".hpp", ".hh", ".hxx", ".cu", ".ino",
@@ -354,49 +358,56 @@ class DemoService:
         names = sorted(files)
         pair_keys = [(a, b) for i, a in enumerate(names) for b in names[i + 1 :]]
         total = len(pair_keys)
-        step = max(1, total // 200)
         from src.demo.scorers.cpg_scorer import CpgScorer
 
+        # M4 batch trước: 1 lần Joern cho mọi file (không phải N² lần JVM).
         raw: dict[str, dict[tuple[str, str], tuple[float | None, dict]]] = {}
         for s in scorers:
+            raw[s.model_id] = {}
             if isinstance(s, CpgScorer) and pair_keys:
                 raw[s.model_id] = s.score_all_pairs([(n, files[n]) for n in names])
-            else:
-                raw[s.model_id] = {}
         pairs = []
+        done = 0
         try:
-            for idx, (a, b) in enumerate(pair_keys, 1):
-                cells = {}
-                best: float | None = None
+            # Chunk-outer: mỗi chunk chấm xong cho MỌI model rồi mới dựng hàng,
+            # nên tiến độ rơi đúng vào phase chấm chậm (M1), không phải lúc cuối.
+            for ci in range(0, len(pair_keys), SCAN_CHUNK_PAIRS):
+                chunk = pair_keys[ci : ci + SCAN_CHUNK_PAIRS]
                 for s in scorers:
-                    if (a, b) not in raw[s.model_id]:
-                        try:
-                            r = s.score(files[a], files[b])
-                            raw[s.model_id][(a, b)] = (r.score, {})
-                        except Exception as exc:  # noqa: BLE001 — model lỗi thì ô đó lỗi
-                            raw[s.model_id][(a, b)] = (
-                                None, {"error": f"{type(exc).__name__}: {exc}"[:200]})
-                    score, detail = raw[s.model_id][(a, b)]
-                    thr = thr_of[s.model_id]
-                    verdict = ("unknown" if (score is None or thr is None)
-                               else ("clone" if score >= thr else "not_clone"))
-                    cells[s.model_id] = {
-                        "score": None if score is None else round(float(score), 6),
-                        "verdict": verdict,
-                        "threshold": thr,
-                        "error": detail.get("error"),
-                    }
-                    if score is not None and (best is None or score > best):
-                        best = score
-                keep = any(
-                    cells[s.model_id]["verdict"] == "clone" for s in scorers
-                )
-                if keep:
-                    pairs.append({"a": a, "b": b, "scores": cells,
-                                  "max_score": round(float(best), 6)})
-                if idx % step == 0 or idx == total:
-                    yield ("progress", {"done": idx, "total": total,
-                                        "kept": len(pairs)})
+                    if isinstance(s, CpgScorer):
+                        continue  # đã batch đủ ở trên
+                    try:
+                        got = s.score_batch([(files[a], files[b]) for a, b in chunk])
+                    except Exception as exc:  # noqa: BLE001 — hỏng cả chunk thì ô đó lỗi
+                        got = [(None, {"error": f"{type(exc).__name__}: {exc}"[:200]})
+                               for _ in chunk]
+                    for (a, b), (score, detail) in zip(chunk, got):
+                        raw[s.model_id][(a, b)] = (score, detail)
+                for a, b in chunk:
+                    cells = {}
+                    best: float | None = None
+                    for s in scorers:
+                        score, detail = raw[s.model_id][(a, b)]
+                        thr = thr_of[s.model_id]
+                        verdict = ("unknown" if (score is None or thr is None)
+                                   else ("clone" if score >= thr else "not_clone"))
+                        cells[s.model_id] = {
+                            "score": None if score is None else round(float(score), 6),
+                            "verdict": verdict,
+                            "threshold": thr,
+                            "error": detail.get("error"),
+                        }
+                        if score is not None and (best is None or score > best):
+                            best = score
+                    keep = any(
+                        cells[s.model_id]["verdict"] == "clone" for s in scorers
+                    )
+                    if keep:
+                        pairs.append({"a": a, "b": b, "scores": cells,
+                                      "max_score": round(float(best), 6)})
+                done += len(chunk)
+                yield ("progress", {"done": done, "total": total,
+                                    "kept": len(pairs)})
         except Exception as exc:  # noqa: BLE001 — stream đang mở, chỉ còn cách event lỗi
             yield ("error", {"message": f"{type(exc).__name__}: {exc}"[:300]})
             return

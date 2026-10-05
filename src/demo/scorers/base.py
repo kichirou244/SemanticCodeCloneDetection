@@ -157,6 +157,23 @@ class BaseScorer(ABC):
         self._state = ScorerState.READY
         return True
 
+    def score_raw(self, code_a: str, code_b: str) -> tuple[float | None, dict]:
+        """Điểm thô + chi tiết, KHÔNG verdict (service tự tính theo ngưỡng áp
+        dụng — ngưỡng frozen hay override ngoài). Lỗi nạp/infer → None + lý do
+        trong detail, không ném."""
+        r = self.score(code_a, code_b)
+        if not r.ok:
+            return None, {"error": r.error}
+        return r.score, r.detail
+
+    def score_batch(
+        self, items: list[tuple[str, str]]
+    ) -> list[tuple[float | None, dict]]:
+        """Chấm nhiều cặp một lần. Mặc định: vòng per-pair (giữ hành vi cũ).
+        Scorer nặng (transformer) override để forward gộp — service chia chunk
+        rồi gọi hàm này nên tiến độ vẫn báo đều."""
+        return [self.score_raw(a, b) for a, b in items]
+
     def score(self, code_a: str, code_b: str) -> ScoreResult:
         """Chấm một cặp. Không bao giờ ném — lỗi trả về trong `ScoreResult`."""
         threshold = read_threshold(self.results_dir)

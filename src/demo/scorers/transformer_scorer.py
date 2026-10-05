@@ -23,7 +23,7 @@ from pathlib import Path
 import torch
 
 from src.demo.scorers.base import BaseScorer, resolve_device
-from src.experiments.transformer_pair_runner import load_eval_weights
+from src.experiments.transformer_pair_runner import _assert_device_match, load_eval_weights
 from src.models.transformer_pair import TransformerPairClassifier, load_tokenizer
 
 
@@ -65,6 +65,44 @@ class TransformerScorer(BaseScorer):
         self._model = model
         self._tokenizer = load_tokenizer(self.hf_id)
         self._device = device
+
+    def score_batch(
+        self, items: list[tuple[str, str]]
+    ) -> list[tuple[float | None, dict]]:
+        """Forward gộp N cặp: tokenize 2N code một lần, 2 forward (2 phía).
+        Padding thêm (pad tới max của 2N thay vì của 2) bị mask che nên toán
+        học đồng nhất với per-pair — có test tương đương bắt buộc.
+        """
+        if not self.ensure_loaded():
+            return [(None, {"error": self._error}) for _ in items]
+        assert self._model is not None and self._tokenizer is not None
+        assert self._device is not None
+        texts = [t for ab in items for t in ab]
+        with torch.no_grad():
+            batch = self._tokenizer(
+                texts, padding=True, truncation=True,
+                max_length=self.max_length, return_tensors="pt",
+            )
+            input_a = {k: v[0::2].to(self._device) for k, v in batch.items()}
+            input_b = {k: v[1::2].to(self._device) for k, v in batch.items()}
+            if self._device.type == "cuda":
+                for name, d in (("input_a", input_a), ("input_b", input_b)):
+                    for k, v in d.items():
+                        if torch.is_tensor(v):
+                            _assert_device_match(self._device, v, name=name)
+            logits = self._model(input_a, input_b)
+            probs = torch.sigmoid(logits).cpu().tolist()
+            lengths = batch["attention_mask"].sum(dim=1).tolist()
+        out = []
+        for i in range(len(items)):
+            n_a, n_b = int(lengths[2 * i]), int(lengths[2 * i + 1])
+            out.append((float(probs[i]), {
+                "n_tokens": max(n_a, n_b),
+                "truncated": bool(n_a >= self.max_length or n_b >= self.max_length),
+                "device": str(self._device),
+                "batched": True,
+            }))
+        return out
 
     def _infer(self, code_a: str, code_b: str) -> tuple[float, dict]:
         assert self._model is not None and self._tokenizer is not None
