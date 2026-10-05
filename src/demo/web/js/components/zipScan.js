@@ -63,7 +63,17 @@ export function renderZipFiles(container, files, skipped) {
   if (skips) container.append(el('p', { class: 'scan-meta', text: `Bỏ qua — ${skips}.` }));
 }
 
-export function bindZipUpload({ inputEl, btnEl, onUpload, onEmpty }) {
+export function bindZipUpload({ inputEl, btnEl, nameEl, onUpload, onEmpty }) {
+  const paint = () => {
+    const file = inputEl.files && inputEl.files[0];
+    if (nameEl) {
+      nameEl.textContent = file
+        ? `${file.name} (${(file.size / 1024).toFixed(0)} KB)`
+        : 'Chưa chọn file';
+    }
+  };
+  inputEl.addEventListener('change', paint);
+  paint();
   btnEl.addEventListener('click', () => {
     const file = inputEl.files && inputEl.files[0];
     if (!file) {

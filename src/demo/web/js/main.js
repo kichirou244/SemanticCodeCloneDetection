@@ -54,6 +54,7 @@ const refs = {
   scanThresholdValue: $('#scan-threshold-value'),
   btnScan: $('#btn-scan'),
   zipFile: $('#zip-file'),
+  zipFileName: $('#zip-file-name'),
   btnUpload: $('#btn-upload'),
   zipModels: $('#zip-models'),
   zipThreshold: $('#zip-threshold'),
@@ -263,7 +264,7 @@ function initZipScan() {
   const noFile = () => renderZipState(
     refs.zipResults, 'error', 'Chưa chọn file .zip nào — bấm “Chọn .zip” trước.',
   );
-  bindZipUpload({ inputEl: refs.zipFile, btnEl: refs.btnUpload, onUpload: onZipUpload, onEmpty: noFile });
+  bindZipUpload({ inputEl: refs.zipFile, btnEl: refs.btnUpload, nameEl: refs.zipFileName, onUpload: onZipUpload, onEmpty: noFile });
   bindZipScan({
     btnEl: refs.btnZipScan, sliderEl: refs.zipThreshold,
     valueEl: refs.zipThresholdValue, frozenEl: refs.zipFrozen, onScan: onZipScan,
