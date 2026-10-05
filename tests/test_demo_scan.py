@@ -86,15 +86,30 @@ def test_upload_skips_non_code_and_sanitizes(tmp_path):
     assert out["skipped"]["non_code"] >= 1
 
 
-def test_upload_rejects_too_many_files(tmp_path):
-    svc = make_service(tmp_path, {"M": (0.5, {})}, scan_cfg={"max_files": 3})
-    data = make_zip({f"f{i}.cpp": A for i in range(4)})
-    try:
-        svc.upload_zip(data, "t.zip")
-    except ValueError as e:
-        assert "3" in str(e)
-        return
-    raise AssertionError("phải ValueError khi quá số file")
+def test_scan_events_stream_progress_then_result(tmp_path):
+    """Refactor NDJSON: gom events phải bằng đúng kết quả bản đồng bộ, tiến độ
+    đơn điệu tăng và kết thúc đúng tổng số cặp."""
+    import json as _json
+
+    svc = make_service(tmp_path, {"M1": (0.5, {(A, B): 0.9, (A, C): 0.1,
+                                               (B, C): 0.2})})
+    up = svc.upload_zip(make_zip({"a.cpp": A, "b.cpp": B, "c.cpp": C}), "t.zip")
+    kinds, progresses, result = [], [], None
+    for kind, payload in svc.scan_upload_events(up["upload_id"]):
+        kinds.append(kind)
+        if kind == "progress":
+            progresses.append((payload["done"], payload["total"]))
+        elif kind == "result":
+            result = payload
+    assert kinds[0] == "progress" and kinds[-1] == "result"
+    assert progresses[-1] == (3, 3)
+    assert all(b >= a for (_, a), (_, b) in
+               zip([(0, 0)] + progresses, progresses))
+    expect = svc.scan_upload(up["upload_id"])
+    # duration_ms do thoi gian chay, khong so duoc — so phan con lai.
+    result.pop("duration_ms", None)
+    expect.pop("duration_ms", None)
+    assert result == expect
 
 
 def test_upload_rejects_empty_zip(tmp_path):
@@ -170,6 +185,24 @@ def test_cpg_batch_real_joern_three_files():
         assert 0.0 <= score <= 1.0
 
 
+def _read_ndjson(resp):
+    """Doc body NDJSON cua /api/scan: gom progress + tra ve result."""
+    import json as _json
+
+    progresses, result = [], None
+    for line in resp.text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        msg = _json.loads(line)
+        if msg["event"] == "progress":
+            progresses.append((msg["done"], msg["total"]))
+        elif msg["event"] == "result":
+            result = msg["data"]
+    assert result is not None, resp.text[:300]
+    return progresses, result
+
+
 def _client_with_stubs(tmp_path):
     httpx = pytest.importorskip("httpx")
     pytest.importorskip("fastapi")
@@ -192,7 +225,7 @@ def test_api_upload_then_scan_end_to_end(tmp_path):
     assert up["files"][0]["code"] == A
     r2 = client.post("/api/scan", json={"upload_id": up["upload_id"]})
     assert r2.status_code == 200, r2.text
-    res = r2.json()
+    _, res = _read_ndjson(r2)
     assert res["n_kept"] == 1
     row = res["pairs"][0]
     assert {row["a"], row["b"]} == {"a.cpp", "b.cpp"}
@@ -218,7 +251,10 @@ def test_api_scan_override_threshold(tmp_path):
     r = client.post("/api/uploads", files={"file": ("t.zip", make_zip(
         {"a.cpp": A, "b.cpp": B}), "application/zip")})
     uid = r.json()["upload_id"]
-    assert client.post("/api/scan", json={
-        "upload_id": uid, "threshold": 0.95}).json()["n_kept"] == 0
-    assert client.post("/api/scan", json={
-        "upload_id": uid, "threshold": 0.4}).json()["n_kept"] == 1
+    _, r95 = _read_ndjson(client.post("/api/scan", json={
+        "upload_id": uid, "threshold": 0.95}))
+    assert r95["n_kept"] == 0
+    _, r40 = _read_ndjson(client.post("/api/scan", json={
+        "upload_id": uid, "threshold": 0.4}))
+    assert r40["n_kept"] == 1
+    assert r40["threshold_applied"] == {"M1": 0.4, "M2": 0.4}

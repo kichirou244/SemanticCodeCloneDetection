@@ -12,10 +12,11 @@ skeleton và báo tiến độ từng model, thay vì quay một spinner không 
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from src.demo.registry import DEFAULT_CONFIG, ModelRegistry
@@ -93,13 +94,31 @@ def create_app(service: DemoService | None = None, config_path: Path | str = DEF
             raise HTTPException(400, str(exc)) from exc
 
     @app.post("/api/scan")
-    def api_scan(req: ScanRequest) -> dict:
+    def api_scan(req: ScanRequest) -> StreamingResponse:
+        """Chấm all-pairs, stream tiến độ NDJSON (mỗi dòng một event).
+
+        Mồi một `next()` trước để lỗi setup (upload không tồn tại, ngưỡng sai)
+        trả đúng 404/400 thay vì sập giữa stream.
+        """
+        it = svc.scan_upload_events(req.upload_id, req.models, req.threshold)
         try:
-            return svc.scan_upload(req.upload_id, req.models, req.threshold)
+            first = next(it)
         except KeyError as exc:
             raise HTTPException(404, str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
+
+        def gen():
+            yield _ndjson(first[0], first[1])
+            try:
+                for kind, payload in it:
+                    yield _ndjson(kind, payload)
+            except Exception as exc:  # noqa: BLE001 — stream đang mở
+                yield _ndjson("error", {"message": f"{type(exc).__name__}: {exc}"[:300]})
+
+        return StreamingResponse(gen(), media_type="application/x-ndjson")
+
+
 
     @app.get("/api/library")
     def api_library() -> dict:
@@ -143,3 +162,14 @@ def create_app(service: DemoService | None = None, config_path: Path | str = DEF
 
     app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
     return app
+
+
+def _ndjson(kind: str, payload: dict) -> bytes:
+    if kind == "result":
+        return (json.dumps({"event": "result", "data": payload},
+                           ensure_ascii=False) + "\n").encode("utf-8")
+    if kind == "error":
+        return (json.dumps({"event": "error", **payload},
+                           ensure_ascii=False) + "\n").encode("utf-8")
+    return (json.dumps({"event": "progress", **payload},
+                       ensure_ascii=False) + "\n").encode("utf-8")
