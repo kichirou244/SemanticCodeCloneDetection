@@ -42,7 +42,7 @@ preprocessing:
 
 training:
   seed: 42
-  epochs: 5
+  epochs: 15
   # Nhỏ hơn M1/M2 vì mỗi sample là cả đồ thị (hàng trăm node × 2 phía), không
   # phải 256 token. Đổi sau khi có log VRAM thật.
   batch_size: 16
