@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.15.0 |
+| **Phiên bản** | 1.16.0 |
 | **Ngày cập nhật** | 2026-10-07 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -116,3 +116,4 @@ Config `configs/exp005_cpg_gnn.yaml` mang `status: BLOCKED_ON_JOERN` — xem
 | 14 | 1.13.0 | 2026-10-07 | **Kênh phân phối checkpoint warm start của EXP-006 chuyển sang Hugging Face Hub** (DEC-029 §4 bổ sung): checkpoint `*.pt` bị `.gitignore` nên không thể nằm trong repo; EXP-003 output trên Kaggle mặc định `KEEP_WEIGHTS=False` nên **không** chứa `best_checkpoint.pt` 1.41GB. Thêm `scripts/export_hybrid_warm_start.py` (rút riêng `encoder.*`: M2 475MB / 199 khóa, M4 0.4MB / 32 khóa — đã verify warm start M4 missing=0) và đẩy lên HF repo `Kichirou24/SemanticCodeCloneDetection`. Notebook `exp006_hybrid_kaggle.ipynb` cell 7 **pull từ HF** (`HF_TOKEN` nếu repo private), kèm fallback quét `/kaggle/input` cho output EXP-003/EXP-005 cũ; thiếu ⇒ assert chặn train. |
 | 15 | 1.14.0 | 2026-10-07 | Chốt tên HF repo chính thức: `Kichirou24/SemanticCodeCloneDetection` (public) — notebook cell 7 + `export_hybrid_warm_start.py` đổi cho khớp; 2 file encoder (`m2_text_encoder.pt` 475MB, `m4_graph_encoder.pt` 0.4MB) đã push lên HF kèm README model card. |
 | 16 | 1.15.0 | 2026-10-07 | **Errata row 15:** repo HF đang để **private** (anonymous 401), không phải public. Push/thao tác local qua **SSH** `git@hf.co` (đã đẩy 2 commit README+weights thành công). Trên Kaggle pull được nhờ `HF_TOKEN` của chính acc (cell 1 → cell 7); README HF ghi rõ điều này. |
+| 17 | 1.16.0 | 2026-10-07 | Chay thử EXP-006 trên Kaggle: cell 7 báo 404 Repository Not Found dù repo vừa push qua SSH thành công. Kết luận vận hành: HF **trả 404 (không phải 401)** khi account của token **không sở hữu/không có quyền** truy cập repo private — che giấu sự tồn tại của repo. Cell 7 được nâng cấp: in whoami() để lộ account của token ngay khi pull lỗi. Khuyến nghị: để repo **public** (không cần token) hoặc dùng token đúng acc sở hữu. |
