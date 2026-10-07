@@ -4,8 +4,8 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.22.0 |
-| **Ngày cập nhật** | 2026-10-03 |
+| **Phiên bản** | 1.24.0 |
+| **Ngày cập nhật** | 2026-10-07 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
 
@@ -40,6 +40,8 @@
 - [DEC-025 — Joern v4: script Scala + gom cả lô vào một tiến trình, và smoke test bắt buộc](#dec-025--joern-v4-script-scala--gom-c%E1%BA%A3-l%C3%B4-v%C3%A0o-m%E1%BB%99t-ti%E1%BA%BFn-tr%C3%ACnh-v%C3%A0-smoke-test-b%E1%BA%AFt-bu%E1%BB%99c)
 - [DEC-026 — Baseline của báo cáo là MOSS (EXP-013), không dùng TF-IDF](#dec-026--baseline-c%E1%BB%A3a-b%C3%A1o-c%C3%A1o-l%C3%A1-mo%E1%BB%85-013-kh%C3%B4ng-d%C3%B9ng-tf-idf)
 - [DEC-027 — M4 schema (b): bỏ CALL/REF/REACHING_DEF, sửa PARAMETER_OUT bằng khớp tên](#dec-027--m4-schema-b-b%E1%BB%8F-callrefreaching_def-s%E1%BB%ADa-parameter_out-b%E1%BA%B1ng-kh%E1%BB%9Bp-t%C3%AAn)
+- [DEC-028 — Baseline chính chuyển sang MOSS service thật (EXP-014); EXP-013 còn lại làm tham chiếu](#dec-028--baseline-ch%C3%ADnh-chuy%E1%BB%83n-sang-moss-service-th%E1%BA%ADt-exp-014-exp-013-c%C3%B2n-l%E1%BA%A1i-l%C3%A0m-tham-chi%E1%BA%BFu)
+- [DEC-029 — M5 hybrid soft fusion (EXP-006): fusion mức embedding, không OR/AND](#dec-029--m5-hybrid-soft-fusion-exp-006-fusion-m%E1%BB%A9c-embedding-kh%C3%B4ng-orand)
 - [Lịch sử thay đổi](#lich-su-thay-doi)
 
 ---
@@ -639,8 +641,8 @@
   công: thắng ở đây chưa chắc thắng ở đó. Và TF-IDF không hề bịt cả thông tin về
   cấu trúc hay dữ liệu, nên nó không phải đối thủ xứng tầm.
 - **Quyết định 1 — MOSS (EXP-013) là baseline chính, dùng cho mọi báo cáo.**
-  MOSS là thuật toán đã có tuổi và được chấp nhận rộng rãi (Sleator & Bernstein
-  2003), chạy lặp lại được không cần mạng, nên đây là đối thủ công bằng. **Không
+  MOSS là thuật toán đã có tuổi và được chấp nhận rộng rãi (Schleimer, Wilkerson &
+  Aiken 2003), chạy lặp lại được không cần mạng, nên đây là đối thủ công bằng. **Không
   dùng TF-IDF làm baseline.** EXP-001 vẫn giữ trong registry ở trạng thái
   `COMPLETED (tham khảo)` — số liệu còn nguyên, chỉ là không dùng làm gốc.
 - **Quyết định 2 — không dùng tham số gốc của MOSS.** Bài báo gốc dùng
@@ -703,3 +705,80 @@
 | 21 | 1.20.0 | 2026-10-03 | DEC-027 kiểm chứng xong: vòng 6 cả 3 OK; PARAMETER_OUT 0→67 (+67 đúng bằng tăng `edges_total`); gate mới PASS hết, `missing: []`. Số chốt Save: 4,416 hàm/s, est 3,27h, error 0, 354,6 nodes/code, đủ 6 loại cạnh. |
 | 22 | 1.21.0 | 2026-10-04 | ASTNN train tiếp trần 20 epoch (early stopping patience 2), train từ đầu: dừng epoch 7, tốt nhất epoch 4 (val F1 0,853). Test P/R/F1 0,760/0,894/0,822±0,004, ROC-AUC 0,889, thr 0,42; ~40 phút T4. Lưu ý: schedule 20-epoch khác schedule cũ nên epoch đầu đã khác (0,789 vs 0,643) — chỉ so best, không so từng epoch. Báo cáo cập nhật hàng ASTNN, bỏ “chưa train đủ”. Đính chính số ở dòng 21: 354,6 nodes/code chỉ là 500 hàm train đầu (samples.jsonl xếp theo nhóm nên không đại diện); TB thật cả 51.991 hàm ~150 (train ~148, val ~188, test ~141). |
 | 23 | 1.22.0 | 2026-10-04 | M4 train xong (5 epoch, ~57 phút T4): val F1 còn tăng tới epoch cuối (0,800→0,817→0,819) nên dừng vì hết epoch chứ không plateau — như ASTNN lúc trước. Test P/R/F1 0,695/0,885/0,779±0,004, ROC-AUC 0,864, thr 0,42. Kém CodeBERT 0,131 (CI [-0,140;-0,122], có ý nghĩa), hơn MOSS 0,097. Báo cáo thêm hàng CPG-GNN (5 phương pháp), bỏ “Tiếp tục CPG-GNN”. |
+| 24 | 1.23.0 | 2026-10-07 | Thêm DEC-028: **baseline chính chuyển sang MOSS service thật (mosspy, EXP-014)** — thay thế quyết định 1 của DEC-026. EXP-013 (winnowing all-pairs local) hạ xuống `COMPLETED (tham khảo)`, giữ làm fallback demo (k=20,w=5). Đính chính citation: MOSS là **Schleimer, Wilkerson & Aiken 2003** (không phải Sleator & Bernstein). |
+| 25 | 1.24.0 | 2026-10-07 | Thêm DEC-029: audit bổ trợ M2×M4 (test, 11.000 cặp) → M4 sửa 662/1.053 lỗi của M2 (62,9%) nhưng phá 2.377/9.947 đúng (23,9%), net −1.715 ⇒ **quy tắc OR/AND bị loại** (OR F1 0,809, AND F1 0,879, đều kém M2 0,907). **M5 = soft fusion mức embedding** (concat_mlp [hA;hB;|hA-hB|], DEC-005 + DEC-016): logistic (s_M2,s_M4) làm baseline đạt test F1 0,9217 > M2 0,9069 (+1,5đ) nhưng AUC 0,9683 < M2 0,9713 — thắng chỉ ở vùng ngưỡng ~0,535, phải nêu đúng vùng thay vì kết luận chung. Warm start encoder M2 (EXP-003) + M4 (EXP-005) rồi joint fine-tune LR 2e-5; giữ max_length 256 (so sánh sạch, không vội segment-GRU). Script: `scripts/audit_m2_m4_complementarity.py`, output `results/audit_m2_m4.json`. |
+
+---
+
+## DEC-028 — Baseline chính chuyển sang MOSS service thật (EXP-014); EXP-013 còn lại làm tham chiếu
+- **Thay thế:** Quyết định 1 của DEC-026 (MOSS EXP-013 là baseline chính).
+- **Bối cảnh (2026-10-07):** người dùng yêu cầu baseline phải là **MOSS thật**
+  (`moss.stanford.edu`) qua `mosspy`, gồm cả demo. Đã gọi service thật cho toàn bộ
+  val/test (user id qua env `MOSS_USER_ID`, không commit).
+- **Quyết định 1 — baseline báo cáo là MOSS service thật (EXP-014),** runner
+  `scripts/eval_moss_service.py`. Điểm cặp = `max(pct_a, pct_b)/100`; quy tắc vận
+  hành `score > 0.01` ⇒ clone (không dò ngưỡng — tool dùng như công cụ đạo văn).
+- **Quyết định 2 — EXP-013 (winnowing all-pairs local) còn lại làm tham chiếu.**
+  Nó vẫn được dùng để (a) cross-check cài đặt và (b) fallback demo khi ứng dụng
+  không có `MOSS_USER_ID` (deterministic, offline). Demo B1 dual-mode: service nếu
+  có env, ngược lại local k=20,w=5.
+- **Số liệu thật và bài học về top-N:** service MOSS chỉ trả **top-N match**
+  (`show=1000`), không cho điểm mọi cặp — nên với bộ cặp cố định test, 11.000
+  điểm gần như toàn 0 và chỉ bắt được 9/5.500 cặp dương (P 1,0 / R 0,0016 /
+  F1 0,003). Đây không phải bug: `_safe_name` khớp 100% sid, parser đã test trên 2
+  định dạng report, và bản local cùng thuật toán đạt F1 0,682 khi chấm được *mọi*
+  cặp. Kết luận: MOSS giỏi ở vai trò "dò top-N clone gần trùng" nhưng đứng trong
+  bài toán phân loại mọi cặp semantic clone Type-3/4 thì thiếu recall cơ bản —
+  ghi thẳng vào báo cáo thay vì giấu.
+- **Vận hành:** nộp MOSS tốn lượt (rate-limit) — chạy lại từ cache
+  `artifacts/moss_cache` (val `http://moss.stanford.edu/results/6/3324282961870`,
+  test `http://moss.stanford.edu/results/7/5556361909376`).
+- **Impact:** bảng kết quả [06-10] ghi B1 = số EXP-014 kèm cảnh báo top-N; demo +
+  registry + report đã cập nhật. M4 "hơn MOSS 0,097" không còn dùng nữa (đổi sang
+  mốc EXP-013 tham chiếu).
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
+## DEC-029 — M5 hybrid soft fusion (EXP-006): fusion mức embedding, không OR/AND
+- **Bối cảnh (2026-10-07):** user xem lại cách M1/M2 tiền xử lý (truncate 256,
+  vứt phần sau) và hỏi M5 (M2+M4) nên xử lý sao. Số thật test: M1 CodeBERT
+  P/R/F1 0,931/0,890/0,910 (AUC 0,973); M2 GraphCodeBERT 0,883/0,933/0,907
+  (AUC 0,971); M3 ASTNN 0,760/0,894/0,821; M4 CPG-GNN 0,695/0,885/0,779.
+  M1/M2 **truncate 60,5%** code nhưng vẫn thắng M3/M4 giữ 100% code ⇒ truncation
+  không phải bottleneck thật trên POJ-104; không vội cải tiến mô hình text theo
+  hướng segment/chunk trước khi kiểm bổ trợ của M4.
+- **Quyết định 1 — M5 (EXP-006) là soft fusion mức embedding,** theo đúng
+  `pair_architecture: concat_hA_hB_absdiff_mlp` của DEC-005 và head DEC-016:
+  `h = [h_text (CLS 768) ; h_graph ([mean;max] 256)]` → `[hA ; hB ; |hA-hB|]` → MLP.
+- **Quyết định 2 — KHÔNG dùng fusion nhị phân/rule:** audit bổ trợ trên test
+  (script `scripts/audit_m2_m4_complementarity.py`, output
+  `results/audit_m2_m4.json`): agreement 0,724, Cohen kappa 0,44; bảng
+  both_ok/only_m2/only_m4/both_bad = 7.570/2.377/662/391. M4 sửa 662/1.053 lỗi
+  M2 (62,9%) nhưng làm hỏng 2.377/9.947 cặp đúng M2 (23,9%), net −1.715; quy tắc
+  OR F1 0,8087 và AND F1 0,8795 đều kém M2 (0,9069) ⇒ **loại OR/AND và mọi dạng
+  score-level rule cứng**.
+- **Quyết định 3 — baseline của M5 chính là logistic mềm trên (s_M2, s_M4):**
+  fit trên validation → test F1 0,9217 > M2 0,9069 (+1,5đ; P/R 0,905/0,939), val
+  F1 0,9463 (thr 0,535). Nhưng ROC-AUC 0,9683 < M2 0,9713 ⇒ thắng chỉ ở vùng
+  ngưỡng vận hành (operating region) chứ không thắng mặt bằng xếp hạng. **Báo cáo
+  bắt buộc nêu đúng điều này**, không được viết “hybrid thắng” chung chung.
+- **Quyết định 4 — warm start encoder rồi joint fine-tune:** 1) copy trọng số
+  `encoder.*` từ M2 (EXP-003) và M4 (EXP-005) — nạp cùng biểu diễn mà audit đã
+  đo; 2) joint fine-tune LR **2e-5**, 5 epoch, patience 2 (LR to sẽ phá biểu diễn
+  đã hội tụ). Giữ tùy chọn `freeze_encoders` như bản rẻ (chỉ train head MLP).
+- **Quyết định 5 — giữ `max_length 256` cho M5** (đóng băng từ DEC-016/022) để so
+  sánh sạch với M2. Segment-GRU / nâng 510 chỉ làm sau khi có kết quả M5.
+- **Loại bỏ:** fusion OR/AND/metric-level; blending score đơn thuần (Cardinal) làm
+  mô hình chính; thay tokenizer/đổi recipe giữa chừng.
+- **Hệ quả:** tầng tiền xử lý M1/M2 giữ nguyên; M5 tái dùng cache CPG của EXP-005
+  (không parse Joern lại); code: `src/models/hybrid/model.py`,
+  `src/experiments/exp006_hybrid.py`, config `configs/exp006_hybrid.yaml`, notebook
+  `notebooks/exp006_hybrid_kaggle.ipynb`.
+- **Impact:** EXP-006 = READY_FOR_KAGGLE_TRAIN; thêm 5 test model (`tests/
+  test_exp006_hybrid.py`) không cần GPU/HF. Nếu M5 vẫn không vượt logistic ⇒ M4
+  thừa; nếu vượt ⇒ cải tiến tiếp theo là nâng độ dài text, không phải phân loại
+  độ phức tạp.
+
+[🔝 Quay lại mục lục](#top)

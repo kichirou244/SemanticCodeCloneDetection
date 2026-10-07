@@ -1,0 +1,100 @@
+{
+  "models": {
+    "M2": {
+      "dir": "results\\exp003_graphcodebert_poj104",
+      "threshold": 0.43
+    },
+    "M4": {
+      "dir": "results\\exp005_cpg_gnn_poj104",
+      "threshold": 0.42000000000000004
+    }
+  },
+  "split": "test",
+  "pairs": {
+    "aligned": 11000,
+    "missing_in_m2": 0,
+    "missing_in_m4": 0,
+    "positive": 5500,
+    "negative": 5500
+  },
+  "binary": {
+    "agreement": 0.7237,
+    "kappa": 0.4388,
+    "table": {
+      "both_ok": 7570,
+      "only_m2_ok": 2377,
+      "only_m4_ok": 662,
+      "both_bad": 391
+    }
+  },
+  "per_model": {
+    "M2": {
+      "precision": 0.8826363792806746,
+      "recall": 0.9325454545454546,
+      "f1": 0.9069047829546459,
+      "tp": 5129,
+      "fp": 682,
+      "fn": 371
+    },
+    "M4": {
+      "precision": 0.694920091324201,
+      "recall": 0.8854545454545455,
+      "f1": 0.778701630956188,
+      "tp": 4870,
+      "fp": 2138,
+      "fn": 630
+    }
+  },
+  "rescue_at_binary_level": {
+    "m2_errors": 1053,
+    "m4_corrects_m2": 662,
+    "m4_corrects_m2_rate": 0.6287,
+    "m2_corrects": 9947,
+    "m4_breaks_m2": 2377,
+    "m4_breaks_m2_rate": 0.239,
+    "net_correctable": -1715
+  },
+  "fusion_bounds": {
+    "or_rule": {
+      "precision": 0.6848278471433976,
+      "recall": 0.9872727272727273,
+      "f1": 0.8086975947576142,
+      "tp": 5430,
+      "fp": 2499,
+      "fn": 70
+    },
+    "and_rule": {
+      "precision": 0.9343558282208589,
+      "recall": 0.8307272727272728,
+      "f1": 0.8794995187680462,
+      "tp": 4569,
+      "fp": 321,
+      "fn": 931
+    }
+  },
+  "score_correlation": {
+    "pearson": 0.5808,
+    "spearman": 0.5783
+  },
+  "logistic_fusion": {
+    "fit_split": "validation",
+    "eval_split": "test",
+    "val_threshold": 0.5349998375003486,
+    "val_f1": 0.9463,
+    "test": {
+      "precision": 0.905170902716915,
+      "recall": 0.9389090909090909,
+      "f1": 0.921731369924141,
+      "tp": 5164,
+      "fp": 541,
+      "fn": 336,
+      "auc": 0.9683579504132231
+    }
+  },
+  "verdict": {
+    "best_single_f1": 0.9069047829546459,
+    "fusion_test_f1": 0.921731369924141,
+    "fusion_beats_best_single": true,
+    "net_correctable": -1715
+  }
+}

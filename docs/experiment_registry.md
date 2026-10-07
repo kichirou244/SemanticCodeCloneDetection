@@ -4,8 +4,8 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.10.0 |
-| **Ngày cập nhật** | 2026-09-28 |
+| **Phiên bản** | 1.12.0 |
+| **Ngày cập nhật** | 2026-10-07 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
 
@@ -23,12 +23,13 @@
 | Experiment | Dataset | Model | Status | Result | Report |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | EXP-001 | POJ-104 | B1 TF-IDF | COMPLETED (tham khảo) | Test P/R/F1 0.552/0.860/0.673, thr 0.24. **Không dùng làm baseline chính** — là mô hình bag-of-token của chính nhóm, so với nó thì bất công với mô hình học sâu | reports/009_baseline_results.md |
-| EXP-013 | POJ-104 | B0 MOSS (Winnowing) | COMPLETED | **Baseline chính của báo cáo.** Test P/R/F1 0.646/0.722/0.682, ROC-AUC 0.731, thr chọn trên validation. Dò (k,w) trên validation: `k=20,w=5` thắng; tham số gốc `k=50,w=100` **không dùng được** trên POJ-104 (hàm quá ngắn ⇒ mỗi hàm chỉ ~6 fingerprint, F1 rơi về 0.667 = dự đoán toàn bộ dương) | scripts/eval_moss.py |
+| EXP-014 | POJ-104 | B1 MOSS service thật (mosspy) | COMPLETED | **Baseline chính của báo cáo.** Gọi thẳng `moss.stanford.edu` (user id qua env `MOSS_USER_ID`), rule vận hành `score > 0.01` ⇒ clone. Test P 1.0 / R 0.0016 / F1 0.0033 (±0.001), flag 9/11000 (9/5500 positive); val 0 flag. **Top-N bias của chính server**: chỉ trả 1000 match mạnh nhất (`show=1000`) nên không chấm điểm được cặp semantic clone Type-3/4 ⇒ phần lớn positive bị điểm 0; ROC-AUC không tính được. Report: val `http://moss.stanford.edu/results/6/3324282961870`, test `http://moss.stanford.edu/results/7/5556361909376` (cache `artifacts/moss_cache` — chạy lại không tốn lượt). Chú ý rate-limit khi nộp | scripts/eval_moss_service.py |
+| EXP-013 | POJ-104 | B0 MOSS (Winnowing) | COMPLETED (tham khảo) | Bản winnowing all-pairs **local**, giữ làm tham chiếu + fallback demo (k=20,w=5). Test P/R/F1 0.646/0.722/0.682, ROC-AUC 0.731, thr chọn trên validation. Chứng minh MOSS đạt F1 cao nếu chấm được *mọi* cặp — nhưng đó không phải cách service thật hoạt động (chỉ top-N) | scripts/eval_moss.py |
 | EXP-002 | POJ-104 | M1 CodeBERT | COMPLETED | Test P/R/F1 0.931/0.890/0.910 ± 0.003, ROC-AUC 0.973, thr 0.59 (val-selected), best epoch 1/3, 7,03h T4 | reports/011_codebert_results.md |
 | EXP-003 | POJ-104 | M2 GraphCodeBERT | COMPLETED | Test P/R/F1 0.883/0.933/0.907 ± 0.003, ROC-AUC 0.971, thr 0.43 (val-selected); 3 epoch, val F1 **còn đang tăng** ⇒ số có thể còn tăng | reports/012_m1_m2_m3_summary.pdf |
 | EXP-004 | POJ-104 | M3 ASTNN | COMPLETED | Test P/R/F1 0.760/0.894/0.822 ± 0.004, ROC-AUC 0.889, thr 0.42 (val-selected); train tiếp trần 20 epoch, early stopping dừng ở epoch 7 (tốt nhất epoch 4: val F1 0.853), ~40 phút T4 | reports/012_m1_m2_m3_summary.pdf |
 | EXP-005 | POJ-104 | M4 CPG-GNN | COMPLETED | Test P/R/F1 0.695/0.885/0.779 ± 0.004, ROC-AUC 0.864, thr 0.42 (val-selected); 5 epoch (~57 phút T4), val F1 còn tăng tới epoch cuối (chưa plateau); kém CodeBERT 0,131 (CI không chứa 0), hơn MOSS 0,097 | - |
-| EXP-006 | POJ-104 | M5 Hybrid | PLANNED | - | - |
+| EXP-006 | POJ-104 | M5 Hybrid (GraphCodeBERT + CPG-GNN) | READY_FOR_KAGGLE_TRAIN | Code + model + config + **`notebooks/exp006_hybrid_kaggle.ipynb`** + 5 test xong (DEC-029): soft fusion embedding concat_mlp, warm start encoder M2+M4, joint fine-tune LR 2e-5. **Baseline logistic (s_M2,s_M4): val F1 0.9463, test F1 0.9217** (M2 0.9069, +1.5đ) nhưng AUC 0.9683 < M2 0.9713 ⇒ chỉ thắng vùng ngưỡng ~0.535, phải nêu đúng khi báo cáo. Audit bổ trợ: agreement 0.724, kappa 0.44; only_m4 662 (sửa 62.9% lỗi M2) nhưng hỏng 2377; OR/AND bị loại (F1 0.809/0.879 < M2) | notebooks/exp006_hybrid_kaggle.ipynb, scripts/audit_m2_m4_complementarity.py, results/audit_m2_m4.json |
 | EXP-007 | CodeNet Python | B1 TF-IDF | CANCELLED | - | DEC-019 |
 | EXP-008 | CodeNet Python | M1 CodeBERT | CANCELLED | - | DEC-019 |
 | EXP-009 | CodeNet Python | M2 GraphCodeBERT | CANCELLED | - | DEC-019 |
@@ -110,3 +111,5 @@ Config `configs/exp005_cpg_gnn.yaml` mang `status: BLOCKED_ON_JOERN` — xem
 | 9 | 1.8.0 | 2026-09-28 | EXP-003 có notebook Kaggle `notebooks/exp003_graphcodebert_kaggle.ipynb` (mirror EXP-002, có test chặn lệch); luồng tải kết quả chuyển sang checkpoint bản nhẹ `best_weights_only.pt` (0,5GB) — DEC-022 §2b. |
 | 11 | 1.10.0 | 2026-09-28 | EXP-005 chuyển `PLANNED` → `BLOCKED_ON_JOERN`: đã có schema/ingest/store/model GAT (33 test local, không cần Joern), Joern cài **trên Kaggle**, chờ số đo `ham/giây` thật — DEC-024. |
 | 10 | 1.9.0 | 2026-09-28 | Tách notebook: EXP-004 có notebook riêng `notebooks/exp004_astnn_kaggle.ipynb`; bỏ bản gộp 1 phiên. Mọi notebook có cell `--mode evaluate` chạy trên Kaggle và chỉ tải metrics + predictions (`KEEP_WEIGHTS=False`) — DEC-023. |
+| 12 | 1.11.0 | 2026-10-07 | EXP-014 COMPLETED: **baseline chính chuyển sang MOSS service thật** (mosspy, `moss.stanford.edu`), rule `score > 0.01`. EXP-013 (winnowing all-pairs local) hạ xuống tham khảo/fallback. Lý do: service MOSS chỉ trả top-N match nên không chấm điểm được cặp semantic clone type-3/4 trong bộ cặp cố định (test chỉ bắt 9/5500 dương, F1 0.003). Điều này **không phải lỗi cài đặt**: `_safe_name` khớp 100% sid; bản local cùng thuật toán vẫn đạt F1 0.682 khi chấm điểm mọi cặp. Demo B1 = service nếu có `MOSS_USER_ID`, ngược lại fallback k=20,w=5. Report + demo đã cập nhật theo EXP-014. |
+| 13 | 1.12.0 | 2026-10-07 | EXP-006 → **READY_FOR_KAGGLE_TRAIN** (M5 Hybrid, DEC-029): `configs/exp006_hybrid.yaml`, `src/models/hybrid/model.py`, `src/experiments/exp006_hybrid.py`, `notebooks/exp006_hybrid_kaggle.ipynb`, `tests/test_exp006_hybrid.py` (5 test, không GPU/HF). Chốt hướng: **soft fusion mức embedding** (concat [hA;hB;\|hA-hB\|] → MLP, DEC-005 + DEC-016), **không OR/AND** — audit `results/audit_m2_m4.json` cho OR F1 0.809 / AND F1 0.879 đều kém M2 0.907; logistic baseline test F1 0.9217 (+1.5đ vs M2) nhưng AUC 0.9683 < 0.9713 ⇒ chỉ thắng vùng ngưỡng. Warm start encoder từ EXP-003 + EXP-005; giữ max_length 256. |
