@@ -1,0 +1,9 @@
+{
+  "threshold": 0.01,
+  "method": "moss_flag_rule",
+  "meaning": "score > 0.01 = MOSS gắn cờ cặp khả nghi (bỏ cặp score ~0)",
+  "score_rule": "max(pct_a,pct_b)/100 — lay phia cao hon",
+  "model": "MOSS service that (moss.stanford.edu)",
+  "language": "cc",
+  "top_n_bias": "report chi chua 1000 match manh nhat (show), khong phai diem moi cap"
+}

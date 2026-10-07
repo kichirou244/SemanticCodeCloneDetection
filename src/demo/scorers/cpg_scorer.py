@@ -100,6 +100,38 @@ class CpgScorer(BaseScorer):
             raise RuntimeError(detail.get("error") or "Joern không ra đồ thị")
         return score, detail
 
+    def _extract_graphs(
+        self, items: list[tuple[str, str]]
+    ) -> dict[str, tuple[object | None, list | None, dict]]:
+        """Chung cho score và evidence: Joern 1 lần → mỗi tên một
+        `(graph|None, raw_nodes|None, stats)`. Raw nodes giữ thứ tự JSON gốc
+        để map ngược node graph → dòng code (qua `stats["order"]`)."""
+        samples = [
+            {"code": code, "sample_id": f"scan_{i}"}
+            for i, (_, code) in enumerate(items)
+        ]
+        out: dict[str, tuple[object | None, list | None, dict]] = {}
+        with tempfile.TemporaryDirectory(prefix="cpg_scan_") as tmp:
+            work = Path(tmp)
+            batch_dir = work / "batch"
+            out_dir = work / "out"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            write_batch(samples, batch_dir)
+            timeout_s = max(300, 15 * len(items))
+            run_batch(samples, out_dir, work, self._joern_cmd,
+                      batch_dir, timeout_s)
+            import json as _json
+
+            for (name, _), s in zip(items, samples):
+                path = out_dir / f"{s['sample_id']}.json"
+                if not path.exists():
+                    out[name] = (None, None, {})
+                    continue
+                g, st = parse_cpg_file(path, self.max_nodes)
+                raw = _json.loads(path.read_text(encoding="utf-8"))["nodes"]
+                out[name] = (g, raw, st)
+        return out
+
     def score_all_pairs(
         self, items: list[tuple[str, str]]
     ) -> dict[tuple[str, str], tuple[float | None, dict]]:
@@ -110,7 +142,6 @@ class CpgScorer(BaseScorer):
 
         from src.models.cpg_gnn.model import to_device
         from src.representations.cpg.graph import collate_pyg
-        from src.representations.cpg.ingest import parse_cpg_file
 
         names = [name for name, _ in items]
         keys = [(a, b) for i, a in enumerate(names) for b in names[i + 1 :]]
@@ -118,31 +149,12 @@ class CpgScorer(BaseScorer):
             err = self._error or "load failed"
             return {k: (None, {"error": err}) for k in keys}
         assert self._model is not None and self._device is not None
-        samples = [
-            {"code": code, "sample_id": f"scan_{i}"}
-            for i, (_, code) in enumerate(items)
-        ]
-        with tempfile.TemporaryDirectory(prefix="cpg_scan_") as tmp:
-            work = Path(tmp)
-            batch_dir = work / "batch"
-            out_dir = work / "out"
-            out_dir.mkdir(parents=True, exist_ok=True)
-            write_batch(samples, batch_dir)
-            timeout_s = max(300, 15 * len(items))
-            n_ok, _ = run_batch(samples, out_dir, work, self._joern_cmd,
-                                batch_dir, timeout_s)
-            graphs: dict[str, object] = {}
-            for (name, _), s in zip(items, samples):
-                path = out_dir / f"{s['sample_id']}.json"
-                if not path.exists():
-                    graphs[name] = None
-                    continue
-                g, _ = parse_cpg_file(path, self.max_nodes)
-                graphs[name] = g
+        extracted = self._extract_graphs(items)
         results: dict[tuple[str, str], tuple[float | None, dict]] = {}
         with torch.no_grad():
             for a, b in keys:
-                ga, gb = graphs[a], graphs[b]
+                ga, _, _ = extracted[a]
+                gb, _, _ = extracted[b]
                 if ga is None or gb is None:
                     results[(a, b)] = (None, {"error": "Joern không ra JSON"})
                     continue
@@ -155,3 +167,80 @@ class CpgScorer(BaseScorer):
                     "device": str(self._device),
                 })
         return results
+
+    def evidence(self, code_a: str, code_b: str) -> dict | None:
+        """Dòng code được GAT chú ý nhất (attention nhận được, tầng cuối).
+
+        Chạy encoder lại từng phía, lấy attention trung bình các heads ở tầng
+        GAT cuối, cộng dồn theo node đích. Node nào vượt trung bình thì giữ,
+        map về dòng code qua `stats["order"]` + field `line` của exporter
+        (JSON không có `line` — vd dữ liệu cũ — thì trả spans rỗng trung thực
+        thay vì đoán). Đây là "GAT nhìn đâu", KHÔNG phải "đoạn nào khớp".
+        """
+        if not self.ensure_loaded():
+            return None
+        import torch
+
+        from src.models.cpg_gnn.model import to_device
+        from src.representations.cpg.graph import collate_pyg
+
+        assert self._model is not None and self._device is not None
+        extracted = self._extract_graphs([("a", code_a), ("b", code_b)])
+        enc = self._model.encoder
+        out_spans: dict[str, list] = {}
+        with torch.no_grad():
+            for side, code in (("a", code_a), ("b", code_b)):
+                g, raw, st = extracted[side]
+                if g is None or raw is None:
+                    out_spans[side] = []
+                    continue
+                b = to_device(collate_pyg([g]), self._device)
+                x = enc.node_emb(b.node_type) + enc.feat_lin(b.x)
+                x = enc.in_norm(x)
+                alpha_last = None
+                for layer in enc.layers:
+                    e = layer.edge_emb(b.edge_type)
+                    h, (_ei, alpha) = layer.conv(
+                        x, b.edge_index, e, return_attention_weights=True)
+                    alpha_last = (alpha, _ei)
+                    x = x + layer.dropout(layer.norm(h))
+                n = int(b.node_type.shape[0])
+                recv = torch.zeros(n, device=self._device)
+                if alpha_last is not None and n > 0:
+                    a_mat, ei = alpha_last
+                    recv.index_add_(0, ei[1], a_mat.mean(dim=1))
+                mean = float(recv.mean().item()) if n else 0.0
+                order = st.get("order") or list(range(len(raw)))
+                lines = code.split("\n")
+                starts = _line_starts(lines)
+                spans = []
+                for j in range(n):
+                    if float(recv[j].item()) <= mean:
+                        continue
+                    ln = (raw[order[j]].get("line")
+                          if order[j] < len(raw) else None)
+                    if not isinstance(ln, int) or ln < 1 or ln > len(lines):
+                        continue
+                    s = starts[ln - 1]
+                    spans.append([s, s + len(lines[ln - 1])])
+                out_spans[side] = spans
+        total = 0
+        final: dict[str, list] = {}
+        for side in ("a", "b"):
+            # Gộp span trùng (nhiều node salient cùng dòng → highlight 1 lần):
+            # dict.fromkeys giữ thứ tự, khử trùng chính xác.
+            uniq = list(dict.fromkeys(map(tuple, out_spans[side])))
+            final[side] = [list(s) for s in uniq]
+            total += len(final[side])
+        return {"spans_a": final["a"], "spans_b": final["b"],
+                "n_shared": total,
+                "kind": "gat",
+                "note": "dòng được GAT chú ý trên trung bình (tầng cuối)"}
+
+
+def _line_starts(lines: list[str]) -> list[int]:
+    starts, pos = [], 0
+    for line in lines:
+        starts.append(pos)
+        pos += len(line) + 1
+    return starts

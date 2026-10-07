@@ -356,3 +356,24 @@ def test_clone_detector_predicts_probabilities(rng):
     assert len(probs) == 2
     assert all(0.0 <= p <= 1.0 for p in probs)
     assert det.predict([_Pair("0", "1")], threshold=0.0) == [1]
+
+
+def test_parse_order_key_maps_graph_rows_to_raw():
+    """DEC-M4-evidence: stats['order'] la hoan vi raw idx; key la ('line', ...)
+    biengnore hoan toan (JSON moi tuong thich nguoc)."""
+    from src.representations.cpg.ingest import parse_cpg
+
+    payload = {
+        "nodes": [
+            {"id": 0, "label": "METHOD"},
+            {"id": 1, "label": "CALL", "line": 3},
+            {"id": 2, "label": "IDENTIFIER", "line": 3, "n_args": 2},
+        ],
+        "edges": [
+            {"src": 0, "dst": 1, "label": "AST"},
+            {"src": 1, "dst": 2, "label": "ARGUMENT"},
+        ],
+    }
+    g, st = parse_cpg(payload)
+    assert sorted(st["order"]) == [0, 1, 2]
+    assert len(st["order"]) == g.n_nodes

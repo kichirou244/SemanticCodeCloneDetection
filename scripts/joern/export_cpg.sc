@@ -212,7 +212,15 @@
           case Some(v) => s""","n_args": $v"""
           case None    => ""
         }
-        s"""{"id": $i, "label": ${esc(n.label)}$naStr}"""
+        // Số dòng để demo highlight evidence M4 (cell 5 vòng 7 đã xác nhận
+        // `n.lineNumber`). Match cả Int lẫn Option[Int] để không phụ thuộc
+        // kiểu trả về chính xác; node không có dòng → bỏ qua (không ghi).
+        val lnStr = n.lineNumber match {
+          case Some(v) => s""","line": $v"""
+          case None => ""
+          case v => s""","line": $v"""
+        }
+        s"""{"id": $i, "label": ${esc(n.label)}$naStr$lnStr}"""
       }.mkString(",")
 
       val body =

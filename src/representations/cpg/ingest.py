@@ -85,6 +85,10 @@ def parse_cpg(payload: dict, max_nodes: int = 0) -> tuple[CPGraph, dict]:
         "edges_dropped_dangling": n_edge_dangling,
         "edges_dropped_selfloop": n_edge_selfloop,
         "has_method": METHOD_LABEL in [labels[i].upper() for i in order],
+        # Thứ tự reorder (raw idx theo thứ tự graph mới): demo map ngược
+        # node graph → node JSON gốc (lấy vị trí dòng cho evidence M4).
+        # Cộng thêm, không đổi gì cũ — train không đọc key này.
+        "order": [int(i) for i in order],
     }
     return graph, stats
 

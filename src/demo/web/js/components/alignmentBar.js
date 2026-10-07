@@ -22,22 +22,26 @@ export function mountAlignmentBar({ statsEl, legendEl, alignment, onBlockFocus }
   const differs = (covA !== undefined && covA < 0.6) || (covB !== undefined && covB < 0.6);
 
   const cells = [
-    ['Khối khớp', stats.n_blocks ?? '—'],
-    ['Token A khớp', covA !== undefined ? pct(covA) : '—'],
-    ['Token B khớp', covB !== undefined ? pct(covB) : '—'],
-    ['Đã khớp A/B',
-      `${stats.n_matched_a ?? '—'} / ${stats.n_matched_b ?? '—'}`],
-    ['Tổng A/B', `${stats.n_tokens_a ?? '—'} / ${stats.n_tokens_b ?? '—'}`],
+    ['Khớp', `${stats.n_blocks ?? '—'} khối · A ${covA !== undefined ? pct(covA) : '—'} · B ${covB !== undefined ? pct(covB) : '—'}`],
   ];
   for (const [label, value] of cells) {
-    statsEl.append(el('span', {}, [el('b', { text: label }), ` ${value}`]), ' ');
+    statsEl.append(el('span', {}, [el('b', { text: label }), `: ${value}`]), ' ');
   }
   if (differs) {
     statsEl.append(el('span', {
       class: 'is-warn',
-      text: '· Phần xanh phủ < 60% — có thể không phải clone.',
+      text: '· Mức khớp phủ < 60% — có thể không phải clone.',
     }));
   }
+  // Hộp giải thích: chip # + sợi nối = khối giống nhau (rê chuột để khoanh,
+  // không còn tô nền); vàng = vị trí model đang chọn chú ý tới.
+  const note = el('div', { class: 'legend-note' });
+  note.innerHTML =
+    '<b>Cách đọc:</b><br>' +
+    '<span class="sw sw--chip"></span><b>Chip # + sợi nối</b> = khối giống nhau, rê chuột để khoanh (không tô nền).<br>' +
+    '<span class="sw sw--ev"></span><b>Vàng (gạch chân dày)</b> = chỗ model đang chọn chú ý tới — đổi model ở cột trái để xem model khác nhìn đâu.<br>' +
+    '<span class="sw sw--plain"></span><b>Không màu</b> = phần còn lại, cứ đọc bình thường, không phải lỗi.';
+  statsEl.append(note);
 
   for (const block of alignment.blocks || []) {
     const chip = el('button', {

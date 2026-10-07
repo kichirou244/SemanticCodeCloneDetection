@@ -75,15 +75,20 @@ alignment:
 
 models:
   B1:
-    label: B1 · MOSS (winnowing)
+    label: B1 · MOSS (service Stanford)
     family: baseline
     kind: moss
-    # Baseline = MOSS EXP-013 (k=20, w=5) — đúng số báo cáo. Tham số gốc
-    # (k=50, w=100) đã chứng minh suy biến trên POJ-104 (F1 rơi về 0,667 =
-    # dự đoán toàn bộ dương), nên KHÔNG dùng ở đây.
-    results_dir: results/exp013_moss_poj104
+    # Baseline CHÍNH = MOSS thật (moss.stanford.edu) — EXP-014. Ngưỡng đọc từ
+    # threshold.json của EXP-014 (rule: score>0.01 = MOSS gắn cờ). Cần
+    # MOSS_USER_ID chạy; thiếu thì demo tự fallback winnowing local (k=20, w=5,
+    # tham số dò trên validation EXP-013) để vẫn chạy được offline.
+    results_dir: results/exp014_moss_service_poj104
     k: 20
     w: 5
+    # Cache nộp MOSS thật (hash nội dung) — chấm lại cùng cặp không nộp lại.
+    cache_dir: artifacts/moss_cache_demo
+    show: 1000
+    max_matches: 1000
 
   M1:
     label: M1 · CodeBERT

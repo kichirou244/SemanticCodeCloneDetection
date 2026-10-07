@@ -1,7 +1,16 @@
-"""Chạy MoSS (Winnowing) trên tập cặp POJ-104 — baseline chính của báo cáo.
+"""Chạy MoSS (Winnowing) trên tập cặp POJ-104 — bản all-pairs local, THAM KHẢO.
 
     python scripts/eval_moss.py
     python scripts/eval_moss.py --k 25 --w 10        # bỏ qua bước dò tham số
+
+CHÚ Ý (2026-10-07): baseline CHÍNH của báo cáo đã chuyển sang **MOSS service thật**
+(moss.stanford.edu) qua `scripts/eval_moss_service.py` → EXP-014. Script này
+(EXP-013) giữ lại để (a) cross-check cài đặt winnowing với kết quả service trên
+tập nhỏ và (b) làm fallback offline; con số EXP-013 không còn là baseline chính.
+
+Lý do giữ bản all-pairs: service MOSS chỉ trả top-N match, không cho điểm mọi
+cặp, nên KHÔNG đo được cho bộ cặp cố định; bản local tính điểm mọi cặp bằng cùng
+thuật toán fingerprints + containment.
 
 Vì sao cần script này
 ---------------------

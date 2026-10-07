@@ -48,15 +48,6 @@
   --syn-pp:   hsl(320 60% 70%);
   --syn-bad:  hsl(4 82% 68%);
 
-  /* --- tô khớp / tô lệch.
-     Nguyên tắc đọc: MÁT = khớp, ẤM = lệch. Nhờ vậy người xem nhận ra ngay
-     "phần nào là giống nhau" mà không cần đọc chú giải.
-     6 sắc độ mát trải đều theo vòng tròn màu; 6 sắc độ ấm cho phần lệch. --- */
-  --diff-match-base:  hsl(158 48% 46%);
-  --diff-diff-base:   hsl(6 62% 56%);
-  --diff-match-ink:   hsl(158 60% 88%);
-  --diff-diff-ink:    hsl(6 70% 88%);
-
   /* --- hình dạng & đổ bóng nhiều tầng --- */
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -82,10 +73,11 @@
   --code-line-h: 1.55rem;
 }
 
-/* Chặn tối đa 6 màu: 6 khối là đủ để mắt phân biệt, nhiều hơn thì thành nhiễu. */
-[data-block="0"] { --block-hue: 158; }
-[data-block="1"] { --block-hue: 186; }
-[data-block="2"] { --block-hue: 205; }
-[data-block="3"] { --block-hue: 232; }
-[data-block="4"] { --block-hue: 268; }
-[data-block="5"] { --block-hue: 305; }
+/* Một màu (lam trung tính) cho mọi khối khớp khi rê chuột: không còn tô nền
+   xanh mặc định — mắt chỉ cần biết "vàng = evidence"; khối nào thì có # + hover. */
+[data-block="0"] { --block-hue: 199; }
+[data-block="1"] { --block-hue: 199; }
+[data-block="2"] { --block-hue: 199; }
+[data-block="3"] { --block-hue: 199; }
+[data-block="4"] { --block-hue: 199; }
+[data-block="5"] { --block-hue: 199; }

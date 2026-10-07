@@ -157,24 +157,19 @@
 .tok--ws   { color: inherit; }
 .tok--bad  { color: var(--syn-bad); text-decoration: underline wavy; }
 
-/* Lệch: nền ấm nhạt. Không dùng đỏ tươi — đọc lâu sẽ chói và dễ tưởng là lỗi. */
+/* Không khớp: giữ nguyên chữ, không nền — tránh tưởng là "lỗi". */
 .tok--diff {
-  background: hsl(var(--diff-diff-hue, 6) 55% 50% / 0.18);
-  box-shadow: inset 0 -1.5px 0 hsl(var(--diff-diff-hue, 6) 60% 58% / 0.5);
-}
-
-/* Khớp: nền theo hue của khối + gạch chân đậm để thấy ranh giới khi token sát nhau. */
-.tok--match {
-  background: hsl(var(--block-hue, 158) 52% 48% / 0.3);
-  box-shadow: inset 0 -1.5px 0 hsl(var(--block-hue, 158) 62% 62% / 0.85);
+  background: transparent;
+  box-shadow: none;
+  opacity: 0.75;
 }
 
 /* Khối đang được rê chuột: nổi lên, phần còn lại mờ đi. */
 .diff .tok.is-dim { opacity: 0.32; }
 .diff .tok.is-focus {
   opacity: 1;
-  background: hsl(var(--block-hue, 158) 60% 54% / 0.52);
-  box-shadow: inset 0 -2px 0 hsl(var(--block-hue, 158) 70% 70%);
+  background: hsl(var(--block-hue, 199) 60% 54% / 0.52);
+  box-shadow: inset 0 -2px 0 hsl(var(--block-hue, 199) 70% 70%);
 }
 
 /* ------------------------------------------------------------ cột nối giữa */
@@ -188,7 +183,7 @@
   left: 0;
   right: 0;
   height: 0;
-  border-top: 2px solid hsl(var(--block-hue, 158) 52% 50% / 0.75);
+  border-top: 2px solid hsl(var(--block-hue, 199) 52% 50% / 0.75);
   transition: border-color var(--t-fast), opacity var(--t-fast);
   cursor: pointer;
 }
@@ -198,14 +193,14 @@
   top: -3.5px;
   width: 5px; height: 5px;
   border-radius: 50%;
-  background: hsl(var(--block-hue, 158) 55% 52%);
+  background: hsl(var(--block-hue, 199) 55% 52%);
   content: '';
 }
 .gutter-link::before { left: 3px; }
 .gutter-link::after  { right: 3px; }
 
 .gutter-link.is-dim { opacity: 0.2; }
-.gutter-link.is-focus { border-color: hsl(var(--block-hue, 158) 68% 62%); }
+.gutter-link.is-focus { border-color: hsl(var(--block-hue, 199) 68% 62%); }
 
 .gutter-link__label {
   position: absolute;
@@ -224,4 +219,28 @@
   .diff__gutter { display: none; }
   .diff__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
-.tok-ev { box-shadow: inset 0 -0.35em hsl(210 90% 55% / 45%); }
+.tok-ev { background: hsl(45 95% 55% / 20%); box-shadow: inset 0 -3px 0 hsl(45 95% 55% / 95%); }
+
+/* Hộp giải thích màu trong modal: 3 dòng, mỗi dòng 1 swatch. */
+.legend-note {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-inset);
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.legend-note b { color: var(--text-primary); font-weight: 600; }
+.legend-note .sw {
+  display: inline-block;
+  width: 0.8em; height: 0.8em;
+  border-radius: 3px;
+  vertical-align: -1px;
+  margin-right: 0.3em;
+}
+.legend-note .sw--chip { background: hsl(199 55% 50% / 0.55); }
+.legend-note .sw--plain { background: transparent; border: 1px solid var(--border-strong); }
+.legend-note .sw--ev { background: hsl(45 95% 55% / 45%); }

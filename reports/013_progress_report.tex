@@ -63,8 +63,9 @@ Test       & 11.000 & 5.500  & báo cáo kết quả cuối \\
 \section{Các phương pháp}
 
 \begin{itemize}
-\item \textbf{MOSS} (baseline). Sleator \& Bernstein 2003. So khớp đặc trưng
-      k-gram. Tham số k=20, w=5.
+\item \textbf{MOSS} (baseline). Schleimer, Wilkerson \& Aiken 2003. So khớp đặc trưng
+      k-gram. Tham số k=20, w=5 (EXP-013). Sau đó (báo cáo [06-10]) baseline chính
+      chuyển sang MOSS service thật (EXP-014).
 \item \textbf{CodeBERT}. \texttt{microsoft/\allowbreak codebert-base}. Ghép ba
       vector (A, B, độ lệch tuyệt đối A với B) rồi qua một lớp MLP.
 \item \textbf{GraphCodeBERT}. \texttt{microsoft/\allowbreak graphcodebert-base}.

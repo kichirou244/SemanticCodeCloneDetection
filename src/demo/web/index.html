@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Semantic Code Clone Detection — Demo trực quan</title>
-<meta name="description" content="Demo phát hiện clone mã nguồn: tải file .zip, chấm mọi cặp bằng 5 model, tải báo cáo kết quả, xem đoạn khớp bôi màu.">
+<meta name="description" content="Demo phát hiện clone mã nguồn: tải file .zip, chấm mọi cặp bằng 5 model, tải báo cáo kết quả, xem highlight evidence từng model.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='13' font-size='13'%3E%E2%8C%9B%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -18,16 +19,13 @@
   <div class="app-header__brand">
     <h1 class="app-header__title">Semantic Code Clone Detection</h1>
     <p class="app-header__subtitle">
-      Tải file .zip · quét mọi cặp bằng 5 model · tải báo cáo · bấm hàng để xem đoạn khớp bôi màu
+      Tải file .zip · quét mọi cặp bằng 5 model · tải báo cáo · bấm hàng để xem highlight evidence từng model
     </p>
   </div>
 </header>
 
 <main class="app-layout app-layout--single">
   <section class="workspace">
-    <section class="score-strip" id="score-strip"
-             aria-label="Điểm và phán quyết của từng model"></section>
-
     <section class="panel panel--flush">
       <div class="scan-panel">
         <div class="scan-toolbar">
@@ -56,21 +54,34 @@
         <p class="scan-meta" id="zip-note"></p>
       </div>
     </section>
-
-    <section class="panel panel--flush">
-      <div class="alignment-bar">
-        <div class="alignment-bar__stats" id="alignment-stats"></div>
-        <div class="alignment-bar__legend" id="block-legend"
-             aria-label="Chú giải các khối khớp"></div>
-      </div>
-      <div class="diff" id="diff-view">
-        <p class="empty-state" id="empty-state">
-          Tải file .zip lên, bấm <b>Quét tất cả cặp</b>, rồi bấm một hàng kết quả để xem đoạn khớp bôi màu.
-        </p>
-      </div>
-    </section>
   </section>
 </main>
+
+<div class="modal-backdrop" id="pair-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal__head">
+      <h2 id="modal-title">Cặp trùng khớp</h2>
+      <span class="modal__sub" id="modal-sub"></span>
+      <button type="button" class="btn" id="modal-close">✕ Đóng</button>
+    </div>
+    <div class="modal__body">
+      <aside class="modal__rail" aria-label="Chọn model để xem vị trí nó thấy">
+        <p class="modal__hint">Bấm model để xem vị trí nó thấy:</p>
+        <div id="modal-models"></div>
+      </aside>
+      <div class="modal__main">
+        <div class="alignment-bar">
+          <div class="alignment-bar__stats" id="alignment-stats"></div>
+          <div class="alignment-bar__legend" id="block-legend"
+               aria-label="Chú giải các khối khớp"></div>
+        </div>
+        <div class="diff" id="diff-view">
+          <p class="empty-state" id="empty-state">Đang tải…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script type="module" src="/static/js/main.js"></script>
 </body>

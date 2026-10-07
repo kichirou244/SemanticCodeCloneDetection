@@ -33,5 +33,10 @@ uvicorn>=0.29.0
 # test đó tự bỏ qua (importorskip) — demo vẫn chạy bình thường.
 httpx>=0.27.0
 
+# B0 Baseline MOSS — SỬA ĐÚNG CHUẨN service MOSS (moss.stanford.edu):
+# src/models/baseline/moss_service.py nộp code qua mosspy, đọc HTML report.
+# MOSS user id không nằm trong repo — truyền qua env MOSS_USER_ID.
+mosspy>=1.0.9
+
 # Test
 pytest>=8.0.0

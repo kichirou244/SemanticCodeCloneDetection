@@ -1,11 +1,12 @@
-"""Winnowing fingerprinting — thuật toán của MOSS (Sleator & Bernstein 2003).
+"""Winnowing fingerprinting — thuật toán của MOSS (Schleimer, Wilkerson & Aiken 2003).
 
 Lý do dùng làm baseline: MOSS là công cụ phát hiện đạo văn chuẩn của Stanford,
 nhưng service thật (`moss.stanford.edu`) cần tài khoản và gửi code lên mạng.
-Nghiên cứu cần baseline **lặp lại được**, nên ở đây chúng tôi triển khai đúng
-thuật toán fingerprinting của nó, chạy local, không phụ thuộc mạng. Đây là
-cách mà chính bài báo MOSS mô tả, và cũng là cách các bản cài lại (pymoss,
-plaggie...) triển khai.
+Đây là bản winnowing all-pairs chạy local, lặp lại được (EXP-013 — tham khảo).
+Baseline CHÍNH của báo cáo là MOSS service thật qua mosspy (`moss_service.py`,
+EXP-014); module này dùng cho (a) cross-check cài đặt và (b) fallback demo khi
+chưa có `MOSS_USER_ID`. Đây là cách mà chính bài báo MOSS mô tả, và cũng là
+cách các bản cài lại (pymoss, plaggie...) triển khai.
 
 Ba bước của thuật toán:
 

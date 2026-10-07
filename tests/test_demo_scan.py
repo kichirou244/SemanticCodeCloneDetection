@@ -307,6 +307,24 @@ def test_moss_evidence_spans_are_within_bounds():
     assert BaseScorer.evidence.__doc__ is not None
 
 
+def test_moss_score_all_pairs_local_fallback(monkeypatch):
+    """Không có MOSS_USER_ID → B1 fallback local, scan all-pairs chạy offline."""
+    monkeypatch.delenv("MOSS_USER_ID", raising=False)
+    from src.demo.scorers.moss_scorer import MossScorer
+
+    m = MossScorer("B1", "moss", Path("."))
+    assert m.ensure_loaded() is True, m.status()["error"]
+    assert m.mode == "moss-local"
+    a = "int same(float x) { return x * x + 1; }"
+    b = a.replace("x", "y").replace("same", "similar")
+    out = m.score_all_pairs([("a.c", a), ("b.c", b)])
+    assert ("a.c", "b.c") in out
+    score, detail = out[("a.c", "b.c")]
+    assert score is not None and 0.0 <= score <= 1.0
+    assert detail.get("mode") == "moss-local"
+    assert m.score_all_pairs([]) == {}
+
+
 def test_evidence_for_returns_token_indices():
     """evidence_for() (fetch riêng, không nằm trong analyze): B1 có tok,
     model lạ thì KeyError (endpoint map thành 404)."""
@@ -412,3 +430,30 @@ def test_evidence_endpoint_returns_mapped_spans():
     r2 = client.post("/api/evidence",
                      json={"code_a": LONG_A, "code_b": LONG_B, "model_id": "M9"})
     assert r2.status_code == 404
+
+
+def test_cpg_evidence_live_lines():
+    """Joern that + GAT attention that: spans nam trong code, on dinh,
+    chi chua dong co node duoc chu y. Skip khi thieu toolchain."""
+    pytest.importorskip("torch_geometric")
+    from scripts.build_cpg_export import joern_missing_reason, joern_or_die
+
+    if joern_missing_reason(joern_or_die()):
+        pytest.skip("can Java+Joern")
+    from src.demo.registry import ModelRegistry
+
+    root = Path(__file__).resolve().parents[1]
+    m4 = ModelRegistry.from_yaml(root / "configs" / "demo_web.yaml",
+                                 root=root).get("M4")
+    if not m4.checkpoint.exists():
+        pytest.skip("thieu checkpoint M4")
+    a = ("int bubble_sort(int arr[], int n) { int i = 0; "
+         "while (i < n) { arr[i] = arr[i] + 1; i = i + 1; } return n; }")
+    b = a.replace("arr", "a").replace("bubble_sort", "sort")
+    ev = m4.evidence(a, b)
+    assert ev is not None and ev["kind"] == "gat"
+    assert ev["spans_a"] and ev["spans_b"]
+    for s, e in ev["spans_a"]:
+        assert 0 <= s < e <= len(a)
+    ev2 = m4.evidence(a, b)
+    assert ev["spans_a"] == ev2["spans_a"] and ev["spans_b"] == ev2["spans_b"]

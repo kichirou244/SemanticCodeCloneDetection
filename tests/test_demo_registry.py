@@ -26,13 +26,14 @@ def test_registry_builds_all_five_from_yaml():
     assert isinstance(by_id["M4"], CpgScorer)
 
 
-def test_moss_uses_exp013_tuned_params_not_defaults():
-    """Regression: YAML từng trỏ EXP-006 (không tồn tại) với k=50/w=100 —
-    bộ suy biến trên POJ-104. Phải là EXP-013 (k=20, w=5)."""
+def test_moss_uses_exp014_service_keeps_fallback_params():
+    """Regression: B1 trỏ về baseline MOSS service (EXP-014), còn k/w (20, 5) giữ
+    làm tham số của fallback winnowing local khi chưa có MOSS_USER_ID."""
     reg = ModelRegistry.from_yaml(YAML, root=ROOT)
     moss = reg.get("B1")
-    assert moss.results_dir.name == "exp013_moss_poj104"
+    assert moss.results_dir.name == "exp014_moss_service_poj104"
     assert (moss.k, moss.w) == (20, 5)
+    assert moss.max_matches == 1000 and moss.cache_dir is not None
 
 
 def test_moss_scores_end_to_end_with_real_threshold():

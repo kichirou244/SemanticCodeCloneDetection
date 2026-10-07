@@ -246,6 +246,14 @@ CANDIDATES: list[dict] = [
      "setup": "val a = cpg.call.l.head; val g = Iterator(a).argument.l.head",
      "expr": "Iterator(g).code.l.size", "expect": "ok"},
 
+    # === VÒNG 7: vị trí dòng cho evidence M4 =================================
+    # Demo highlight M4 cần map node → dòng code. Exporter ghi `n.lineNumber`
+    # (dạng trực tiếp như `n.label`), fallback dạng Iterator nếu trực tiếp FAIL.
+    {"name": "node.lineNumber", "setup": "val n = cpg.method.ast.l.head",
+     "expr": "n.lineNumber", "expect": "ok"},
+    {"name": "node.lineNumber.iter", "setup": "val n = cpg.method.ast.l.head",
+     "expr": "Iterator(n).lineNumber.l.size", "expect": "ok"},
+
     # --- ĐỐI CHỨNG: hai cái này chắc chắn hỏng, đã bác ở các lần chạy trước ----
     # Giữ **nguyên tên** để api_scan nhận cache và không chạy lại (tiết kiệm 20s).
     {"name": "call.ref", "expr": "cpg.call.ref.l.size", "expect": "fail"},

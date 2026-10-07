@@ -6,10 +6,9 @@
  * JSON/Markdown. Mọi lỗi hiện trên trang, không console-only.
  */
 
-import { $, el } from './utils/dom.js';
+import { $, clear, el, fixed } from './utils/dom.js';
 import { getStatus, analyze, uploadZip, scanUpload, evidenceFor } from './api/demoApi.js';
 import { createStore } from './state/store.js';
-import { renderScoreStrip } from './components/scoreStrip.js';
 import { renderDiff } from './components/diffPane.js';
 import { mountAlignmentBar } from './components/alignmentBar.js';
 import {
@@ -29,7 +28,6 @@ const state = createStore({
 });
 
 const refs = {
-  scoreStrip: $('#score-strip'),
   diffView: $('#diff-view'),
   emptyState: $('#empty-state'),
   statsEl: $('#alignment-stats'),
@@ -44,6 +42,10 @@ const refs = {
   btnZipScan: $('#btn-zip-scan'),
   zipResults: $('#zip-results'),
   zipNote: $('#zip-note'),
+  modal: $('#pair-modal'),
+  modalSub: $('#modal-sub'),
+  modalModels: $('#modal-models'),
+  modalClose: $('#modal-close'),
 };
 
 function setToast(message, kind = 'info') {
@@ -72,14 +74,6 @@ const toastStyle = el('style', { text: `
 ` });
 document.head.append(toastStyle);
 
-function renderScores() {
-  renderScoreStrip(refs.scoreStrip, {
-    statuses: state.get().status?.models ?? [],
-    results: state.get().results,
-    loading: state.get().loading,
-  });
-}
-
 function renderEmpty() {
   $('.diff__grid', refs.diffView)?.remove();
   refs.diffView.append(refs.emptyState);
@@ -105,7 +99,6 @@ function renderResult(data, labelA, labelB) {
   } else {
     renderEmpty();
   }
-  renderScores();
   applyEvidence();
 }
 
@@ -133,7 +126,6 @@ async function runAnalyze(codeA, codeB, labelA, labelB) {
     renderResult(data, labelA, labelB);
   } catch (error) {
     setToast(`Phân tích thất bại: ${error.message}`, 'error');
-    renderScores();
   }
 }
 
@@ -148,7 +140,7 @@ function applyEvidence() {
   if (grid) {
     grid.querySelectorAll('.tok-ev').forEach((n) => n.classList.remove('tok-ev'));
   }
-  refs.scoreStrip.querySelectorAll('.score-card').forEach((c) => {
+  refs.modalModels.querySelectorAll('.model-opt').forEach((c) => {
     c.classList.toggle('is-sel', !!evSelected && c.dataset.model === evSelected);
   });
   const ev = evSelected ? evByModel[evSelected] : null;
@@ -188,7 +180,7 @@ async function selectModelForEvidence(modelId) {
   if (!ev || (!(ev.tok_a || []).length && !(ev.tok_b || []).length)) {
     evSelected = null;
     applyEvidence();
-    setToast(`${modelId} chưa có evidence vị trí riêng — đang hiện căn chỉnh chung.`);
+    setToast(`${modelId} chưa có evidence vị trí riêng — chỉ tô màu cú pháp, chưa có vệt vàng.`);
     return;
   }
   evSelected = modelId;
@@ -239,7 +231,37 @@ async function onZipScan() {
   }
 }
 
-async function pickZipPair(pair) {
+function renderModelRail(models) {
+  clear(refs.modalModels);
+  for (const m of models || []) {
+    const score = m.score === null || m.score === undefined ? '—' : fixed(m.score, 3);
+    refs.modalModels.append(el('button', {
+      type: 'button',
+      class: 'model-opt',
+      dataset: { model: m.model_id },
+      title: `${m.label || m.model_id} · ${m.verdict || ''} (bấm để xem vị trí)`,
+    }, [
+      el('span', { class: `model-opt__dot model-opt__dot--${m.verdict || 'unknown'}` }),
+      el('span', { class: 'model-opt__label', text: m.label || m.model_id }),
+      el('span', { class: 'model-opt__score', text: score }),
+    ]));
+  }
+  applyEvidence();
+}
+
+function openModal(pair) {
+  refs.modalSub.textContent = `${pair.a} ↔ ${pair.b}`;
+  refs.modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  pickZipPairInModal(pair);
+}
+
+function closeModal() {
+  refs.modal.hidden = true;
+  document.body.style.overflow = '';
+}
+
+async function pickZipPairInModal(pair) {
   const a = zipState.filesByName[pair.a];
   const b = zipState.filesByName[pair.b];
   if (a === undefined || b === undefined) {
@@ -247,6 +269,14 @@ async function pickZipPair(pair) {
     return;
   }
   await runAnalyze(a, b, pair.a, pair.b);
+  const models = state.get().results || [];
+  renderModelRail(models);
+  const best = [...models].sort((x, y) => (y.score ?? -1) - (x.score ?? -1))[0];
+  if (best) await selectModelForEvidence(best.model_id);
+}
+
+async function pickZipPair(pair) {
+  openModal(pair);
 }
 
 function downloadFile(name, text, type) {
@@ -284,9 +314,16 @@ function initZipScan() {
     refs.zipResults, 'error', 'Chưa chọn file .zip nào — bấm “Chọn .zip” trước.',
   );
   // Bấm thẻ điểm = đổi highlight sang evidence riêng của model đó.
-  refs.scoreStrip.addEventListener('click', (e) => {
-    const card = e.target.closest('[data-model]');
-    if (card) selectModelForEvidence(card.dataset.model);
+  refs.modalModels.addEventListener('click', (e) => {
+    const opt = e.target.closest('[data-model]');
+    if (opt) selectModelForEvidence(opt.dataset.model);
+  });
+  refs.modalClose.addEventListener('click', closeModal);
+  refs.modal.addEventListener('click', (e) => {
+    if (e.target === refs.modal) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !refs.modal.hidden) closeModal();
   });
   bindZipUpload({ inputEl: refs.zipFile, btnEl: refs.btnUpload, nameEl: refs.zipFileName, onUpload: onZipUpload, onEmpty: noFile });
   bindZipScan({
@@ -301,7 +338,6 @@ function initZipScan() {
  * `ok=False` hiện thẻ đỏ kèm lý do, trang vẫn xem được phần alignment một cách độc lập.
  */
 async function init() {
-  renderScores();
   try {
     const status = await getStatus();
     state.set({ status });
@@ -309,7 +345,6 @@ async function init() {
     setToast(`Không liên hệ được server: ${error.message ?? 'không rõ lý do'}`, 'error');
   }
   initZipScan();
-  renderScores();
 }
 
 init();

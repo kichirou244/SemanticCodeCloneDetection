@@ -286,51 +286,55 @@ class DemoService:
         }
 
     def scan_library(self, threshold: float | None = None) -> dict:
-        """Quét all-vs-all bằng fingerprint MOSS, trả các cặp >= ngưỡng (giảm dần).
+        """Quét all-vs-all bằng MOSS, trả các cặp >= ngưỡng (giảm dần).
 
-        Chỉ dùng B1 (MOSS) — nhanh và đúng thuật toán baseline. Cặp nào được bấm
-        trên UI thì `analyze()` của 4 model chạy riêng cho cặp đó.
+        Chỉ dùng B1. B1 gọi MOSS thật (moss.stanford.edu) với MỘT lần nộp cho cả
+        thư mục (`report_url` trong kết quả); thiếu MOSS_USER_ID thì tự fallback
+        winnowing local (k=20, w=5). Cặp nào được bấm trên UI thì `analyze()` của
+        4 model chạy riêng cho cặp đó.
         """
+        from src.demo.scorers.moss_scorer import MossScorer
+
         listing = self.library_files()
         files = listing["files"][: self._library_max_files]
         if not files:
             return {
-                "n_files": 0, "threshold": threshold,
-                "pairs": [], "duration_ms": 0.0, "mode": "moss",
+                "n_files": 0, "threshold": threshold, "mode": "moss",
+                "pairs": [], "duration_ms": 0.0,
             }
         if threshold is None:
             threshold = self._library_default_threshold
-        threshold = float(threshold)
-        threshold = max(0.0, min(1.0, threshold))
+        threshold = max(0.0, min(float(threshold), 1.0))
 
-        moss_cfg = self.registry.config.get("models", {}).get(
-            "B1", {}
-        )
-        k = int(moss_cfg.get("k", 20))
-        w = int(moss_cfg.get("w", 5))
-
-        from src.models.baseline.moss import FingerprintDoc, scan_pairwise
+        moss = self.registry.get("B1")
+        if not isinstance(moss, MossScorer):  # config B1 sai kind — fail rõ ràng
+            raise RuntimeError("B1 trong registry không phải MossScorer")
 
         t0 = time.perf_counter()
-        docs: list[FingerprintDoc] = []
-        for info in files:
-            content = self.read_library_file(info["path"])
-            docs.append(
-                FingerprintDoc.from_code(
-                    info["path"], content["code"], k=k, w=w
-                )
-            )
-        pairs = scan_pairwise(docs, threshold)
+        items = [(info["path"], self.read_library_file(info["path"])["code"])
+                 for info in files]
+        raw = moss.score_all_pairs(items)
+        pairs = sorted(
+            ({"a": a, "b": b, "similarity": round(float(score), 6)}
+             for (a, b), (score, _detail) in raw.items()
+             if score is not None and score >= threshold),
+            key=lambda r: r["similarity"], reverse=True,
+        )
         duration_ms = round((time.perf_counter() - t0) * 1000, 1)
-        return {
+        out = {
             "n_files": len(files),
             "threshold": threshold,
             "mode": "moss",
-            "k": k,
-            "w": w,
             "duration_ms": duration_ms,
             "pairs": pairs,
         }
+        if moss.mode == "moss-service":
+            # link report MOSS thật để mở kết quả gốc ở Stanford
+            first_url = next((d.get("report_url") for (_a, _b), (s, d) in
+                              raw.items() if d.get("report_url")), None)
+            out["report_url"] = first_url
+            out["cache_dir"] = str(moss.cache_dir) if moss.cache_dir else None
+        return out
 
     # ------------------------------------------------------- quét zip upload
     def upload_zip(self, data: bytes, filename: str) -> dict:
@@ -422,12 +426,14 @@ class DemoService:
         pair_keys = [(a, b) for i, a in enumerate(names) for b in names[i + 1 :]]
         total = len(pair_keys)
         from src.demo.scorers.cpg_scorer import CpgScorer
+        from src.demo.scorers.moss_scorer import MossScorer
 
         # M4 batch trước: 1 lần Joern cho mọi file (không phải N² lần JVM).
+        # B1 cũng batch: 1 lần nộp MOSS cho cả zip (không phải N² lần upload).
         raw: dict[str, dict[tuple[str, str], tuple[float | None, dict]]] = {}
         for s in scorers:
             raw[s.model_id] = {}
-            if isinstance(s, CpgScorer) and pair_keys:
+            if isinstance(s, (CpgScorer, MossScorer)) and pair_keys:
                 raw[s.model_id] = s.score_all_pairs([(n, files[n]) for n in names])
         pairs = []
         done = 0
@@ -437,7 +443,7 @@ class DemoService:
             for ci in range(0, len(pair_keys), SCAN_CHUNK_PAIRS):
                 chunk = pair_keys[ci : ci + SCAN_CHUNK_PAIRS]
                 for s in scorers:
-                    if isinstance(s, CpgScorer):
+                    if isinstance(s, (CpgScorer, MossScorer)):
                         continue  # đã batch đủ ở trên
                     try:
                         got = s.score_batch([(files[a], files[b]) for a, b in chunk])
@@ -459,6 +465,7 @@ class DemoService:
                             "verdict": verdict,
                             "threshold": thr,
                             "error": detail.get("error"),
+                            "report_url": detail.get("report_url"),
                         }
                         if score is not None and (best is None or score > best):
                             best = score

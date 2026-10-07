@@ -19,6 +19,8 @@ from src.demo.scorers.moss_scorer import MossScorer
 from src.demo.scorers.transformer_scorer import TransformerScorer
 from src.models.baseline.moss import DEFAULT_K, DEFAULT_W
 
+DEFAULT_MOSS_SHOW = 1000
+
 DEFAULT_CONFIG = Path("configs/demo_web.yaml")
 
 #: `kind` trong YAML → class. Thêm loại scorer mới thì thêm ở đây, không chạm chỗ khác.
@@ -99,6 +101,11 @@ def _build(spec: dict, model_id: str, root: Path, device: str) -> BaseScorer:
             **common,
             k=int(spec.get("k", DEFAULT_K)),
             w=int(spec.get("w", DEFAULT_W)),
+            cache_dir=(
+                _p(root, spec["cache_dir"]) if spec.get("cache_dir") else None
+            ),
+            show=int(spec.get("show", DEFAULT_MOSS_SHOW)),
+            max_matches=int(spec.get("max_matches", DEFAULT_MOSS_SHOW)),
         )
     if kind == "transformer":
         return TransformerScorer(
