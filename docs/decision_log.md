@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.25.0 |
+| **Phiên bản** | 1.26.0 |
 | **Ngày cập nhật** | 2026-10-07 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -707,7 +707,8 @@
 | 23 | 1.22.0 | 2026-10-04 | M4 train xong (5 epoch, ~57 phút T4): val F1 còn tăng tới epoch cuối (0,800→0,817→0,819) nên dừng vì hết epoch chứ không plateau — như ASTNN lúc trước. Test P/R/F1 0,695/0,885/0,779±0,004, ROC-AUC 0,864, thr 0,42. Kém CodeBERT 0,131 (CI [-0,140;-0,122], có ý nghĩa), hơn MOSS 0,097. Báo cáo thêm hàng CPG-GNN (5 phương pháp), bỏ “Tiếp tục CPG-GNN”. |
 | 24 | 1.23.0 | 2026-10-07 | Thêm DEC-028: **baseline chính chuyển sang MOSS service thật (mosspy, EXP-014)** — thay thế quyết định 1 của DEC-026. EXP-013 (winnowing all-pairs local) hạ xuống `COMPLETED (tham khảo)`, giữ làm fallback demo (k=20,w=5). Đính chính citation: MOSS là **Schleimer, Wilkerson & Aiken 2003** (không phải Sleator & Bernstein). |
 | 25 | 1.24.0 | 2026-10-07 | Thêm DEC-029: audit bổ trợ M2×M4 (test, 11.000 cặp) → M4 sửa 662/1.053 lỗi của M2 (62,9%) nhưng phá 2.377/9.947 đúng (23,9%), net −1.715 ⇒ **quy tắc OR/AND bị loại** (OR F1 0,809, AND F1 0,879, đều kém M2 0,907). **M5 = soft fusion mức embedding** (concat_mlp [hA;hB;|hA-hB|], DEC-005 + DEC-016): logistic (s_M2,s_M4) làm baseline đạt test F1 0,9217 > M2 0,9069 (+1,5đ) nhưng AUC 0,9683 < M2 0,9713 — thắng chỉ ở vùng ngưỡng ~0,535, phải nêu đúng vùng thay vì kết luận chung. Warm start encoder M2 (EXP-003) + M4 (EXP-005) rồi joint fine-tune LR 2e-5; giữ max_length 256 (so sánh sạch, không vội segment-GRU). Script: `scripts/audit_m2_m4_complementarity.py`, output `results/audit_m2_m4.json`. |
-| 26 | 1.25.0 | 2026-10-07 | DEC-029 **§4 bổ sung — kênh phân phối checkpoint warm start = Hugging Face Hub.** Lý do: checkpoint `*.pt` bị `.gitignore` (M2 1,41GB) không thể trong repo; đồng thời khi chạy notebook EXP-006 trên Kaggle, cell 7 báo *WARM_START MISSING* vì user chưa Add input output EXP-003/EXP-005 **nhưng thật ra EXP-003 mặc định `KEEP_WEIGHTS=False` nên output của nó không hề chứa `best_checkpoint.pt`** — Add input cũng không tìm thấy. Giải pháp: `scripts/export_hybrid_warm_start.py` rút riêng `encoder.*` (M2 475MB/199 khóa, M4 0,4MB/32 khóa; verify warm start M4 missing=0) rồi push lên HF repo `kichirou244/sccd-hybrid-warm-start` qua `--hf-repo`. Notebook cell 7 pull từ HF (`HF_TOKEN` nếu private), fallback quét `/kaggle/input` output cũ; thiếu checkpoint ⇒ **assert chặn train** để không tạo số không chính thức. |
+| 26 | 1.25.0 | 2026-10-07 | DEC-029 **§4 bổ sung — kênh phân phối checkpoint warm start = Hugging Face Hub.** Lý do: checkpoint `*.pt` bị `.gitignore` (M2 1,41GB) không thể trong repo; đồng thời khi chạy notebook EXP-006 trên Kaggle, cell 7 báo *WARM_START MISSING* vì user chưa Add input output EXP-003/EXP-005 **nhưng thật ra EXP-003 mặc định `KEEP_WEIGHTS=False` nên output của nó không hề chứa `best_checkpoint.pt`** — Add input cũng không tìm thấy. Giải pháp: `scripts/export_hybrid_warm_start.py` rút riêng `encoder.*` (M2 475MB/199 khóa, M4 0,4MB/32 khóa; verify warm start M4 missing=0) rồi push lên HF repo `Kichirou24/SemanticCodeCloneDetection` qua `--hf-repo`. Notebook cell 7 pull từ HF (`HF_TOKEN` nếu private), fallback quét `/kaggle/input` output cũ; thiếu checkpoint ⇒ **assert chặn train** để không tạo số không chính thức. |
+| 27 | 1.26.0 | 2026-10-07 | DEC-029 §4 chốt tên HF repo **chính thức**: `Kichirou24/SemanticCodeCloneDetection` (public — SSH `git@hf.co` hoạt động trên máy chủ, không cần token). 2 file encoder đã push lên HF kèm README model card; notebook EXP-006 cell 7 và `export_hybrid_warm_start.py` đổi theo tên repo này. |
 
 ---
 
@@ -773,7 +774,7 @@
   26): checkpoint `*.pt` gitignored + output EXP-003 trên Kaggle không giữ
   checkpoint (`KEEP_WEIGHTS=False`) ⇒ sinh bằng `scripts/export_hybrid_warm_start.py`
   (chỉ `encoder.*`: M2 475MB, M4 0,4MB) rồi pull về từ HF repo
-  `kichirou244/sccd-hybrid-warm-start` ở cell 7 của notebook.
+  `Kichirou24/SemanticCodeCloneDetection` ở cell 7 của notebook.
 - **Quyết định 5 — giữ `max_length 256` cho M5** (đóng băng từ DEC-016/022) để so
   sánh sạch với M2. Segment-GRU / nâng 510 chỉ làm sau khi có kết quả M5.
 - **Loại bỏ:** fusion OR/AND/metric-level; blending score đơn thuần (Cardinal) làm

@@ -16,7 +16,7 @@ Cách dùng (push thường dùng nhất, cần `HF_TOKEN` trong env):
         --m2 results/exp003_graphcodebert_poj104/best_checkpoint.pt \
         --m4 results/exp005_cpg_gnn_poj104/best_checkpoint.pt \
         --out warm_start \
-        --hf-repo kichirou244/sccd-hybrid-warm-start
+        --hf-repo Kichirou24/SemanticCodeCloneDetection
 
 Bước chuẩn bị 1 lần trên HF: tạo repo model (không cần file gì) với tên khớp
 `--hf-repo`; muốn private thì chọn Private (notebook vẫn pull được nhờ HF_TOKEN).
@@ -73,7 +73,7 @@ def main() -> None:
                     help="checkpoint M4 (results/exp005_cpg_gnn_poj104/best_checkpoint.pt)")
     ap.add_argument("--out", default="warm_start", help="thư mục đầu ra (default: warm_start)")
     ap.add_argument("--hf-repo", default="",
-                    help="Hugging Face repo id (vd kichirou244/sccd-hybrid-warm-start) "
+                    help="Hugging Face repo id (vd Kichirou24/SemanticCodeCloneDetection) "
                          "để đẩy 2 file encoder lên sau khi export; bỏ trống thì chỉ export local")
     ap.add_argument("--token", default=os.environ.get("HF_TOKEN", ""),
                     help="Hugging Face token (mặc định dùng env HF_TOKEN)")
