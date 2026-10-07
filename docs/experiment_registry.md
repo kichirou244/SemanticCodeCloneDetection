@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.14.0 |
+| **Phiên bản** | 1.15.0 |
 | **Ngày cập nhật** | 2026-10-07 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -115,3 +115,4 @@ Config `configs/exp005_cpg_gnn.yaml` mang `status: BLOCKED_ON_JOERN` — xem
 | 13 | 1.12.0 | 2026-10-07 | EXP-006 → **READY_FOR_KAGGLE_TRAIN** (M5 Hybrid, DEC-029): `configs/exp006_hybrid.yaml`, `src/models/hybrid/model.py`, `src/experiments/exp006_hybrid.py`, `notebooks/exp006_hybrid_kaggle.ipynb`, `tests/test_exp006_hybrid.py` (5 test, không GPU/HF). Chốt hướng: **soft fusion mức embedding** (concat [hA;hB;\|hA-hB\|] → MLP, DEC-005 + DEC-016), **không OR/AND** — audit `results/audit_m2_m4.json` cho OR F1 0.809 / AND F1 0.879 đều kém M2 0.907; logistic baseline test F1 0.9217 (+1.5đ vs M2) nhưng AUC 0.9683 < 0.9713 ⇒ chỉ thắng vùng ngưỡng. Warm start encoder từ EXP-003 + EXP-005; giữ max_length 256. |
 | 14 | 1.13.0 | 2026-10-07 | **Kênh phân phối checkpoint warm start của EXP-006 chuyển sang Hugging Face Hub** (DEC-029 §4 bổ sung): checkpoint `*.pt` bị `.gitignore` nên không thể nằm trong repo; EXP-003 output trên Kaggle mặc định `KEEP_WEIGHTS=False` nên **không** chứa `best_checkpoint.pt` 1.41GB. Thêm `scripts/export_hybrid_warm_start.py` (rút riêng `encoder.*`: M2 475MB / 199 khóa, M4 0.4MB / 32 khóa — đã verify warm start M4 missing=0) và đẩy lên HF repo `Kichirou24/SemanticCodeCloneDetection`. Notebook `exp006_hybrid_kaggle.ipynb` cell 7 **pull từ HF** (`HF_TOKEN` nếu repo private), kèm fallback quét `/kaggle/input` cho output EXP-003/EXP-005 cũ; thiếu ⇒ assert chặn train. |
 | 15 | 1.14.0 | 2026-10-07 | Chốt tên HF repo chính thức: `Kichirou24/SemanticCodeCloneDetection` (public) — notebook cell 7 + `export_hybrid_warm_start.py` đổi cho khớp; 2 file encoder (`m2_text_encoder.pt` 475MB, `m4_graph_encoder.pt` 0.4MB) đã push lên HF kèm README model card. |
+| 16 | 1.15.0 | 2026-10-07 | **Errata row 15:** repo HF đang để **private** (anonymous 401), không phải public. Push/thao tác local qua **SSH** `git@hf.co` (đã đẩy 2 commit README+weights thành công). Trên Kaggle pull được nhờ `HF_TOKEN` của chính acc (cell 1 → cell 7); README HF ghi rõ điều này. |
