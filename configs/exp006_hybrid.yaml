@@ -56,9 +56,13 @@ training:
   #         trên embedding 1024 chiều). false = joint fine-tune (bản đầy đủ, tốn GPU).
   freeze_encoders: false
   # LR nhỏ vì warm start từ encoder đã train xong — LR to sẽ phá biểu diễn.
-  epochs: 5
+  # V2 (10h Kaggle): giảm 1/2 so với bản báo cáo 09-10 (2e-5 -> 1e-5 cho head,
+  # encoder chỉ 5e-6 qua encoder_learning_rate) vì E0 đỉnh rồi train loss sập
+  # 0,054 -> 0,003 là overfit.
+  epochs: 3
   batch_size: 12                    # text + GAT trong 1 step -> VRAM lớn hơn M4
-  learning_rate: 0.00002
+  learning_rate: 0.00001
+  encoder_learning_rate: 0.000005
   weight_decay: 0.01
   warmup_ratio: 0.1
   gradient_accumulation_steps: 2

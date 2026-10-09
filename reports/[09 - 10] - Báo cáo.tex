@@ -37,26 +37,12 @@
 \maketitle
 \vspace{-0.8cm}
 
-\section{Tổng quan}
-Phát hiện trùng lặp code trên POJ-104 với 5 phương pháp:
-CodeBERT, GraphCodeBERT, ASTNN, CPG-GNN, Hybrid.
+\section{Kết quả tuần này}
+Hoàn thành train 5 phương pháp trên POJ-104: CodeBERT (\texttt{codebert-base}, 3 epoch),
+GraphCodeBERT (\texttt{graphcodebert-base}, 3 epoch), ASTNN (7 epoch),
+CPG-GNN (5 epoch), Hybrid (warm-start từ GraphCodeBERT và CPG-GNN, fine-tune 4 epoch).
 Ngưỡng chọn trên validation, giữ nguyên khi test và khi demo.
-
-\section{Các phương pháp}
-\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
-\item \textbf{CodeBERT}: \texttt{codebert-base}, 126M tham số,
-  ghép ba vector A, B và trị tuyệt đối của hiệu rồi qua MLP.
-\item \textbf{GraphCodeBERT}: \texttt{graphcodebert-base}, 126M tham số,
-  như CodeBERT, thêm luồng dữ liệu. CodeBERT và GraphCodeBERT cùng LR 2e-5, batch 16,
-  đầu vào tối đa 256 token, 3 epoch.
-\item \textbf{ASTNN}: 0,4M tham số, huấn luyện từ đầu,
-  cây cú pháp qua RvNN và Bi-GRU, 7 epoch, LR 1e-3.
-\item \textbf{CPG-GNN}: 0,2M tham số, huấn luyện từ đầu,
-  đồ thị CPG 6 loại cạnh qua GAT 3 tầng, 4 head, hidden 128,
-  5 epoch, tối đa 1500 node.
-\item \textbf{Hybrid}: 128M tham số, hợp GraphCodeBERT và CPG-GNN
-  ở mức embedding, warm-start từ GraphCodeBERT và CPG-GNN, fine-tune 4 epoch.
-\end{itemize}
+Chạy demo cho kết quả trên tập test ở mục 6.
 
 \section{Kết quả huấn luyện}
 Giá trị là F1 trên validation sau mỗi epoch, đánh số từ 0.
@@ -95,12 +81,12 @@ Hybrid        & 0,905 & 0,922 & \textbf{0,913} & 0,970 & 0,370 \\
 \section{Minh hoạ}
 Cách đọc hình:
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
-\item Hai phía cùng màu là hai đoạn chính model đó cho là khớp nhau.
-\item Mỗi model một bảng màu riêng vì mỗi họ nhìn code bằng tín hiệu riêng.
+\item Hai phía cùng màu là hai đoạn chính mô hình đó cho là khớp nhau.
+\item Mỗi mô hình một bảng màu riêng vì mỗi họ nhìn code bằng tín hiệu riêng.
 \item CodeBERT, GraphCodeBERT, Hybrid bắt cặp từng từ trên vector encoder.
 \item ASTNN bắt cặp câu lệnh trên vector RvNN.
 \item CPG-GNN bắt cặp dòng trên vector node GAT.
-\item \colorbox{evyellow!30}{Vàng} lẻ là token model dựa vào để cho điểm
+\item \colorbox{evyellow!30}{Vàng} lẻ là token mô hình dựa vào để cho điểm
   nhưng không ghép được cặp, không màu là phần còn lại.
 \end{itemize}
 

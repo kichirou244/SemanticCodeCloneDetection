@@ -42,7 +42,8 @@ preprocessing:
 
 training:
   seed: 42
-  epochs: 15
+  epochs: 15                        # V2: giữ 15 (bản báo cáo dừng ở 5 do epochs=5 cũ),
+  # resume từ epoch 5 train tiếp; val F1 còn tăng 0,780 -> 0,819 nên cho thêm cơ hội
   # Nhỏ hơn M1/M2 vì mỗi sample là cả đồ thị (hàng trăm node × 2 phía), không
   # phải 256 token. Đổi sau khi có log VRAM thật.
   batch_size: 16
@@ -59,7 +60,7 @@ diagnostic:
 early_stopping:
   enabled: true
   monitor: val_f1
-  patience: 2
+  patience: 4                       # V2: 2 -> 4 để CPG train thêm vài epoch (val còn tăng ở cuối)
   mode: max
 
 inference:

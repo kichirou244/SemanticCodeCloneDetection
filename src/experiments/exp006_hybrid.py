@@ -237,8 +237,20 @@ def train_model(cfg, out_dir: Path, device: torch.device, max_pairs: int = 0,
 
     bs = int(tr["batch_size"])
     steps_per_epoch = max(1, math.ceil(len(train_refs) / bs / tr["gradient_accumulation_steps"]))
-    params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = AdamW(params, lr=tr["learning_rate"], weight_decay=tr.get("weight_decay", 0.0))
+    # V2: LR phân biệt — encoder warm-start đi LR nhỏ hơn head mới.
+    # Head học từ đầu nên giữ learning_rate, encoder chỉ encoder_learning_rate.
+    enc_ids = {id(p) for p in list(model.text_encoder.parameters())
+               + list(model.graph_encoder.parameters())}
+    enc_params = [p for p in model.parameters() if p.requires_grad and id(p) in enc_ids]
+    head_params = [p for p in model.parameters() if p.requires_grad and id(p) not in enc_ids]
+    enc_lr = float(tr.get("encoder_learning_rate", tr["learning_rate"]))
+    groups = []
+    if enc_params:
+        groups.append({"params": enc_params, "lr": enc_lr})
+    if head_params:
+        groups.append({"params": head_params, "lr": tr["learning_rate"]})
+    optimizer = AdamW(groups,
+                      lr=tr["learning_rate"], weight_decay=tr.get("weight_decay", 0.0))
     total_steps = steps_per_epoch * epochs
     scheduler = get_linear_schedule_with_warmup(
         optimizer, int(total_steps * tr.get("warmup_ratio", 0.1)), total_steps)
