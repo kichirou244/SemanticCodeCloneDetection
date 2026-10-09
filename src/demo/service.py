@@ -65,10 +65,14 @@ def _spans_to_indices(lines: list, code: str, spans) -> list[int]:
 
 
 def _attach_token_indices(ev, lines_a, lines_b, code_a, code_b):
-    """Gắn `tok_a/tok_b` (chỉ số token để frontend tô) vào evidence spans."""
+    """Gắn `tok_a/tok_b` (chỉ số token để frontend tô) vào evidence spans.
+
+    Nếu evidence có `pairs` (cặp tương ứng do model bắt: đoạn nào khớp đoạn
+    nào), map từng cặp sang `tok_pairs` để frontend tô màu theo cặp.
+    """
     if not ev:
         return None
-    return {
+    out = {
         "kind": ev.get("kind"),
         "note": ev.get("note"),
         "n_shared": ev.get("n_shared"),
@@ -77,6 +81,23 @@ def _attach_token_indices(ev, lines_a, lines_b, code_a, code_b):
         "tok_a": _spans_to_indices(lines_a, code_a, ev.get("spans_a", [])),
         "tok_b": _spans_to_indices(lines_b, code_b, ev.get("spans_b", [])),
     }
+    raw_pairs = ev.get("pairs") or []
+    tok_pairs = []
+    for p in raw_pairs:
+        try:
+            ta = _spans_to_indices(lines_a, code_a, [p["a"]])
+            tb = _spans_to_indices(lines_b, code_b, [p["b"]])
+        except (KeyError, TypeError, IndexError):
+            continue
+        if ta and tb:
+            tok_pairs.append({"a": ta, "b": tb})
+    if tok_pairs:
+        out["tok_pairs"] = tok_pairs
+        out["pair_note"] = ev.get("pair_note")
+    for k in ("report_url",):
+        if ev.get(k) is not None:
+            out[k] = ev[k]
+    return out
 
 
 class InputTooLarge(ValueError):

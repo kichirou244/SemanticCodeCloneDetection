@@ -11,7 +11,7 @@ demo:
   id: EXP-DEMO-001
   name: clone_demo_web
   # Thứ tự hiển thị trên UI: baseline trước, rồi theo họ đại diện.
-  order: [B1, M1, M2, M3, M4]
+  order: [B1, M1, M2, M3, M4, M5]
 
   limits:
     # Chặn input khổng lồ: demo là công cụ xem trực quan, không phải batch job.
@@ -25,7 +25,7 @@ server:
   port: 8000
   # Số model nạp trước khi server báo sẵn sàng. 0 = không nạp, model nạp lười
   # (lazy) ở request đầu tiên tương ứng.
-  preload: [M1, M2, M3, M4]
+  preload: [M1, M2, M3, M4, M5]
 
 runtime:
   # auto = cuda nếu torch thấy GPU, ngược lại cpu. Demo chạy 1 cặp/req nên
@@ -133,3 +133,19 @@ models:
     max_nodes: 1500
     # best_checkpoint.pt nhẹ (~2,5MB: model + optimizer + scheduler).
     checkpoint: results/exp005_cpg_gnn_poj104/best_checkpoint.pt
+
+  M5:
+    label: M5 · Hybrid GraphCodeBERT + CPG-GNN
+    family: hybrid
+    kind: hybrid
+    results_dir: results/exp006_hybrid_poj104
+    hf_id: microsoft/graphcodebert-base
+    max_length: 256
+    hidden_size: 128
+    num_layers: 3
+    heads: 4
+    dropout: 0.2
+    max_nodes: 1500
+    # best_checkpoint.pt đầy đủ (model + optimizer + scheduler);
+    # `load_eval_weights` tự rút `model_state` nên nạp được.
+    checkpoint: results/exp006_hybrid_poj104/best_checkpoint.pt

@@ -45,8 +45,9 @@ SemanticCodeCloneDetection/
 │   ├── analysis/             # errors.py (FP/FN)
 │   ├── demo/                 # web demo (M6 · Dùng 4 model đã train chấm điểm cặp code)
 │   │   ├── alignment/        # lexer.py (C++ per-line) + aligner.py (LCS → khối khớp)
-│   │   ├── scorers/          # base.py (giao diện) + moss/transformer/astnn_scorer.py
-│   │   ├── registry.py       # nạp model từ configs/demo_web.yaml (B1,M1,M2,M3)
+│   │   ├── scorers/          # base.py (giao diện) + moss/transformer/astnn/cpg/hybrid_scorer.py
+│   │   │                         # cpg_scorer.py giữ extract_graphs() dùng chung M4+M5
+│   │   ├── registry.py       # nạp model từ configs/demo_web.yaml (B1,M1..M5)
 │   │   ├── service.py        # DemoService: analyze/status/real_pairs/library scan/_validate
 │   │   ├── schemas.py        # DTO (AnalyzeRequest, PreloadRequest)
 │   │   ├── server.py         # FastAPI: tĩnh + API, controller mỏng
@@ -75,6 +76,9 @@ SemanticCodeCloneDetection/
 
 | Ngày | Nội dung |
 | :--- | :--- |
+| 2026-10-08 | M5 (Hybrid) vào demo: `src/demo/scorers/hybrid_scorer.py` (kế thừa CpgScorer,
+tái dùng `extract_graphs`, evidence saliency nhánh text), `configs/demo_web.yaml`
+thêm M5 (order + preload), `tests/test_demo_registry.py` lên 6 model |
 | 2026-09-20 | Khởi tạo INIT: toàn bộ khung trên |
 | 2026-09-28 | M4 (CPG-GNN): thêm `representations/cpg/{schema,ingest,graph,store}.py`,
 `models/cpg_gnn/model.py` (thay stub), `scripts/build_cpg_export.py`,

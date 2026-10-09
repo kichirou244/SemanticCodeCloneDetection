@@ -142,7 +142,7 @@ class BaseScorer(ABC):
 
         Mặc định None (chưa có). MOSS override: spans k-gram chung (tọa độ code
         gốc). Service map spans → chỉ số token rồi gắn vào response; frontend
-        tô theo model đang chọn. Model neural (M1/M2/M3/M4) làm sau.
+        tô theo model đang chọn. Model neural (M1/M2/M3/M4/M5) làm sau.
         """
         return None
 

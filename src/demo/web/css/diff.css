@@ -220,6 +220,11 @@
   .diff__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 .tok-ev { background: hsl(45 95% 55% / 20%); box-shadow: inset 0 -3px 0 hsl(45 95% 55% / 95%); }
+/* Cặp tương ứng do model bắt: hai phía cùng màu là hai đoạn model cho là khớp. */
+.tok-pair {
+  background: hsl(var(--pair-hue, 210) 75% 60% / 0.38);
+  box-shadow: inset 0 -3px 0 hsl(var(--pair-hue, 210) 75% 55% / 95%);
+}
 
 /* Hộp giải thích màu trong modal: 3 dòng, mỗi dòng 1 swatch. */
 .legend-note {
@@ -242,5 +247,6 @@
   margin-right: 0.3em;
 }
 .legend-note .sw--chip { background: hsl(199 55% 50% / 0.55); }
+.legend-note .sw--pair { background: hsl(280 75% 60% / 0.55); }
 .legend-note .sw--plain { background: transparent; border: 1px solid var(--border-strong); }
 .legend-note .sw--ev { background: hsl(45 95% 55% / 45%); }

@@ -176,10 +176,45 @@ class TransformerScorer(BaseScorer):
             for p in frozen:
                 p.requires_grad_(True)
             model.train(was_training)
+        # Tương ứng từng từ: mỗi từ phía A tìm từ giống nhất phía B trên
+        # vector encoder của chính model, giữ cặp hai chiều đều chọn nhau.
+        # Đây mới là "đoạn nào khớp đoạn nào" theo model, khác saliency ở trên
+        # vốn chỉ nói "model dựa vào đâu để cho điểm".
+        pairs = self._word_pairs(code_a, code_b)
         return {"spans_a": out_spans[0], "spans_b": out_spans[1],
                 "n_shared": len(out_spans[0]) + len(out_spans[1]),
                 "kind": "saliency",
+                "pairs": pairs,
                 "note": "token ảnh hưởng mạnh tới logit (mỗi phía riêng)"}
+
+    def _word_pairs(self, code_a: str, code_b: str) -> list[dict]:
+        """Cặp từ tương ứng mutual-best trên vector encoder, tối đa 30 cặp."""
+        import torch
+
+        from src.demo.correspondence import mutual_best, word_vectors
+
+        assert self._model is not None and self._tokenizer is not None
+        assert self._device is not None
+        model = self._model
+        was_training = model.training
+        model.eval()
+        try:
+            enc = self._tokenizer(
+                [code_a, code_b], padding=True, truncation=True,
+                max_length=self.max_length, return_tensors="pt",
+                return_offsets_mapping=True,
+            )
+            offsets = enc.pop("offset_mapping").tolist()
+            word_ids = [enc.word_ids(batch_index=i) for i in range(2)]
+            inputs = {k: v.to(self._device) for k, v in enc.items()}
+            with torch.no_grad():
+                h = model.encoder(**inputs).last_hidden_state.cpu()
+        finally:
+            model.train(was_training)
+        va, sa = word_vectors(h[0], word_ids[0], offsets[0])
+        vb, sb = word_vectors(h[1], word_ids[1], offsets[1])
+        return [{"a": sa[i], "b": sb[j], "cos": round(c, 4)}
+                for i, j, c in mutual_best(va, vb)]
 
     def _infer(self, code_a: str, code_b: str) -> tuple[float, dict]:
         assert self._model is not None and self._tokenizer is not None

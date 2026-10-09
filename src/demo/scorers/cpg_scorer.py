@@ -27,6 +27,42 @@ from src.demo.scorers.base import BaseScorer, resolve_device
 from src.representations.cpg.ingest import parse_cpg_file
 
 
+def extract_graphs(
+    codes: list[str], joern_cmd: str | list[str], max_nodes: int,
+) -> list[tuple[object | None, list | None, dict]]:
+    """Dựng CPG cho nhiều đoạn code với MỘT lần chạy Joern.
+
+    Trả list cùng thứ tự `codes`, mỗi phần tử `(graph|None, raw_nodes|None,
+    stats)`. Raw nodes giữ thứ tự JSON gốc để map ngược node graph → dòng code
+    (qua `stats["order"]`). Hàm module để `HybridScorer` (M5) dùng chung — CPG
+    demo thấy là CPG train đã thấy, không có đường export thứ hai.
+    """
+    samples = [
+        {"code": code, "sample_id": f"scan_{i}"}
+        for i, code in enumerate(codes)
+    ]
+    out: list[tuple[object | None, list | None, dict]] = []
+    with tempfile.TemporaryDirectory(prefix="cpg_scan_") as tmp:
+        work = Path(tmp)
+        batch_dir = work / "batch"
+        out_dir = work / "out"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        write_batch(samples, batch_dir)
+        timeout_s = max(300, 15 * len(samples))
+        run_batch(samples, out_dir, work, joern_cmd, batch_dir, timeout_s)
+        import json as _json
+
+        for s in samples:
+            path = out_dir / f"{s['sample_id']}.json"
+            if not path.exists():
+                out.append((None, None, {}))
+                continue
+            g, st = parse_cpg_file(path, max_nodes)
+            raw = _json.loads(path.read_text(encoding="utf-8"))["nodes"]
+            out.append((g, raw, st))
+    return out
+
+
 class CpgScorer(BaseScorer):
     def __init__(
         self,
@@ -93,44 +129,21 @@ class CpgScorer(BaseScorer):
         # thẳng tới JVM. Không nhét vào chuỗi lệnh (shlex sẽ cắt sai).
         self._joern_cmd = [joern_cmd, f"-J-Xmx{self.jvm_xmx}"]
 
+    def _extract_graphs(
+        self, items: list[tuple[str, str]]
+    ) -> dict[str, tuple[object | None, list | None, dict]]:
+        """Chung cho score và evidence: Joern 1 lần → mỗi tên một
+        `(graph|None, raw_nodes|None, stats)`."""
+        graphs = extract_graphs(
+            [code for _, code in items], self._joern_cmd, self.max_nodes)
+        return {name: res for (name, _), res in zip(items, graphs)}
+
     def _infer(self, code_a: str, code_b: str) -> tuple[float, dict]:
         out = self.score_all_pairs([("a", code_a), ("b", code_b)])
         score, detail = out[("a", "b")]
         if score is None:
             raise RuntimeError(detail.get("error") or "Joern không ra đồ thị")
         return score, detail
-
-    def _extract_graphs(
-        self, items: list[tuple[str, str]]
-    ) -> dict[str, tuple[object | None, list | None, dict]]:
-        """Chung cho score và evidence: Joern 1 lần → mỗi tên một
-        `(graph|None, raw_nodes|None, stats)`. Raw nodes giữ thứ tự JSON gốc
-        để map ngược node graph → dòng code (qua `stats["order"]`)."""
-        samples = [
-            {"code": code, "sample_id": f"scan_{i}"}
-            for i, (_, code) in enumerate(items)
-        ]
-        out: dict[str, tuple[object | None, list | None, dict]] = {}
-        with tempfile.TemporaryDirectory(prefix="cpg_scan_") as tmp:
-            work = Path(tmp)
-            batch_dir = work / "batch"
-            out_dir = work / "out"
-            out_dir.mkdir(parents=True, exist_ok=True)
-            write_batch(samples, batch_dir)
-            timeout_s = max(300, 15 * len(items))
-            run_batch(samples, out_dir, work, self._joern_cmd,
-                      batch_dir, timeout_s)
-            import json as _json
-
-            for (name, _), s in zip(items, samples):
-                path = out_dir / f"{s['sample_id']}.json"
-                if not path.exists():
-                    out[name] = (None, None, {})
-                    continue
-                g, st = parse_cpg_file(path, self.max_nodes)
-                raw = _json.loads(path.read_text(encoding="utf-8"))["nodes"]
-                out[name] = (g, raw, st)
-        return out
 
     def score_all_pairs(
         self, items: list[tuple[str, str]]
@@ -172,7 +185,7 @@ class CpgScorer(BaseScorer):
         """Dòng code được GAT chú ý nhất (attention nhận được, tầng cuối).
 
         Chạy encoder lại từng phía, lấy attention trung bình các heads ở tầng
-        GAT cuối, cộng dồn theo node đích. Node nào vượt trung bình thì giữ,
+        GAT cuối, cộng dồn theo node đích. Giữ 5 dòng có attention cao nhất,
         map về dòng code qua `stats["order"]` + field `line` của exporter
         (JSON không có `line` — vd dữ liệu cũ — thì trả spans rỗng trung thực
         thay vì đoán). Đây là "GAT nhìn đâu", KHÔNG phải "đoạn nào khớp".
@@ -187,43 +200,88 @@ class CpgScorer(BaseScorer):
         assert self._model is not None and self._device is not None
         extracted = self._extract_graphs([("a", code_a), ("b", code_b)])
         enc = self._model.encoder
+        was_training = self._model.training
+        self._model.eval()
+        # Attention GAT trên CUDA không tất định (atomic scatter): cùng một
+        # đồ thị cho recv khác nhau mỗi lần chạy, hai file giống hệt lại
+        # vàng khác nhau. Chạy phần attention trên bản copy CPU của encoder
+        # (0,2M tham số, rẻ): cùng input luôn ra cùng spans.
+        import copy as _copy
+
+        enc_cpu = _copy.deepcopy(enc).to("cpu").eval()
         out_spans: dict[str, list] = {}
+        line_vecs: dict[str, tuple] = {}
         with torch.no_grad():
             for side, code in (("a", code_a), ("b", code_b)):
                 g, raw, st = extracted[side]
                 if g is None or raw is None:
                     out_spans[side] = []
+                    line_vecs[side] = (torch.zeros((0, 1)), [])
                     continue
-                b = to_device(collate_pyg([g]), self._device)
-                x = enc.node_emb(b.node_type) + enc.feat_lin(b.x)
-                x = enc.in_norm(x)
+                b = collate_pyg([g])
+                x = enc_cpu.node_emb(b.node_type) + enc_cpu.feat_lin(b.x)
+                x = enc_cpu.in_norm(x)
                 alpha_last = None
-                for layer in enc.layers:
+                for layer in enc_cpu.layers:
                     e = layer.edge_emb(b.edge_type)
                     h, (_ei, alpha) = layer.conv(
                         x, b.edge_index, e, return_attention_weights=True)
                     alpha_last = (alpha, _ei)
                     x = x + layer.dropout(layer.norm(h))
                 n = int(b.node_type.shape[0])
-                recv = torch.zeros(n, device=self._device)
+                recv = torch.zeros(n)
                 if alpha_last is not None and n > 0:
                     a_mat, ei = alpha_last
-                    recv.index_add_(0, ei[1], a_mat.mean(dim=1))
-                mean = float(recv.mean().item()) if n else 0.0
+                    recv.index_add_(0, ei[1].cpu(), a_mat.mean(dim=1).cpu())
                 order = st.get("order") or list(range(len(raw)))
                 lines = code.split("\n")
                 starts = _line_starts(lines)
-                spans = []
+                # Tương ứng từng dòng: vector dòng là trung bình vector các
+                # node trên dòng đó, bắt cặp mutual-best giữa hai phía.
+                # Đây mới là "dòng nào khớp dòng nào" theo model.
+                from src.demo.correspondence import mutual_best, unit_rows
+
+                per_line: dict[int, list] = {}
                 for j in range(n):
-                    if float(recv[j].item()) <= mean:
-                        continue
                     ln = (raw[order[j]].get("line")
                           if order[j] < len(raw) else None)
                     if not isinstance(ln, int) or ln < 1 or ln > len(lines):
                         continue
-                    s = starts[ln - 1]
-                    spans.append([s, s + len(lines[ln - 1])])
+                    if not lines[ln - 1].strip():
+                        continue
+                    per_line.setdefault(ln, []).append(j)
+                lns = sorted(per_line)
+                if lns:
+                    mat = unit_rows(torch.stack(
+                        [x[per_line[ln]].mean(dim=0) for ln in lns]))
+                else:
+                    mat = torch.zeros((0, x.shape[-1]))
+                spans = [[starts[ln - 1], starts[ln - 1] + len(lines[ln - 1])]
+                         for ln in lns]
+                line_vecs[side] = (mat, spans)
+                # Attention vẫn giữ để tô nền: 5 dòng nhận attention cao nhất.
+                best: dict[int, float] = {}
+                for j in range(n):
+                    ln = (raw[order[j]].get("line")
+                          if order[j] < len(raw) else None)
+                    if not isinstance(ln, int) or ln < 1 or ln > len(lines):
+                        continue
+                    if not lines[ln - 1].strip():
+                        continue
+                    v = float(recv[j].item())
+                    if ln not in best or v > best[ln]:
+                        best[ln] = v
+                top = sorted(best, key=lambda ln: (-best[ln], ln))[:5]
+                spans = [[starts[ln - 1], starts[ln - 1] + len(lines[ln - 1])]
+                         for ln in top]
                 out_spans[side] = spans
+        self._model.train(was_training)
+        # Ghép cặp dòng tương ứng mutual-best, tối đa 10 cặp.
+        from src.demo.correspondence import mutual_best as _mb
+
+        (ma, sa), (mb, sb) = line_vecs["a"], line_vecs["b"]
+        corr = [{"a": sa[i], "b": sb[j], "cos": round(c, 4)}
+                for i, j, c in _mb(ma, mb, cap=10)]
         total = 0
         final: dict[str, list] = {}
         for side in ("a", "b"):
@@ -235,7 +293,8 @@ class CpgScorer(BaseScorer):
         return {"spans_a": final["a"], "spans_b": final["b"],
                 "n_shared": total,
                 "kind": "gat",
-                "note": "dòng được GAT chú ý trên trung bình (tầng cuối)"}
+                "pairs": corr,
+                "note": "5 dòng nhận attention cao nhất, tầng GAT cuối"}
 
 
 def _line_starts(lines: list[str]) -> list[int]:

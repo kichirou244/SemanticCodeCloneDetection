@@ -135,16 +135,46 @@ let evByModel = {};
 let evSelected = null;
 let currentPair = null;
 
+function clearEvidenceMarks(grid) {
+  grid.querySelectorAll('.tok-ev').forEach((n) => n.classList.remove('tok-ev'));
+  grid.querySelectorAll('.tok-pair').forEach((n) => {
+    n.classList.remove('tok-pair');
+    n.style.removeProperty('--pair-hue');
+  });
+}
+
 function applyEvidence() {
   const grid = $('.diff__grid', refs.diffView);
-  if (grid) {
-    grid.querySelectorAll('.tok-ev').forEach((n) => n.classList.remove('tok-ev'));
-  }
+  if (grid) clearEvidenceMarks(grid);
   refs.modalModels.querySelectorAll('.model-opt').forEach((c) => {
     c.classList.toggle('is-sel', !!evSelected && c.dataset.model === evSelected);
   });
   const ev = evSelected ? evByModel[evSelected] : null;
   if (!grid || !ev) return;
+  // Ưu tiên cặp tương ứng do model bắt: mỗi cặp một màu, hai phía cùng màu
+  // là hai đoạn model cho là khớp nhau. Không có cặp thì lùi về vệt vàng cũ.
+  const pairs = ev.tok_pairs || [];
+  if (pairs.length) {
+    const byPane = {
+      '.diff__pane--a': pairs.map((p, i) => [p.a, i]),
+      '.diff__pane--b': pairs.map((p, i) => [p.b, i]),
+    };
+    for (const [paneSel, lists] of Object.entries(byPane)) {
+      const hueOf = new Map();
+      for (const [toks, i] of lists) {
+        for (const t of toks || []) hueOf.set(t, (i * 47) % 360);
+      }
+      if (!hueOf.size) continue;
+      grid.querySelectorAll(`${paneSel} .tok[data-ti]`).forEach((n) => {
+        const hue = hueOf.get(Number(n.dataset.ti));
+        if (hue !== undefined) {
+          n.classList.add('tok-pair');
+          n.style.setProperty('--pair-hue', hue);
+        }
+      });
+    }
+    return;
+  }
   const sides = [['.diff__pane--a', 'tok_a'], ['.diff__pane--b', 'tok_b']];
   for (const [paneSel, key] of sides) {
     const set = new Set(ev[key] || []);
@@ -177,7 +207,8 @@ async function selectModelForEvidence(modelId) {
     }
   }
   const ev = evByModel[modelId];
-  if (!ev || (!(ev.tok_a || []).length && !(ev.tok_b || []).length)) {
+  const hasPairs = (ev.tok_pairs || []).length > 0;
+  if (!ev || (!(ev.tok_a || []).length && !(ev.tok_b || []).length && !hasPairs)) {
     evSelected = null;
     applyEvidence();
     setToast(`${modelId} chưa có evidence vị trí riêng — chỉ tô màu cú pháp, chưa có vệt vàng.`);
@@ -185,7 +216,9 @@ async function selectModelForEvidence(modelId) {
   }
   evSelected = modelId;
   applyEvidence();
-  setToast(`${modelId}: ${ev.note || 'đang hiện vị trí model này thấy'}.`);
+  setToast(hasPairs
+    ? `${modelId}: đang tô ${ev.tok_pairs.length} cặp tương ứng do model bắt — hai phía cùng màu là hai đoạn model cho là khớp.`
+    : `${modelId}: ${ev.note || 'đang hiện vị trí model này thấy'}.`);
 }
 
 /* ------------------------------------------------- quét zip đa model */

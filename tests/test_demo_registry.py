@@ -1,4 +1,4 @@
-"""Registry demo: đủ 5 model, MOSS đúng EXP-013, M4 hỏng êm khi thiếu Java."""
+"""Registry demo: đủ 6 model, MOSS đúng EXP-013, M4 hỏng êm khi thiếu Java."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import pytest
 from src.demo.registry import ModelRegistry
 from src.demo.scorers.base import ScorerState
 from src.demo.scorers.cpg_scorer import CpgScorer
+from src.demo.scorers.hybrid_scorer import HybridScorer
 from src.demo.scorers.moss_scorer import MossScorer
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,12 +19,24 @@ CODE_A = "int add(int a, int b) { return a + b; }"
 CODE_B = "int add(int x, int y) { int s = x + y; return s; }"
 
 
-def test_registry_builds_all_five_from_yaml():
+def test_registry_builds_all_six_from_yaml():
     reg = ModelRegistry.from_yaml(YAML, root=ROOT)
-    assert reg.order == ["B1", "M1", "M2", "M3", "M4"]
+    assert reg.order == ["B1", "M1", "M2", "M3", "M4", "M5"]
     by_id = {s.model_id: s for s in reg.all()}
     assert isinstance(by_id["B1"], MossScorer)
     assert isinstance(by_id["M4"], CpgScorer)
+    assert isinstance(by_id["M5"], HybridScorer)
+
+
+def test_hybrid_uses_exp006_threshold_and_checkpoint():
+    """Regression: M5 trỏ về EXP-006 — ngưỡng đọc từ threshold.json của hybrid,
+    checkpoint là best_checkpoint.pt đầy đủ."""
+    reg = ModelRegistry.from_yaml(YAML, root=ROOT)
+    m5 = reg.get("M5")
+    assert m5.results_dir.name == "exp006_hybrid_poj104"
+    assert m5.checkpoint.name == "best_checkpoint.pt"
+    assert m5.hf_id == "microsoft/graphcodebert-base"
+    assert m5.max_length == 256
 
 
 def test_moss_uses_exp014_service_keeps_fallback_params():
@@ -81,6 +94,37 @@ def test_cpg_scorer_scores_real_pair_with_joern():
         pytest.skip("cần Java+Joern để chấm M4 thật")
     reg = ModelRegistry.from_yaml(YAML, root=ROOT)
     res = reg.get("M4").score(CODE_A, CODE_B)
+    assert res.ok, res.error
+    assert res.threshold is not None
+    assert 0.0 <= res.score <= 1.0
+    assert res.verdict in ("clone", "not_clone")
+    assert res.detail.get("n_nodes_a", 0) > 10
+
+
+def test_hybrid_scorer_fails_gracefully_without_toolchain(tmp_path, monkeypatch):
+    """M5 như M4: thiếu Joern thì hỏng êm, không kéo sập request."""
+    monkeypatch.setenv("JOERN_BIN", str(tmp_path / "joern-khong-co"))
+    reg = ModelRegistry.from_yaml(YAML, root=ROOT)
+    m5 = reg.get("M5")
+    assert m5.ensure_loaded() is False
+    assert m5.state == ScorerState.FAILED
+    assert m5.status()["error"] and "Joern" in m5.status()["error"]
+    res = m5.score(CODE_A, CODE_B)
+    assert res.ok is False and res.error
+
+
+def test_hybrid_scorer_scores_real_pair_with_joern():
+    """Joern thật dựng CPG + GraphCodeBERT tokenize rồi hybrid chấm ra số.
+    Tốn vài phút (JVM + model 128M). Skip khi thiếu toolchain/checkpoint."""
+    pytest.importorskip("torch_geometric")
+    from scripts.build_cpg_export import joern_missing_reason, joern_or_die
+
+    if joern_missing_reason(joern_or_die()):
+        pytest.skip("cần Java+Joern để chấm M5 thật")
+    reg = ModelRegistry.from_yaml(YAML, root=ROOT)
+    if not reg.get("M5").checkpoint.exists():
+        pytest.skip("thiếu checkpoint M5")
+    res = reg.get("M5").score(CODE_A, CODE_B)
     assert res.ok, res.error
     assert res.threshold is not None
     assert 0.0 <= res.score <= 1.0

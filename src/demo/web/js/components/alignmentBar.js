@@ -33,13 +33,15 @@ export function mountAlignmentBar({ statsEl, legendEl, alignment, onBlockFocus }
       text: '· Mức khớp phủ < 60% — có thể không phải clone.',
     }));
   }
-  // Hộp giải thích: chip # + sợi nối = khối giống nhau (rê chuột để khoanh,
-  // không còn tô nền); vàng = vị trí model đang chọn chú ý tới.
+  // Hộp giải thích: chip # + sợi nối = khối giống nhau theo difflib;
+  // màu theo cặp = đoạn model đang chọn cho là khớp nhau;
+  // vàng = chỗ model chú ý khi không bắt được cặp nào.
   const note = el('div', { class: 'legend-note' });
   note.innerHTML =
     '<b>Cách đọc:</b><br>' +
-    '<span class="sw sw--chip"></span><b>Chip # + sợi nối</b> = khối giống nhau, rê chuột để khoanh (không tô nền).<br>' +
-    '<span class="sw sw--ev"></span><b>Vàng (gạch chân dày)</b> = chỗ model đang chọn chú ý tới — đổi model ở cột trái để xem model khác nhìn đâu.<br>' +
+    '<span class="sw sw--chip"></span><b>Chip # + sợi nối</b> = khối giống nhau từng chữ, rê chuột để khoanh.<br>' +
+    '<span class="sw sw--pair"></span><b>Màu theo cặp</b> = hai phía cùng màu là hai đoạn model đang chọn cho là khớp nhau.<br>' +
+    '<span class="sw sw--ev"></span><b>Vàng (gạch chân dày)</b> = chỗ model chú ý, hiện khi model không bắt được cặp nào.<br>' +
     '<span class="sw sw--plain"></span><b>Không màu</b> = phần còn lại, cứ đọc bình thường, không phải lỗi.';
   statsEl.append(note);
 

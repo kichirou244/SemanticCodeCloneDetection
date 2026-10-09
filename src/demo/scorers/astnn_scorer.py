@@ -148,6 +148,7 @@ class AstnnScorer(BaseScorer):
         out_b = [_byte_span_to_char(codes[1], spans[1][j]) for _, j in pairs]
         return {"spans_a": out_a, "spans_b": out_b, "n_shared": len(pairs),
                 "kind": "stmt",
+                "pairs": [{"a": a, "b": b} for a, b in zip(out_a, out_b)],
                 "note": "cặp câu lệnh giống nhau nhất lẫn nhau (cosine RvNN)"}
 
     def _infer(self, code_a: str, code_b: str) -> tuple[float, dict]:

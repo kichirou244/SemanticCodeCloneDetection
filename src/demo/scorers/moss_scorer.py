@@ -152,7 +152,26 @@ class MossScorer(BaseScorer):
         if not n:
             return {"spans_a": [], "spans_b": [], "n_shared": 0, "kind": "kgram",
                     "note": "không có k-gram chung (k=%d, w=%d)" % (self.k, self.w)}
+        # Tương ứng từng k-gram: cùng hash thì bắt cặp theo thứ tự, tối đa
+        # 30 cặp. Đây đúng là "đoạn nào khớp đoạn nào" theo MOSS.
+        by_hash_b: dict[int, list] = {}
+        for h, s, e in fb:
+            by_hash_b.setdefault(h, []).append([s, e])
+        pairs: list[dict] = []
+        used: set = set()
+        for h, s, e in fa:
+            cand = by_hash_b.get(h)
+            if not cand:
+                continue
+            key = (h, s, e)
+            if key in used:
+                continue
+            used.add(key)
+            pairs.append({"a": [s, e], "b": cand[len(pairs) % len(cand)]})
+            if len(pairs) >= 30:
+                break
         return {"spans_a": [[s, e] for s, e in sa],
                 "spans_b": [[s, e] for s, e in sb],
                 "n_shared": n, "kind": "kgram",
+                "pairs": pairs,
                 "note": "%d k-gram chung (k=%d, w=%d)" % (n, self.k, self.w)}
