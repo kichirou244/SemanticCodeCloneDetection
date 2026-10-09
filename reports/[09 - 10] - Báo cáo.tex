@@ -29,24 +29,21 @@
   \colorbox{pc3}{#2}\or\colorbox{pc4}{#2}\or\colorbox{pc5}{#2}\or%
   \colorbox{pc6}{#2}\or\colorbox{pc7}{#2}\fi}
 
-\title{\vspace{-1.0cm}\textbf{Báo cáo kết quả huấn luyện + demo}\\[4pt]
-       {\normalsize Đề tài: Phát hiện trùng lặp code}}
+\title{\vspace{-1.0cm}\textbf{Báo cáo kết quả huấn luyện \& Thử nghiệm}\\[4pt]
+       {\normalsize Đề tài: Phát hiện trùng lặp mã nguồn C/C++ và Python}}
 \date{\today}
 
 \begin{document}
 \maketitle
 \vspace{-0.8cm}
-
 \section{Kết quả tuần này}
 Hoàn thành train 5 phương pháp trên POJ-104: CodeBERT (\texttt{codebert-base}, 3 epoch),
 GraphCodeBERT (\texttt{graphcodebert-base}, 3 epoch), ASTNN (7 epoch),
-CPG-GNN (5 epoch), Hybrid (warm-start từ GraphCodeBERT và CPG-GNN, fine-tune 4 epoch).
+CPG-GNN (15 epoch), Hybrid (warm-start từ GraphCodeBERT và CPG-GNN, fine-tune 4 epoch).
 Ngưỡng chọn trên validation, giữ nguyên khi test và khi demo.
 Chạy demo cho kết quả trên tập test ở mục 6.
 
 \section{Kết quả huấn luyện}
-Giá trị là F1 trên validation sau mỗi epoch, đánh số từ 0.
-In đậm là epoch tốt nhất, ngưỡng quyết định lấy tại đó.
 {\small
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccccc@{}}
 \toprule
@@ -56,10 +53,11 @@ In đậm là epoch tốt nhất, ngưỡng quyết định lấy tại đó.
 CodeBERT & 0,919 & \textbf{0,919} & 0,912 & --- & --- & --- & --- \\
 GraphCodeBERT & \textbf{0,916} & 0,914 & 0,911 & --- & --- & --- & --- \\
 ASTNN & 0,789 & 0,814 & 0,841 & \textbf{0,853} & 0,804 & 0,823 & 0,841 \\
-CPG-GNN & 0,780 & 0,796 & 0,800 & 0,817 & \textbf{0,819} & --- & --- \\
+CPG-GNN & 0,782 & 0,773 & 0,806 & 0,794 & 0,833 & 0,816 & 0,804 \\
 Hybrid & \textbf{0,914} & 0,893 & 0,859 & 0,879 & --- & --- & --- \\
 \bottomrule
 \end{tabular*}\par}
+CPG-GNN tốt nhất 0,842 ở E14 (bảng chỉ hiện E0--E6).
 
 \section{Kết quả test}
 {\small
@@ -70,7 +68,7 @@ Hybrid & \textbf{0,914} & 0,893 & 0,859 & 0,879 & --- & --- & --- \\
 CodeBERT      & 0,931 & 0,890 & \textbf{0,910} & \textbf{0,973} & 0,500 \\
 GraphCodeBERT & 0,883 & 0,933 & 0,907 & 0,971 & 0,512 \\
 ASTNN         & 0,760 & 0,894 & 0,821 & 0,889 & 0,557 \\
-CPG-GNN       & 0,695 & 0,885 & 0,779 & 0,864 & 0,420 \\
+CPG-GNN       & 0,723 & 0,887 & 0,797 & 0,882 & 0,470 \\
 Hybrid        & 0,905 & 0,922 & \textbf{0,913} & 0,970 & 0,370 \\
 \bottomrule
 \end{tabular*}\par}
@@ -93,13 +91,13 @@ Cách đọc hình:
 \subsection{Cặp clone: 355523 với 355575}
 Hai file giống hệt nhau.
 Cả 5 phương pháp kết luận đúng: CodeBERT 1,000, GraphCodeBERT 1,000,
-ASTNN 0,985, CPG-GNN 0,962, Hybrid 1,000, đều trên ngưỡng nên là clone.
+ASTNN 0,985, CPG-GNN 0,967, Hybrid 1,000, đều trên ngưỡng nên là clone.
 \input{../workspace/demo_clone5.tex}
 
 \subsection{Cặp không clone: bài 30 với 33}
 Hai bài khác nhau của POJ-104.
 Cả 5 phương pháp kết luận đúng: CodeBERT 0,000, GraphCodeBERT 0,010,
-ASTNN 0,178, CPG-GNN 0,294, Hybrid 0,000, đều dưới ngưỡng nên không clone.
+ASTNN 0,178, CPG-GNN 0,190, Hybrid 0,000, đều dưới ngưỡng nên không clone.
 \input{../workspace/demo_neg5.tex}
 
 \section{Hạn chế}

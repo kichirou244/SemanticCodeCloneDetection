@@ -17,6 +17,15 @@
   - `exp005_cpg_gnn_kaggle.ipynb` cell 9 = FULL TRAIN từ đầu, budget 3,5h.
   - `exp006_hybrid_kaggle.ipynb` cell 10 = train MỚI hoàn toàn (không resume), budget 7h.
 
+## [COMPLETE] M4 V2 + báo cáo (10/10)
+- Train full 15 epoch: val F1 0,819 → **0,842** (E14), test F1 0,779 → **0,797**,
+  ngưỡng mới 0,470. Train/val loss giảm mượt, không overfit.
+- Chạy lại demo M4 mới (local, Joern): cặp clone 0,962 → **0,967**,
+  cặp neg 0,294 → **0,190**. Tái sinh section CPG-GNN trong
+  `workspace/demo_clone5.tex` + `demo_neg5.tex`.
+- Báo cáo cập nhật: mục 1 (15 epoch), bảng train (hàng CPG mới + ghi tốt nhất E14),
+  bảng test (0,723/0,887/0,797/0,882/0,470), câu 6.1/6.2. PDF build lại.
+
 ## [TO DO] Chạy trên Kaggle (user)
 1. Import 2 notebook, `git pull` ở cell 2.
 2. Chạy CPG trước (~3h), rồi Hybrid (~7-8h).
