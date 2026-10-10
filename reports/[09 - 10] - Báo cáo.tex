@@ -8,6 +8,7 @@
 \setmainfont{Times New Roman}
 \usepackage[a4paper,top=2.0cm,bottom=2.0cm,left=2.2cm,right=1.9cm]{geometry}
 \usepackage{booktabs}
+\usepackage{graphicx}
 \usepackage{enumitem}
 \usepackage[vietnamese]{babel}
 \usepackage{xcolor}
@@ -37,31 +38,45 @@
 \maketitle
 \vspace{-0.8cm}
 \section{Kết quả tuần này}
+{\sloppy
 Hoàn thành train 5 phương pháp trên POJ-104: CodeBERT (\texttt{codebert-base}, 3 epoch),
 GraphCodeBERT (\texttt{graphcodebert-base}, 3 epoch), ASTNN (7 epoch),
 CPG-GNN (15 epoch), Hybrid (warm-start từ GraphCodeBERT và CPG-GNN, fine-tune 4 epoch).
 Ngưỡng chọn trên validation, giữ nguyên khi test và khi demo.
-Chạy demo cho kết quả trên tập test ở mục 6.
+Chạy demo cho kết quả trên tập test ở mục 6.\par}
 
 \section{Kết quả huấn luyện}
+Val F1 theo epoch (ngưỡng chọn trên validation).
 {\small
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccccc@{}}
+\centering
+\setlength{\tabcolsep}{4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccc}
 \toprule
-\textbf{PP} & \textbf{E0} & \textbf{E1} & \textbf{E2} & \textbf{E3} &
-\textbf{E4} & \textbf{E5} & \textbf{E6} \\
+\textbf{Epoch} & \textbf{CodeBERT} & \textbf{GraphCodeBERT} & \textbf{ASTNN} & \textbf{CPG-GNN} & \textbf{Hybrid} \\
 \midrule
-CodeBERT & 0,919 & \textbf{0,919} & 0,912 & --- & --- & --- & --- \\
-GraphCodeBERT & \textbf{0,916} & 0,914 & 0,911 & --- & --- & --- & --- \\
-ASTNN & 0,789 & 0,814 & 0,841 & \textbf{0,853} & 0,804 & 0,823 & 0,841 \\
-CPG-GNN & 0,782 & 0,773 & 0,806 & 0,794 & 0,833 & 0,816 & 0,804 \\
-Hybrid & \textbf{0,914} & 0,893 & 0,859 & 0,879 & --- & --- & --- \\
+E0  & 0,919 & \textbf{0,915} & 0,789 & 0,782 & \textbf{0,914} \\
+E1  & \textbf{0,919} & 0,914 & 0,814 & 0,773 & 0,893 \\
+E2  & 0,912 & 0,911 & 0,841 & 0,806 & 0,859 \\
+E3  & --- & --- & \textbf{0,853} & 0,794 & 0,879 \\
+E4  & --- & --- & 0,804 & 0,833 & --- \\
+E5  & --- & --- & 0,823 & 0,816 & --- \\
+E6  & --- & --- & 0,841 & 0,804 & --- \\
+E7  & --- & --- & --- & 0,817 & --- \\
+E8  & --- & --- & --- & 0,816 & --- \\
+E9  & --- & --- & --- & 0,836 & --- \\
+E10 & --- & --- & --- & 0,827 & --- \\
+E11 & --- & --- & --- & 0,830 & --- \\
+E12 & --- & --- & --- & 0,837 & --- \\
+E13 & --- & --- & --- & 0,838 & --- \\
+E14 & --- & --- & --- & \textbf{0,842} & --- \\
 \bottomrule
-\end{tabular*}\par}
-CPG-GNN tốt nhất 0,842 ở E14 (bảng chỉ hiện E0--E6).
+\end{tabular}}\par}
 
 \section{Kết quả test}
-{\small
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccc@{}}
+{\small\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccc}
 \toprule
 \textbf{PP} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} & \textbf{AUC} & \textbf{Ngưỡng} \\
 \midrule
@@ -71,7 +86,7 @@ ASTNN         & 0,760 & 0,894 & 0,821 & 0,889 & 0,557 \\
 CPG-GNN       & 0,723 & 0,887 & 0,797 & 0,882 & 0,470 \\
 Hybrid        & 0,905 & 0,922 & \textbf{0,913} & 0,970 & 0,370 \\
 \bottomrule
-\end{tabular*}\par}
+\end{tabular}}\par}
 
 % Mục 5 cũ là bảng điểm demo đã bỏ, điểm số chuyển vào 6.1 và 6.2.
 % Giữ số mục Minh hoạ là 6 cho khớp cấu trúc đã chốt.
@@ -82,8 +97,11 @@ Cách đọc hình:
 \item Hai phía cùng màu là hai đoạn chính mô hình đó cho là khớp nhau.
 \item Mỗi mô hình một bảng màu riêng vì mỗi họ nhìn code bằng tín hiệu riêng.
 \item CodeBERT, GraphCodeBERT, Hybrid bắt cặp từng từ trên vector encoder.
-\item ASTNN bắt cặp câu lệnh trên vector RvNN.
+\item ASTNN bắt cặp câu lệnh trên vector RvNN, bỏ span bao hơn 60\% file
+  và chỉ giữ statement trong cùng (không bôi cả hàm).
 \item CPG-GNN bắt cặp dòng trên vector node GAT.
+\item MOSS tô đúng vùng khớp mà server Stanford trả về trên trang match
+(cặp không được gắn cờ hiện trắng trơn, không có màu nào).
 \item \colorbox{evyellow!30}{Vàng} lẻ là token mô hình dựa vào để cho điểm
   nhưng không ghép được cặp, không màu là phần còn lại.
 \end{itemize}
@@ -92,13 +110,17 @@ Cách đọc hình:
 Hai file giống hệt nhau.
 Cả 5 phương pháp kết luận đúng: CodeBERT 1,000, GraphCodeBERT 1,000,
 ASTNN 0,985, CPG-GNN 0,967, Hybrid 1,000, đều trên ngưỡng nên là clone.
-\input{../workspace/demo_clone5.tex}
+MOSS server cũng gắn cờ đúng (0,980).
+{\shorthandoff{"}\input{../workspace/demo_clone5.tex}
+\input{../workspace/demo_moss_61.tex}}
 
 \subsection{Cặp không clone: bài 30 với 33}
 Hai bài khác nhau của POJ-104.
 Cả 5 phương pháp kết luận đúng: CodeBERT 0,000, GraphCodeBERT 0,010,
 ASTNN 0,178, CPG-GNN 0,190, Hybrid 0,000, đều dưới ngưỡng nên không clone.
-\input{../workspace/demo_neg5.tex}
+MOSS server cũng không gắn cờ (0,000) nên đúng.
+{\shorthandoff{"}\input{../workspace/demo_neg5.tex}
+\input{../workspace/demo_moss_62.tex}}
 
 \section{Hạn chế}
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
@@ -110,7 +132,8 @@ ASTNN 0,178, CPG-GNN 0,190, Hybrid 0,000, đều dưới ngưỡng nên không c
 
 \section{Kế hoạch tiếp theo}
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
-\item Giảm LR khi fine-tune Hybrid, train thêm vài epoch cho CPG-GNN.
+\item Hybrid V2 (giảm LR) không tốt hơn V1 nên giữ V1; tiếp theo thử freeze
+  encoder, chỉ train head rồi mới unfreeze.
 \item Thử đầu vào 512 token, nới giới hạn node của CPG-GNN.
 \end{itemize}
 

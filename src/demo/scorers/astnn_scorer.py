@@ -108,6 +108,14 @@ class AstnnScorer(BaseScorer):
         cặp hai chiều đều chọn nhau (mutual best) — không ngưỡng số nào, không
         ngẫu nhiên. Bỏ gốc (index 0, span cả hàm — highlight vô nghĩa) và cặp
         cosine <= 0. Vector RvNN (chưa qua GRU) để không phải mổ model.
+
+        Lọc để highlight chỉ còn "đoạn giống nhau", không bôi hết code:
+
+        - Bỏ cặp mà span bao hơn 60% file (function/compound gốc — cha nào
+          cũng khớp cha đó, union là cả file).
+        - Khử lồng nhau: statement cha bao trọn một statement con đã giữ thì
+          bỏ cha, chỉ giữ con trong cùng (inner nhất). Sắp theo cosine giảm
+          dần để cặp chắc nhất giữ màu đầu.
         """
         if not self.ensure_loaded():
             return None
@@ -143,13 +151,38 @@ class AstnnScorer(BaseScorer):
             for i in range(cos.shape[0]):
                 j = int(best_b[i])
                 if int(best_a[j]) == i and float(cos[i, j]) > 0:
-                    pairs.append((i + 1, j + 1))  # +1 vì đã bỏ gốc
-        out_a = [_byte_span_to_char(codes[0], spans[0][i]) for i, _ in pairs]
-        out_b = [_byte_span_to_char(codes[1], spans[1][j]) for _, j in pairs]
-        return {"spans_a": out_a, "spans_b": out_b, "n_shared": len(pairs),
+                    pairs.append((i + 1, j + 1, float(cos[i, j])))  # +1 vì đã bỏ gốc
+        pairs.sort(key=lambda t: (-t[2], t[0], t[1]))
+        # Đổi sang span ký tự một lần, rồi lọc:
+        #  - bỏ cặp mà span bao hơn 60% file (function/compound gốc);
+        #  - khử lồng nhau: duyệt span NHỎ trước, cặp rộng bao trọn con đã
+        #    giữ thì bỏ, chỉ giữ statement trong cùng.
+        char_pairs = [(_byte_span_to_char(codes[0], spans[0][i]),
+                       _byte_span_to_char(codes[1], spans[1][j]), c)
+                      for i, j, c in pairs]
+        order = sorted(range(len(char_pairs)),
+                       key=lambda k: min(char_pairs[k][0][1] - char_pairs[k][0][0],
+                                         char_pairs[k][1][1] - char_pairs[k][1][0]))
+        kept_idx: list[int] = []
+        kept_char: list[tuple[list[int], list[int]]] = []
+        for k in order:
+            sa, sb, _c = char_pairs[k]
+            if _covers_most(sa, len(codes[0])) or _covers_most(sb, len(codes[1])):
+                continue
+            if any(_contains(sa, kc[0]) or _contains(sb, kc[1]) for kc in kept_char):
+                continue
+            kept_idx.append(k)
+            kept_char.append((sa, sb))
+            if len(kept_idx) >= 30:
+                break
+        # Trả về theo cosine giảm dần để màu cặp ổn định.
+        kept_idx.sort(key=lambda k: -char_pairs[k][2])
+        out_a = [char_pairs[k][0] for k in kept_idx]
+        out_b = [char_pairs[k][1] for k in kept_idx]
+        return {"spans_a": out_a, "spans_b": out_b, "n_shared": len(kept_idx),
                 "kind": "stmt",
                 "pairs": [{"a": a, "b": b} for a, b in zip(out_a, out_b)],
-                "note": "cặp câu lệnh giống nhau nhất lẫn nhau (cosine RvNN)"}
+                "note": "cặp câu lệnh giống nhau nhất lẫn nhau (cosine RvNN, bỏ span phủ cả file + chỉ giữ statement trong cùng)"}
 
     def _infer(self, code_a: str, code_b: str) -> tuple[float, dict]:
         assert self._model is not None and self._parser is not None
@@ -185,6 +218,19 @@ def _unit_rows(h):
     import torch
 
     return h.float() / h.float().norm(dim=1, keepdim=True).clamp(min=1e-9)
+
+
+def _covers_most(span: list[int], code_len: int, frac: float = 0.6) -> bool:
+    """Span có bao hơn `frac` file không (function/compound gốc)."""
+    if code_len <= 0:
+        return True
+    return (span[1] - span[0]) > frac * code_len
+
+
+def _contains(outer: list[int], inner: list[int]) -> bool:
+    """`outer` có bao trọn `inner` (thừa ít nhất 1 ký tự mỗi phía gộp) không."""
+    return outer[0] <= inner[0] and inner[1] <= outer[1] and (
+        outer[0] < inner[0] or inner[1] < outer[1])
 
 
 def _byte_span_to_char(code: str, span: tuple[int, int]) -> list[int]:

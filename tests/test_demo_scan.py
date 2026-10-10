@@ -308,8 +308,9 @@ def test_moss_evidence_spans_are_within_bounds():
 
 
 def test_moss_score_all_pairs_local_fallback(monkeypatch):
-    """Không có MOSS_USER_ID → B1 fallback local, scan all-pairs chạy offline."""
+    """Không có id nào (env + mặc định) → B1 fallback local, scan chạy offline."""
     monkeypatch.delenv("MOSS_USER_ID", raising=False)
+    monkeypatch.setattr("src.models.baseline.moss_service._DEFAULT_USER_ID", "")
     from src.demo.scorers.moss_scorer import MossScorer
 
     m = MossScorer("B1", "moss", Path("."))
@@ -409,6 +410,18 @@ def test_astnn_evidence_mutual_best_statements():
         assert 0 <= s < e <= len(LONG_A)
     ev2 = m.evidence(LONG_A, LONG_B)
     assert ev["spans_a"] == ev2["spans_a"]
+    # Không span nào phủ cả file (function/compound gốc đã lọc), không cặp
+    # nào lồng nhau (chỉ giữ statement trong cùng).
+    for s, e in ev["spans_a"]:
+        assert e - s <= 0.6 * len(LONG_A)
+    for s, e in ev["spans_b"]:
+        assert e - s <= 0.6 * len(LONG_B)
+    for side, code in ((ev["spans_a"], LONG_A), (ev["spans_b"], LONG_B)):
+        for i in range(len(side)):
+            for j in range(len(side)):
+                if i != j:
+                    a, b = side[i], side[j]
+                    assert not (a[0] < b[0] and b[1] < a[1])
 
 
 def test_evidence_endpoint_returns_mapped_spans():

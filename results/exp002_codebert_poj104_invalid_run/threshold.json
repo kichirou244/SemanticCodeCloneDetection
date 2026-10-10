@@ -1,6 +1,0 @@
-{
-  "threshold": 0.47000000000000003,
-  "f1": 0.6667111140742716,
-  "method": "validation_f1",
-  "split": "validation"
-}

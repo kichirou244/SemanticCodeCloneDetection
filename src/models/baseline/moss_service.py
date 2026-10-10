@@ -38,6 +38,9 @@ DEFAULT_MAX_MATCHES = 1000
 DEFAULT_SHOW = 1000
 
 _ENV_USER_ID = "MOSS_USER_ID"
+#: Id mặc định của nhóm (đã đăng ký với Stanford). Biến môi trường trên
+#: được ưu tiên nếu có — giữ được cho máy khác mà không sửa code.
+_DEFAULT_USER_ID = "954365299"
 
 #: `saveWebPage` trả URL tuyệt đối + thẻ IN HOA; `download_report` trả tương đối.
 #: Bắt cả hai nên parse được từ nguồn nào cũng chạy.
@@ -51,8 +54,8 @@ class MossServiceError(RuntimeError):
 
 
 def user_id_from_env() -> int:
-    """Đọc MOSS user id từ môi trường; thiếu thì báo rõ cách lấy."""
-    raw = os.environ.get(_ENV_USER_ID, "").strip()
+    """Đọc MOSS user id từ môi trường, fallback id mặc định của nhóm."""
+    raw = os.environ.get(_ENV_USER_ID, "").strip() or _DEFAULT_USER_ID
     if not raw:
         raise MossServiceError(
             f"thiếu MOSS user id — set biến môi trường {_ENV_USER_ID} "
