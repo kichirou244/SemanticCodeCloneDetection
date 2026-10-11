@@ -286,6 +286,29 @@ def export_eval_weights(out_dir: Path) -> dict:
     return {"path": str(dst), "from_mb": round(src_mb, 1), "to_mb": round(dst_mb, 1)}
 
 
+def _maybe_warm_start(cfg, model, device, resume: bool) -> dict:
+    """Nạp model_state từ checkpoint 256 để train tiếp 512 (cùng kiến trúc).
+
+    Chỉ nạp weights model (strict), optimizer/scheduler reset từ đầu.
+    `cfg["model"]["warm_start"]` là path tới best_checkpoint.pt hoặc
+    best_weights_only.pt. Không có / resume=True -> bỏ qua.
+    """
+    ws = (cfg.get("model", {}) or {}).get("warm_start")
+    if not ws or resume:
+        return {"loaded": False}
+    p = Path(str(ws))
+    if not p.exists():
+        print(f"[warm-start] bỏ qua: {ws} không tồn tại — train từ pretrained")
+        return {"loaded": False, "reason": "missing"}
+    ckpt = torch.load(str(p), map_location=device,
+                      weights_only=p.name.endswith("_weights_only.pt"))
+    model.load_state_dict(ckpt["model_state"], strict=True)
+    print(json.dumps({"warm-start": {"loaded_from": str(ws),
+                                     "best_f1": ckpt.get("best_f1"),
+                                     "epoch": ckpt.get("epoch")}}))
+    return {"loaded": True}
+
+
 def load_training_state(out_dir: Path, model, optimizer, scheduler) -> dict:
     """Nạp `last_checkpoint.pt` để resume. Raise nếu không tồn tại (fail-fast)."""
     path = out_dir / "last_checkpoint.pt"
@@ -323,6 +346,7 @@ def train_model(cfg, out_dir: Path, device: torch.device, max_pairs: int = 0, ep
     tokenizer = load_tokenizer(cfg["model"]["hf_id"])
     model = TransformerPairClassifier(cfg["model"]["hf_id"], tr.get("dropout", 0.1)).to(device)
     assert_device_setup(device, model)  # FAIL FAST nếu CPU fallback (§7)
+    _maybe_warm_start(cfg, model, device, resume)
     max_len = cfg["tokenizer"]["max_length"]
 
     train_codes = load_code_map(processed, ["train"])
