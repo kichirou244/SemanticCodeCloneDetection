@@ -103,6 +103,40 @@
 - Khôi phục: `exp006_hybrid_poj104` = V1 (test 0,9133/thr 0,37), V2 cất sang
   `exp006_hybrid_poj104_v2`. Báo cáo giữ nguyên số V1, không cần sửa.
 
+## [COMPLETE] Chuẩn bị train 512 token M1/M2 (warm-start từ 256)
+- `transformer_pair_runner.py`: thêm `_maybe_warm_start()` — nạp `model_state`
+  (strict, cùng kiến trúc, pos-embeds vốn đã 512), optimizer/scheduler reset.
+  Chỉ kích hoạt khi config có `model.warm_start`, run cũ không ảnh hưởng.
+- 2 config mới: `exp002_codebert_512.yaml` (M1) + `exp003_graphcodebert_512.yaml`
+  (M2): `max_length` 256 → 512, `batch_size` 16 → 8, accum 2 → 4 (giữ
+  effective batch 32), `pair_batch_size` 64 → 32, epochs 3 + patience 2.
+- Checkpoint 256 (`best_weights_only.pt` M1/M2, ~506MB mỗi file) đã push lên HF
+  `Kichirou24/SemanticCodeCloneDetection` (`m1/m2_pair_256_weights_only.pt`, LFS).
+- 2 notebook mới `exp002_codebert_512_kaggle.ipynb` / `exp003_graphcodebert_512_kaggle.ipynb`
+  (copy từ bản 256 + cell kéo weights HF về đúng path `warm_start`).
+- Test: 33 passed (`test_configs` + `test_exp002` + `test_exp003`).
+- Diagnostic trên Kaggle T4: M1 + M2 đều PASS (CUDA, gradient finite,
+  params updated, loss giảm).
+
+## [IN PROGRESS] Train M1/M2 512 trên Kaggle (user, warm-start từ 256)
+1. Chạy 2 notebook 512 (M1 trước cho rẻ, rồi M2).
+2. Khi xong: tải `results/exp00*_..._512/` về, so truncation mới
+   (`truncation.json`, kỳ vọng rate rớt từ ~60-78% về gần 0) + val/test F1 vs bản 256.
+3. Nếu ok mới xét M5-512 (text 512 + GNN, tốn VRAM nhất nên để sau cùng).
+
+## [READY] M5 Hybrid-512 đấu M2-512 (config + notebook xong 13-10, chờ M2-512 về)
+- `configs/exp006_hybrid_512.yaml`: max_length 512, warm-start text từ
+  `results/exp003_graphcodebert_poj104_512/best_checkpoint.pt` + graph M4 giữ nguyên,
+  batch 12->6 / accum 2->4 (effective ~24), pair_batch 32->16, LR V2
+  (head 1e-5 / encoder 5e-6), out `results/exp006_hybrid_poj104_512`.
+- `notebooks/exp006_hybrid_512_kaggle.ipynb`: copy từ bản 256, trỏ config/out mới,
+  HF file `m2_512_text_encoder.pt` (+ `m4_graph_encoder.pt` giữ nguyên).
+- Test: `test_configs` + `test_exp006_hybrid` + `test_demo_registry` xanh (15 passed).
+- Việc còn lại (user): (1) export encoder M2-512 local
+  (`export_hybrid_warm_start --m2 <m2-512 ckpt> --m4 <m4 ckpt>`), đổi tên
+  `m2_text_encoder.pt -> m2_512_text_encoder.pt`, upload HF; (2) audit bổ trợ lại
+  trên `test_scores.jsonl` M2-512 trước khi đốt ~8h train; (3) chạy notebook 512.
+
 ## [TO DO] Chạy trên Kaggle (user)
 1. Import 2 notebook, `git pull` ở cell 2.
 2. Chạy CPG trước (~3h), rồi Hybrid (~7-8h).
@@ -114,6 +148,5 @@
 - So sánh Hybrid V2 vs V1 (hết overfit E0 chưa), CPG epoch mới có tăng tiếp không.
 
 ## [BACKLOG] Tạm hoãn (vượt quota)
-- Thử đầu vào 512 token, nới giới hạn node CPG-GNN (attention O(n²), một mình
-  retrain CodeBERT đã nuốt hết ~10h).
+- Nới giới hạn node CPG-GNN (attention O(n²)).
 - Two-stage Hybrid: freeze encoder 1 epoch đầu rồi unfreeze (nếu V2 vẫn overfit).

@@ -1,0 +1,100 @@
+{
+  "models": {
+    "M2": {
+      "dir": "results\\exp003_graphcodebert_poj104_512",
+      "threshold": 0.66
+    },
+    "M4": {
+      "dir": "results\\exp005_cpg_gnn_poj104",
+      "threshold": 0.47000000000000003
+    }
+  },
+  "split": "test",
+  "pairs": {
+    "aligned": 11000,
+    "missing_in_m2": 0,
+    "missing_in_m4": 0,
+    "positive": 5500,
+    "negative": 5500
+  },
+  "binary": {
+    "agreement": 0.7635,
+    "kappa": 0.5263,
+    "table": {
+      "both_ok": 8207,
+      "only_m2_ok": 2296,
+      "only_m4_ok": 305,
+      "both_bad": 192
+    }
+  },
+  "per_model": {
+    "M2": {
+      "precision": 0.951452806352644,
+      "recall": 0.9585454545454546,
+      "f1": 0.9549859614165385,
+      "tp": 5272,
+      "fp": 269,
+      "fn": 228
+    },
+    "M4": {
+      "precision": 0.7232434034983694,
+      "recall": 0.887090909090909,
+      "f1": 0.7968316184876694,
+      "tp": 4879,
+      "fp": 1867,
+      "fn": 621
+    }
+  },
+  "rescue_at_binary_level": {
+    "m2_errors": 497,
+    "m4_corrects_m2": 305,
+    "m4_corrects_m2_rate": 0.6137,
+    "m2_corrects": 10503,
+    "m4_breaks_m2": 2296,
+    "m4_breaks_m2_rate": 0.2186,
+    "net_correctable": -1991
+  },
+  "fusion_bounds": {
+    "or_rule": {
+      "precision": 0.7342826437399248,
+      "recall": 0.9938181818181818,
+      "f1": 0.8445611866501854,
+      "tp": 5466,
+      "fp": 1978,
+      "fn": 34
+    },
+    "and_rule": {
+      "precision": 0.9673755936403056,
+      "recall": 0.8518181818181818,
+      "f1": 0.9059267137194237,
+      "tp": 4685,
+      "fp": 158,
+      "fn": 815
+    }
+  },
+  "score_correlation": {
+    "pearson": 0.6459,
+    "spearman": 0.6318
+  },
+  "logistic_fusion": {
+    "fit_split": "validation",
+    "eval_split": "test",
+    "val_threshold": 0.47605515238491986,
+    "val_f1": 0.955,
+    "test": {
+      "precision": 0.9240006862240522,
+      "recall": 0.9792727272727273,
+      "f1": 0.9508341424662371,
+      "tp": 5386,
+      "fp": 443,
+      "fn": 114,
+      "auc": 0.9846046776859505
+    }
+  },
+  "verdict": {
+    "best_single_f1": 0.9549859614165385,
+    "fusion_test_f1": 0.9508341424662371,
+    "fusion_beats_best_single": false,
+    "net_correctable": -1991
+  }
+}

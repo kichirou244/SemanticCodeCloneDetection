@@ -1,0 +1,105 @@
+# EXP-006-512 — M5 Hybrid GraphCodeBERT-512 + CPG-GNN trên POJ-104 (C++).
+# Trạng thái: READY_FOR_KAGGLE_TRAIN.
+#
+# Bản đấu trực tiếp với M2-512 (test F1 0.9550): text encoder warm-start từ
+# checkpoint M2-512 (thay vì M2-256 như bản 256), max_length 512.
+# Graph encoder giữ nguyên M4 (CPG không phụ thuộc max_length text).
+#
+# VRAM: text 512 (~4x attention) + GAT trong 1 step -> tốn nhất trong mọi EXP.
+# So với bản 256 (batch 12 / accum 2): giảm batch một nửa (12 -> 6), tăng accum
+# gấp đôi (2 -> 4) để effective batch giữ ~24. pair_batch_size 32 -> 16.
+
+experiment:
+  id: EXP-006-512
+  name: hybrid_graphcodebert_cpg_poj104_512
+  status: READY_FOR_KAGGLE_TRAIN
+  seed: 42
+
+dataset:
+  name: poj104
+  language: cpp
+  manifest: data/manifests/poj104.json
+  pairs_dir: data/pairs/poj104
+  processed: data/processed/poj104/samples.jsonl
+
+model:
+  id: M5
+  type: hybrid
+  language: cpp
+  hf_id: microsoft/graphcodebert-base
+  graph_hidden_size: 128          # = CPGEncoder M4 (results/exp005)
+  graph_num_layers: 3
+  graph_heads: 4
+  graph_dropout: 0.2
+  head_hidden_size: 1024          # MLP fusion (khối head mới, không phải head của M2/M4)
+  head_dropout: 0.1
+  # h = [h_text ; h_graph], head = [hA ; hB ; |hA-hB|] -> MLP (DEC-005 concat_mlp + DEC-016)
+  pair_architecture: concat_hA_hB_absdiff_mlp
+  # Warm start từ encoder đã fine-tune 512 + M4. File thiếu -> model cảnh báo và dùng
+  # pretrained/scratch (an toàn cho smoke/test local).
+  # Notebook Kaggle pull 2 file này từ HF về đúng path trước khi train:
+  #   m2_512_text_encoder.pt -> results/exp003_graphcodebert_poj104_512/best_checkpoint.pt
+  #   m4_graph_encoder.pt     -> results/exp005_cpg_gnn_poj104/best_checkpoint.pt
+  # Sinh bằng: export_hybrid_warm_start --m2 <m2-512 ckpt> --m4 <m4 ckpt> --out warm_start
+  # rồi đổi tên m2_text_encoder.pt -> m2_512_text_encoder.pt trước khi upload HF.
+  warm_start:
+    text: results/exp003_graphcodebert_poj104_512/best_checkpoint.pt
+    graph: results/exp005_cpg_gnn_poj104/best_checkpoint.pt
+
+tokenizer:
+  max_length: 512
+  truncation: true
+  padding: dynamic
+
+# CPG không truncate theo độ dài văn bản; nó bị giới hạn theo **số node**.
+# Cache dùng lại đúng của EXP-005 (không parse lại Joern).
+preprocessing:
+  max_nodes: 1500
+  export_dir: artifacts/cpg_export   # JSON từng hàm do Joern sinh (EXP-005)
+  cache_dir: artifacts/cpg_cache
+  extractor: joern
+
+training:
+  seed: 42
+  # true  = khóa encoder, chỉ train head MLP (bản rẻ, fallback nếu joint fine-tune
+  #         overfit/OOM). false = joint fine-tune (bản đầy đủ, tốn GPU).
+  freeze_encoders: false
+  # Giữ scheme V2 của bản 256: head LR 1e-5, encoder warm-start LR 5e-6
+  # (bản báo cáo 09-10 dùng 2e-5 rồi overfit E0: train loss 0,054 -> 0,003).
+  epochs: 3
+  batch_size: 6                     # 512 + GAT -> VRAM lớn nhất; effective batch 6*4=24
+  learning_rate: 0.00001
+  encoder_learning_rate: 0.000005
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  gradient_accumulation_steps: 4
+  max_grad_norm: 1.0
+  mixed_precision: true
+
+diagnostic:
+  bench_steps: 20
+
+early_stopping:
+  enabled: true
+  monitor: val_f1
+  patience: 2
+  mode: max
+
+inference:
+  pair_batch_size: 16               # 32 -> 16 vì seq 512 + graph cùng lúc
+
+threshold:
+  method: validation_f1
+  grid_step: 0.01
+
+evaluation:
+  metrics: [precision, recall, f1, roc_auc, pr_auc, accuracy]
+
+error_analysis:
+  top_k: 100
+
+runtime:
+  device: cuda
+
+output:
+  directory: results/exp006_hybrid_poj104_512
