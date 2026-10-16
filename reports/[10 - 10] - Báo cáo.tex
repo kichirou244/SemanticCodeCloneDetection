@@ -1,0 +1,173 @@
+% !TeX program = xelatex
+% Báo cáo ngắn gọn: 5 phương pháp + demo 2 cặp custom_suite + hạn chế + kế hoạch.
+% Biên dịch: xelatex -interaction=nonstopmode "[10 - 10] - Báo cáo.tex"
+% Số liệu: results/*/metrics.json + threshold.json, ngưỡng chọn trên validation.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\usepackage[a4paper,top=2.0cm,bottom=2.0cm,left=2.2cm,right=1.9cm]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage[vietnamese]{babel}
+\usepackage{xcolor}
+\definecolor{evyellow}{HTML}{B8860B}
+\newcommand{\mline}[1]{#1}
+\newcommand{\eline}[1]{\colorbox{evyellow!30}{#1}}
+% Màu cặp tương ứng: hai phía cùng số là hai đoạn model cho là khớp nhau.
+% Màu xoay vòng theo số cặp, cặp 8 trùng màu cặp 0.
+\definecolor{pc0}{HTML}{F4B6C2}
+\definecolor{pc1}{HTML}{B5D8F7}
+\definecolor{pc2}{HTML}{B8E6B8}
+\definecolor{pc3}{HTML}{F7E08B}
+\definecolor{pc4}{HTML}{D9C2F0}
+\definecolor{pc5}{HTML}{F5C99B}
+\definecolor{pc6}{HTML}{A8E0E0}
+\definecolor{pc7}{HTML}{E8C39E}
+\newcommand{\pline}[2]{%
+  \ifcase#1\colorbox{pc0}{#2}\or\colorbox{pc1}{#2}\or\colorbox{pc2}{#2}\or%
+  \colorbox{pc3}{#2}\or\colorbox{pc4}{#2}\or\colorbox{pc5}{#2}\or%
+  \colorbox{pc6}{#2}\or\colorbox{pc7}{#2}\fi}
+
+\title{\vspace{-1.0cm}\textbf{Báo cáo kết quả huấn luyện \& Thử nghiệm}\\[4pt]
+       {\normalsize Đề tài: Phát hiện trùng lặp mã nguồn C/C++ và Python}}
+\date{\today}
+
+\begin{document}
+\maketitle
+\vspace{-0.8cm}
+\section{Kết quả tuần này}
+{\sloppy
+Hoàn thành train 5 phương pháp trên POJ-104: CodeBERT (\texttt{codebert-base}, 3 epoch),
+GraphCodeBERT (\texttt{graphcodebert-base}, 3 epoch), ASTNN (7 epoch),
+CPG-GNN (15 epoch), Hybrid (warm-start từ GraphCodeBERT và CPG-GNN, fine-tune 4 epoch).
+Ngưỡng chọn trên validation, giữ nguyên khi test và khi demo.
+Minh hoạ ở mục 6 chuyển sang bộ test tự tạo \texttt{data/custom\_suite}
+(4 bài riêng biệt, mỗi bài có biến thể đổi vòng lặp/IO/đổi tên + non-clone khó),
+thay cho 2 cặp POJ-104 cũ.\par}
+Ngày 12-10 chạy thêm M1-512 và M2-512 (warm-start từ checkpoint 256,
+\texttt{max\_length} 512, effective batch 32 giữ nguyên, 2 epoch do hết budget 9h):
+test F1 0,941 và 0,955, đều vượt bản 256 (0,910 và 0,907). Chi tiết ở mục 2b và 3b.\par}
+
+\section{Kết quả huấn luyện}
+Val F1 theo epoch (ngưỡng chọn trên validation).
+{\small
+\centering
+\setlength{\tabcolsep}{4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Epoch} & \textbf{M3} & \textbf{M4} & \textbf{M1-256} & \textbf{M2-256} & \textbf{M1-512} & \textbf{M2-512} & \textbf{M5} \\
+\midrule
+E0  & 0,789 & 0,782 & 0,919 & \textbf{0,915} & \textbf{0,921} & 0,932 & \textbf{0,914} \\
+E1  & 0,814 & 0,773 & \textbf{0,919} & 0,914 & 0,918 & \textbf{0,933} & 0,893 \\
+E2  & 0,841 & 0,806 & 0,912 & 0,911 & --- & --- & 0,859 \\
+E3  & \textbf{0,853} & 0,794 & --- & --- & --- & --- & 0,879 \\
+E4  & 0,804 & 0,833 & --- & --- & --- & --- & --- \\
+E5  & 0,823 & 0,816 & --- & --- & --- & --- & --- \\
+E6  & 0,841 & 0,804 & --- & --- & --- & --- & --- \\
+E7  & --- & 0,817 & --- & --- & --- & --- & --- \\
+E8  & --- & 0,816 & --- & --- & --- & --- & --- \\
+E9  & --- & 0,836 & --- & --- & --- & --- & --- \\
+E10 & --- & 0,827 & --- & --- & --- & --- & --- \\
+E11 & --- & 0,830 & --- & --- & --- & --- & --- \\
+E12 & --- & 0,837 & --- & --- & --- & --- & --- \\
+E13 & --- & 0,838 & --- & --- & --- & --- & --- \\
+E14 & --- & \textbf{0,842} & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}}\par}
+M1 = CodeBERT, M2 = GraphCodeBERT, M3 = ASTNN, M4 = CPG-GNN, M5 = Hybrid.
+Cột 512 warm-start từ checkpoint 256 (12-10, T4, hết budget 9h nên dừng ở 2 epoch).
+Nguồn: \texttt{training\_history.csv} trong \texttt{results/exp00\{2,3\}\_*\_512/}.\par}
+
+\section{Kết quả test}
+{\small\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+\textbf{PP} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} & \textbf{AUC} & \textbf{Ngưỡng} \\
+\midrule
+M3            & 0,760 & 0,894 & 0,821 & 0,889 & 0,557 \\
+M4            & 0,723 & 0,887 & 0,797 & 0,882 & 0,470 \\
+M1-256        & 0,931 & 0,890 & 0,910 & 0,973 & 0,590 \\
+M2-256        & 0,883 & 0,933 & 0,907 & 0,971 & 0,430 \\
+M1-512        & 0,947 & 0,935 & \textbf{0,941} & \textbf{0,987} & 0,210 \\
+M2-512        & 0,951 & 0,959 & \textbf{0,955} & \textbf{0,991} & 0,660 \\
+M5            & 0,905 & 0,922 & \textbf{0,913} & 0,970 & 0,370 \\
+\bottomrule
+\end{tabular}}\par}
+
+\subsection{So sánh 256 với 512 token}
+M1: F1 0,910 $\to$ \textbf{0,941} (+0,031); FP 363 $\to$ 288, FN 606 $\to$ 357;
+val F1 0,920 $\to$ 0,924 (ngưỡng 0,21).
+M2: F1 0,907 $\to$ \textbf{0,955} (+0,048); FP 682 $\to$ 269, FN 371 $\to$ 228;
+val F1 0,916 $\to$ 0,934 (ngưỡng 0,66).
+Tỉ lệ code bị cắt giảm từ 78,6\% (train) / 73,5\% (val) xuống còn 25,5\% / 22,3\%,
+đúng vùng lỗi FN tập trung ở code dài nên recall tăng mạnh nhất
+(M1 0,890 $\to$ 0,935; M2 0,933 $\to$ 0,959).
+Cả hai bản 512 warm-start từ checkpoint 256, chỉ chạy 2 epoch (hết budget 9h trên T4:
+M1 best epoch 0 với val F1 0,921; M2 best epoch 1 với val F1 0,933).
+Nguồn số liệu: \texttt{results/exp002\_codebert\_poj104\_512/metrics.json} và
+\texttt{results/exp003\_graphcodebert\_poj104\_512/metrics.json}.\par}
+
+% Mục 5 cũ là bảng điểm demo đã bỏ, điểm số chuyển vào 6.1 và 6.2.
+% Giữ số mục Minh hoạ là 6 cho khớp cấu trúc đã chốt.
+\setcounter{section}{5}
+\section{Minh hoạ}
+Cách đọc hình:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
+\item Hai phía cùng màu là hai đoạn chính mô hình đó cho là khớp nhau.
+\item Mỗi mô hình một bảng màu riêng vì mỗi họ nhìn code bằng tín hiệu riêng.
+\item CodeBERT, GraphCodeBERT, Hybrid bắt cặp từng từ trên vector encoder.
+\item ASTNN bắt cặp câu lệnh trên vector RvNN, bỏ span bao hơn 60\% file
+  và chỉ giữ statement trong cùng (không bôi cả hàm).
+\item CPG-GNN bắt cặp dòng trên vector node GAT.
+\item MOSS tô đúng vùng khớp mà server Stanford trả về trên trang match
+(cặp không được gắn cờ hiện trắng trơn, không có màu nào).
+\item \colorbox{evyellow!30}{Vàng} lẻ là token mô hình dựa vào để cho điểm
+  nhưng không ghép được cặp, không màu là phần còn lại.
+\end{itemize}
+
+\subsection{Cặp clone khó: P1\_combo (bộ test custom\_suite)}
+Cùng bài tổng 1..n, nhưng bản B viết lại toàn bộ: \texttt{for} thành
+\texttt{while}, \texttt{cin/cout} thành \texttt{scanf/printf}, đổi tên biến,
+đảo điều kiện phủ định, thêm biến thừa.
+Cả 5 phương pháp kết luận đúng: M1 1,000, M2 1,000,
+M3 0,812, M4 0,915, M5 1,000, đều trên ngưỡng nên là clone.
+MOSS server mù với biến thể này (0,000) — đúng hạn chế đã biết ở mục 6
+của bản trước: server chỉ trả top match nên cặp Type-3/4 viết lại kỹ không
+được gắn cờ.
+{\shorthandoff{"}\input{../workspace/demo_suite_P1_combo.tex}
+\input{../workspace/demo_suite_moss_P1_combo.tex}}
+
+\subsection{Cặp không clone khó: P3\_nonclone (bộ test custom\_suite)}
+Cùng skeleton đọc mảng bằng \texttt{for} và in một số, nhưng một bên tìm
+\texttt{max}, bên kia tính tổng.
+M1 0,001, M2 0,172 và M5 0,094 dưới ngưỡng nên kết luận đúng là không clone;
+M3 0,852 và M4 0,973 trên ngưỡng nên kết luận sai.
+MOSS server không gắn cờ (0,000) nên đúng ở cặp này.
+Cặp này cho thấy bẫy skeleton giống hệt: mô hình cấu trúc (ASTNN, CPG-GNN)
+dễ bị đánh lừa hơn mô hình transformer.
+{\shorthandoff{"}\input{../workspace/demo_suite_P3_nonclone_sum.tex}
+\input{../workspace/demo_suite_moss_P3_nonclone_sum.tex}}
+
+\section{Hạn chế}
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
+\item Hybrid đỉnh ngay epoch đầu rồi overfit, CPG-GNN thì val F1 còn tăng
+  ở epoch cuối.
+\item M1/M2 bản 256 cắt đầu vào 256 token (78,6\% train bị cắt),
+  CPG-GNN chặn 1500 node, hàm dài bị mất thông tin.
+  Bản 512 đã giảm tỉ lệ cắt xuống 25,5\% và F1 tăng +0,031/+0,048 (mục 3b),
+  nhưng 1/4 code dài nhất vẫn bị cắt.
+\end{itemize}
+
+\section{Kế hoạch tiếp theo}
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
+\item Hybrid V2 (giảm LR) không tốt hơn V1 nên giữ V1; tiếp theo thử freeze
+  encoder, chỉ train head rồi mới unfreeze.
+\item Đầu vào 512 token đã thử xong cho M1/M2 (cải thiện rõ);
+  tiếp theo nới giới hạn node của CPG-GNN và thử Hybrid trên nền encoder 512.
+\end{itemize}
+
+\end{document}

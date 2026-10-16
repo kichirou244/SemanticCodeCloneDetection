@@ -1,5 +1,18 @@
 # Task log — SemanticCodeCloneDetection
 
+## [QUY UOC] Bo test mac dinh: `data/custom_suite` (tu 16-10)
+- Moi lan test/demo/bao cao sau nay deu dung `data/custom_suite`
+  (26 cap: 16 clone + 10 non-clone), cham bang `scripts/score_custom_suite.py`,
+  sinh hinh bang `scripts/evidence_custom_suite.py`. Khong them comment vao file
+  test (da xoa sach 16-10). `data/custom_hard/` giu lai lam tham khao.
+- Ket qua full 16-10 (khong comment): 16/16 clone ca 5 model neural dung;
+  non-clone kho: P1_fact + P4_square ca 5 model sai, P2_digitsum chi M1 dung,
+  P3_sum M1/M2/M5 dung; cross X: M1/M2 6/6, M5 4/6, M3/M4 0/6. B1-service 0 diem
+  moi cap (mu Type-3/4, da biet tu EXP-014).
+- Bao cao [17-10]: muc 6 co 3 cap (6.1 clone kho P1_combo, 6.2 non-clone kho
+  P3_nonclone_sum, 6.3 bay skeleton P1_nonclone_fact ca 5 model sai).
+  Khong ton tai ca false-non-clone nhat tri (16/16 clone deu bi bat).
+
 ## [COMPLETE] Bổ sung MOSS + ví dụ khó theo review báo cáo [10-10]
 - Đào từ `test_scores.jsonl` (ngưỡng threshold.json): 11 cặp FN cả 5 mô hình,
   65 cặp FP cả 5 mô hình. Chọn `test-pos-30-284` (GT=clone, 0,073/0,022/0,407/
