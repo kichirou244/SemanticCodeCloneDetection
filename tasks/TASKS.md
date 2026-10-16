@@ -13,34 +13,45 @@
   P3_nonclone_sum, 6.3 bay skeleton P1_nonclone_fact ca 5 model sai).
   Khong ton tai ca false-non-clone nhat tri (16/16 clone deu bi bat).
 
-## [TO DO] Kế hoạch tuần sau 19-10 → 23-10: freeze-encoder + nới node CPG + Hybrid-512
+## [QUY UOC] Cập nhật trạng thái task trên Notion (từ 18-10)
+- Trước khi bắt đầu 1 việc: mở task trong Notion, đổi Status -> **In progress**.
+- Làm xong: đổi Status -> **Done** (ghi kết quả vào Description nếu cần).
+- Xem task: `node tasks/notion.js --tasks`
+- Đổi status: `node tasks/notion.js --status "<tên task>" "<trạng thái>"`
+  (trạng thái: Not started / In progress / On Hold / To Review / Done / Cancelled)
+- Sync kế hoạch từ `tasks/tasks.json` lên Notion: `node tasks/notion.js`
+  (khớp theo tên: có thì cập nhật, chưa có thì tạo mới, không tạo trùng).
 
-Mục tiêu: (1) Hybrid hết overfit đỉnh-ngay-E0 bằng cách freeze encoder rồi unfreeze
-(đúng item trong BACKLOG); (2) CPG-GNN nới giới hạn node để bớt cắt hàm dài;
+## [TO DO] Kế hoạch tuần 18-10 (CN) → 23-10 (T6), T7 nộp báo cáo
+Mục tiêu: (1) Hybrid hết overfit đỉnh-ngay-E0 bằng freeze encoder rồi unfreeze
+(item trong BACKLOG); (2) CPG-GNN nới giới hạn node để bớt cắt hàm dài;
 (3) thử cấu hình khác cho Hybrid-512.
 
-### 19-10 (T2) — Chuẩn bị config Hybrid V3 (freeze → unfreeze)
-- Thêm option `freeze_encoder_epochs` (vd 1–2) vào `src/experiments/exp006_hybrid.py`
-  + `configs/exp006_hybrid.yaml`: đóng băng encoder N epoch đầu, chỉ train phần head,
-  sau đó unfreeze mới train tiếp. Viết/sửa test, chạy `pytest` xanh.
-- (nếu kịp) Soạn config `exp005_cpg_gnn` bản nới node: `max_nodes` 1500 → 2000.
+### 18-10 (CN) — Chuẩn bị config
+- Hybrid V3: thêm option `freeze_encoder_epochs` (vd 1–2) vào
+  `src/experiments/exp006_hybrid.py` + `configs/exp006_hybrid.yaml` (đóng băng encoder
+  N epoch đầu, chỉ train head rồi mới unfreeze). Viết/sửa test, chạy `pytest` xanh.
+- CPG-GNN: soạn config `exp005_cpg_gnn` bản nới node `max_nodes` 1500 → 2000.
 
-### 20-10 (T3) — Chạy Kaggle Hybrid V3
-- Chạy notebook Hybrid V3 (freeze→unfreeze), ~7–8h, theo dõi val F1 từng epoch.
-- Kỳ vọng: đỉnh không còn rơi ngay E0, val F1 ≥ V1 (0,914).
+### 19-10 (T2) — Chạy Hybrid V3
+- Chạy notebook Kaggle Hybrid V3 (freeze→unfreeze), ~7–8h.
+- Theo dõi val F1 từng epoch (kỳ vọng ≥ V1 0,914, hết đỉnh-ngay-E0).
 
-### 21-10 (T4) — Đánh giá Hybrid V3 + chạy M4 nới node
-- Tải `results/exp006_hybrid_poj104_v3/` về, so val/test F1 với V1 (test 0,913,
-  thr 0,370) và V2. Quyết định giữ V1 hay chuyển V3.
-- Chạy M4 CPG-GNN với giới hạn node mới (Kaggle), xem val F1 có vượt 0,842 không;
-  ghi lại tỉ lệ cắt node (`truncation.json`).
+### 20-10 (T3) — Đánh giá V3 + chạy M4
+- Tải `results/exp006_hybrid_poj104_v3/`, so val/test F1 với V1 (0,913, thr 0,370)
+  và V2. Quyết định giữ V1 hay chuyển V3.
+- Chạy M4 CPG-GNN với giới hạn node mới (Kaggle).
 
-### 22-10 (T5) — Hybrid-512 cấu hình mới
-- Chạy lại Hybrid-512 với cấu hình khác (freeze encoder / thêm epoch / LR khác),
-  so với M5-512 hiện tại (test F1 0,952, thr 0,010 rất mỏng nên cần xem cả verdict).
+### 21-10 (T4) — Đánh giá M4 + chạy Hybrid-512
+- Đánh giá M4 nới node: val F1 có vượt 0,842 không + tỉ lệ cắt node (`truncation.json`).
+- Chạy Hybrid-512 với cấu hình mới (freeze encoder / epochs / LR khác).
+
+### 22-10 (T5) — Đánh giá Hybrid-512 + truncation
+- Đánh giá Hybrid-512 cấu hình mới (so M5-512: test F1 0,952, thr 0,010 rất mỏng,
+  xem cả verdict).
 - Đo lại `truncation.json` của M1/M2/M5-512.
 
-### 23-10 (T6) — Tổng hợp + báo cáo tuần
+### 23-10 (T6) — Chốt số + viết báo cáo (T7 nộp)
 - Chấm lại `data/custom_suite` cho model mới bằng `scripts/score_custom_suite.py`.
 - Cập nhật bảng train/test + mục demo trong báo cáo tuần, build PDF.
 

@@ -1,0 +1,55 @@
+[
+  {
+    "date": "2026-10-18",
+    "title": "Hybrid V3: thêm freeze_encoder_epochs vào exp006 (freeze encoder N epoch → unfreeze)",
+    "notes": "Sửa src/experiments/exp006_hybrid.py + configs/exp006_hybrid.yaml: đóng băng encoder, chỉ train head rồi mới mở ra train tiếp."
+  },
+  {
+    "date": "2026-10-18",
+    "title": "Hybrid V3: viết/sửa test và chạy pytest xanh"
+  },
+  {
+    "date": "2026-10-18",
+    "title": "CPG-GNN: soạn config nới node max_nodes 1500 → 2000"
+  },
+  {
+    "date": "2026-10-19",
+    "title": "Chạy Kaggle Hybrid V3 (freeze→unfreeze), ~7–8h"
+  },
+  {
+    "date": "2026-10-19",
+    "title": "Theo dõi val F1 từng epoch (kỳ vọng ≥ 0,914, hết đỉnh-ngay-E0)"
+  },
+  {
+    "date": "2026-10-20",
+    "title": "Đánh giá Hybrid V3: so val/test F1 với V1 (0,913) và V2, quyết định giữ V1 hay V3"
+  },
+  {
+    "date": "2026-10-20",
+    "title": "Chạy M4 CPG-GNN nới node, xem val F1 có vượt 0,842 không"
+  },
+  {
+    "date": "2026-10-21",
+    "title": "Đánh giá M4 CPG-GNN nới node (val F1 + tỉ lệ cắt node)"
+  },
+  {
+    "date": "2026-10-21",
+    "title": "Hybrid-512: chạy cấu hình mới (freeze/epochs/LR), so M5-512 (F1 0,952)"
+  },
+  {
+    "date": "2026-10-22",
+    "title": "Đánh giá Hybrid-512 cấu hình mới (so M5-512)"
+  },
+  {
+    "date": "2026-10-22",
+    "title": "Đo lại truncation.json của M1/M2/M5-512"
+  },
+  {
+    "date": "2026-10-23",
+    "title": "Chấm custom_suite cho model mới (scripts/score_custom_suite.py)"
+  },
+  {
+    "date": "2026-10-23",
+    "title": "Cập nhật báo cáo tuần (bảng train/test + demo) và build PDF để T7 nộp"
+  }
+]
