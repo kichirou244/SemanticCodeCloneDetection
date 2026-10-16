@@ -13,6 +13,37 @@
   P3_nonclone_sum, 6.3 bay skeleton P1_nonclone_fact ca 5 model sai).
   Khong ton tai ca false-non-clone nhat tri (16/16 clone deu bi bat).
 
+## [TO DO] Kế hoạch tuần sau 19-10 → 23-10: freeze-encoder + nới node CPG + Hybrid-512
+
+Mục tiêu: (1) Hybrid hết overfit đỉnh-ngay-E0 bằng cách freeze encoder rồi unfreeze
+(đúng item trong BACKLOG); (2) CPG-GNN nới giới hạn node để bớt cắt hàm dài;
+(3) thử cấu hình khác cho Hybrid-512.
+
+### 19-10 (T2) — Chuẩn bị config Hybrid V3 (freeze → unfreeze)
+- Thêm option `freeze_encoder_epochs` (vd 1–2) vào `src/experiments/exp006_hybrid.py`
+  + `configs/exp006_hybrid.yaml`: đóng băng encoder N epoch đầu, chỉ train phần head,
+  sau đó unfreeze mới train tiếp. Viết/sửa test, chạy `pytest` xanh.
+- (nếu kịp) Soạn config `exp005_cpg_gnn` bản nới node: `max_nodes` 1500 → 2000.
+
+### 20-10 (T3) — Chạy Kaggle Hybrid V3
+- Chạy notebook Hybrid V3 (freeze→unfreeze), ~7–8h, theo dõi val F1 từng epoch.
+- Kỳ vọng: đỉnh không còn rơi ngay E0, val F1 ≥ V1 (0,914).
+
+### 21-10 (T4) — Đánh giá Hybrid V3 + chạy M4 nới node
+- Tải `results/exp006_hybrid_poj104_v3/` về, so val/test F1 với V1 (test 0,913,
+  thr 0,370) và V2. Quyết định giữ V1 hay chuyển V3.
+- Chạy M4 CPG-GNN với giới hạn node mới (Kaggle), xem val F1 có vượt 0,842 không;
+  ghi lại tỉ lệ cắt node (`truncation.json`).
+
+### 22-10 (T5) — Hybrid-512 cấu hình mới
+- Chạy lại Hybrid-512 với cấu hình khác (freeze encoder / thêm epoch / LR khác),
+  so với M5-512 hiện tại (test F1 0,952, thr 0,010 rất mỏng nên cần xem cả verdict).
+- Đo lại `truncation.json` của M1/M2/M5-512.
+
+### 23-10 (T6) — Tổng hợp + báo cáo tuần
+- Chấm lại `data/custom_suite` cho model mới bằng `scripts/score_custom_suite.py`.
+- Cập nhật bảng train/test + mục demo trong báo cáo tuần, build PDF.
+
 ## [COMPLETE] Bổ sung MOSS + ví dụ khó theo review báo cáo [10-10]
 - Đào từ `test_scores.jsonl` (ngưỡng threshold.json): 11 cặp FN cả 5 mô hình,
   65 cặp FP cả 5 mô hình. Chọn `test-pos-30-284` (GT=clone, 0,073/0,022/0,407/
@@ -161,5 +192,5 @@
 - So sánh Hybrid V2 vs V1 (hết overfit E0 chưa), CPG epoch mới có tăng tiếp không.
 
 ## [BACKLOG] Tạm hoãn (vượt quota)
-- Nới giới hạn node CPG-GNN (attention O(n²)).
-- Two-stage Hybrid: freeze encoder 1 epoch đầu rồi unfreeze (nếu V2 vẫn overfit).
+- ~~Nới giới hạn node CPG-GNN (attention O(n²)).~~ → đã đưa vào kế hoạch tuần sau (21-10).
+- ~~Two-stage Hybrid: freeze encoder 1 epoch đầu rồi unfreeze (nếu V2 vẫn overfit).~~ → đã đưa vào kế hoạch tuần sau (19-10).

@@ -39,21 +39,14 @@
 \vspace{-0.8cm}
 \section{Kết quả tuần này}
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
-\item Train 5 phương pháp trên POJ-104: CodeBERT (\texttt{codebert-base}, 3 epoch),
-  GraphCodeBERT (\texttt{graphcodebert-base}, 3 epoch), ASTNN (7 epoch),
-  CPG-GNN (15 epoch), Hybrid (warm-start từ GraphCodeBERT + CPG-GNN, fine-tune 4 epoch).
-\item Ngưỡng chọn trên validation, giữ nguyên khi test và khi demo.
-\item Minh hoạ (mục 6) nay dùng bộ test tự tạo \texttt{data/custom\_suite}: 4 bài,
-  mỗi bài có biến thể đổi vòng lặp/IO/đổi tên và non-clone khó, thay 2 cặp POJ-104 cũ.
-\item 12-10: thêm M1-512, M2-512 (warm-start từ checkpoint 256, \texttt{max\_length} 512,
-  effective batch 32, dừng 2 epoch do hết budget 9h) $\to$ test F1 0,941 và 0,955,
-  đều vượt bản 256 (0,910 và 0,907). Chi tiết ở mục 2 và 3.1.
-\item 15-10: thêm M5-512 (Hybrid trên nền encoder 512: text M2-512 giữ nguyên graph M4,
-  dừng 2 epoch do hết budget, best epoch 0) $\to$ test F1 0,952, thứ hai toàn đoàn sau M2-512.
+\item Tạo bộ test thay đổi vòng lặp \texttt{for}/\texttt{while}/\texttt{do-while},
+  đổi IO và tên biến, thêm cặp non-clone khó.
+\item 12-10: chạy thêm M1-512, M2-512 (warm-start từ checkpoint 256, \texttt{max\_length} 512, 2 epoch).
+\item 15-10: chạy thêm M5-512 (Hybrid trên nền encoder 512, 2 epoch).
 \end{itemize}
 
 \section{Kết quả huấn luyện}
-Val F1 theo epoch (ngưỡng chọn trên validation).\\[2pt]
+F1 trên tập val theo từng epoch, ngưỡng chọn bằng val.\\[2pt]
 {\small
 \centering
 \setlength{\tabcolsep}{4pt}
@@ -79,12 +72,7 @@ E13 & --- & 0,838 & --- & --- & --- & --- & --- & --- \\
 E14 & --- & \textbf{0,842} & --- & --- & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}}\par}
-\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
-\item M1 = CodeBERT, M2 = GraphCodeBERT, M3 = ASTNN, M4 = CPG-GNN, M5 = Hybrid.
-\item Cột 512 warm-start từ checkpoint 256 (12-10, T4, hết budget 9h, dừng ở 2 epoch);
-  M5-512 là Hybrid trên nền encoder 512 (15-10, dừng 2 epoch, best epoch 0).
-\item Nguồn: \texttt{training\_history.csv} trong \texttt{results/exp00\{2,3,6\}\_*\_512/}.
-\end{itemize}
+Trong đó: M1 = CodeBERT, M2 = GraphCodeBERT, M3 = ASTNN, M4 = CPG-GNN, M5 = Hybrid.
 
 \section{Kết quả test}
 {\small\centering
@@ -104,22 +92,12 @@ M5-512        & 0,961 & 0,942 & \textbf{0,952} & 0,988 & 0,010 \\
 \bottomrule
 \end{tabular}}\par}
 
-\subsection{So sánh 256 với 512 token}
+\subsection{So sánh 256 và 512 token}
+Lên 512 token thì cả ba đều tăng điểm:
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
-\item M1: F1 0,910 $\to$ \textbf{0,941} (+0,031); FP 363 $\to$ 288, FN 606 $\to$ 357;
-  val F1 0,920 $\to$ 0,924 (ngưỡng 0,21).
-\item M2: F1 0,907 $\to$ \textbf{0,955} (+0,048); FP 682 $\to$ 269, FN 371 $\to$ 228;
-  val F1 0,916 $\to$ 0,934 (ngưỡng 0,66).
-\item M5: F1 0,913 $\to$ \textbf{0,952} (+0,039); val F1 0,915 $\to$ 0,938
-  (15-10, best epoch 0 rồi overfit như bản 256).
-\item Lưu ý: ngưỡng M5-512 rất mỏng (0,01, điểm phân cực 0/1) nên khi demo cần
-  theo dõi verdict, không chỉ nhìn điểm số.
-\item Tỉ lệ code bị cắt giảm 78,6\% (train) / 73,5\% (val) $\to$ 25,5\% / 22,3\%;
-  FN tập trung ở code dài nên recall tăng mạnh nhất (M1 0,890 $\to$ 0,935; M2 0,933 $\to$ 0,959).
-\item Cả hai bản 512 warm-start từ checkpoint 256, chỉ chạy 2 epoch (hết budget 9h trên T4):
-  M1 best epoch 0 (val F1 0,921), M2 best epoch 1 (val F1 0,933).
-\item Nguồn: \texttt{results/exp002\_codebert\_poj104\_512/metrics.json},
-  \texttt{results/exp003\_graphcodebert\_poj104\_512/metrics.json}.
+\item M1: 0,910 $\to$ 0,941.
+\item M2: 0,907 $\to$ 0,955.
+\item M5: 0,913 $\to$ 0,952.
 \end{itemize}
 
 % Mục 5 cũ là bảng điểm demo đã bỏ, điểm số chuyển vào 6.1, 6.2 và 6.3.
@@ -128,70 +106,66 @@ M5-512        & 0,961 & 0,942 & \textbf{0,952} & 0,988 & 0,010 \\
 \section{Minh hoạ}
 Cách đọc hình:
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
-\item Hai phía cùng màu là hai đoạn chính mô hình đó cho là khớp nhau.
-\item Mỗi mô hình một bảng màu riêng vì mỗi họ nhìn code bằng tín hiệu riêng.
-\item CodeBERT, GraphCodeBERT, Hybrid bắt cặp từng từ trên vector encoder.
-\item ASTNN bắt cặp câu lệnh trên vector RvNN, bỏ span bao hơn 60\% file
-  và chỉ giữ statement trong cùng (không bôi cả hàm).
-\item CPG-GNN bắt cặp dòng trên vector node GAT.
-\item MOSS tô đúng vùng khớp mà server Stanford trả về trên trang match
-(cặp không được gắn cờ hiện trắng trơn, không có màu nào).
-\item \colorbox{evyellow!30}{Vàng} lẻ là token mô hình dựa vào để cho điểm
-  nhưng không ghép được cặp, không màu là phần còn lại.
+\item Hai phía cùng màu là hai đoạn mà model cho là khớp nhau.
+\item Mỗi model có một bảng màu riêng.
+\item CodeBERT, GraphCodeBERT, Hybrid ghép theo từng từ (vector encoder).
+\item ASTNN ghép theo câu lệnh (vector RvNN); bỏ các span chiếm hơn 60\% file
+  và chỉ giữ statement cùng cấp, không bôi cả hàm.
+\item CPG-GNN ghép theo dòng (vector node GAT).
+\item MOSS tô đúng vùng khớp mà server Stanford trả về; cặp nào không được
+  gắn cờ thì để trắng.
+\item Ô \colorbox{evyellow!30}{vàng} lẻ là token model dựa vào để cho điểm
+  nhưng không ghép được cặp, phần không tô màu là còn lại.
 \end{itemize}
 
-\subsection{Cặp clone khó: P1\_combo (bộ test custom\_suite)}
-Cùng bài tổng 1..n, nhưng bản B viết lại toàn bộ: \texttt{for} thành
-\texttt{while}, \texttt{cin/cout} thành \texttt{scanf/printf}, đổi tên biến,
-đảo điều kiện phủ định, thêm biến thừa.
-Cả 5 phương pháp kết luận đúng: M1 1,000, M2 1,000,
-M3 0,812, M4 0,915, M5 1,000, đều trên ngưỡng nên là clone.
-MOSS server mù với biến thể này (0,000) — đúng hạn chế đã biết ở mục 6
-của bản trước: server chỉ trả top match nên cặp Type-3/4 viết lại kỹ không
-được gắn cờ.
+\subsection{Cặp clone khó: P1\_combo}
+Cùng bài tính tổng 1..n, nhưng bản B viết lại hết: \texttt{for} đổi thành
+\texttt{while}, \texttt{cin/cout} đổi thành \texttt{scanf/printf}, đổi tên biến,
+đảo điều kiện, thêm biến thừa.
+Cả 5 model đều cho là clone (M1 1,000, M2 1,000, M3 0,812, M4 0,915, M5 1,000), đúng cả.
+Riêng MOSS cho 0,000 nên bỏ sót cặp này, do server chỉ trả top match nên mấy cặp
+Type-3/4 viết lại nhiều không được gắn cờ.
 {\shorthandoff{"}\input{../workspace/demo_suite_P1_combo.tex}
 \input{../workspace/demo_suite_moss_P1_combo.tex}}
 
-\subsection{Cặp không clone khó: P3\_nonclone (bộ test custom\_suite)}
-Cùng skeleton đọc mảng bằng \texttt{for} và in một số, nhưng một bên tìm
-\texttt{max}, bên kia tính tổng.
-M1 0,000, M2 0,110 và M5 0,005 dưới ngưỡng nên kết luận đúng là không clone;
-M3 0,852 và M4 0,973 trên ngưỡng nên kết luận sai.
-MOSS server không gắn cờ (0,000) nên đúng ở cặp này.
-Cặp này cho thấy bẫy skeleton giống hệt: mô hình cấu trúc (ASTNN, CPG-GNN)
-dễ bị đánh lừa hơn mô hình transformer.
+\subsection{Cặp không clone khó: P3\_nonclone}
+Cùng khung đọc mảng bằng \texttt{for} rồi in một số, nhưng một bài tìm
+\texttt{max} còn bài kia tính tổng.
+M1 (0,000), M2 (0,110) và M5 (0,005) đều dưới ngưỡng nên nói đúng là không clone;
+ngược lại M3 (0,852) và M4 (0,973) vượt ngưỡng nên nói sai.
+MOSS cho 0,000 nên cũng đúng ở cặp này.
+Qua đây thấy mấy model cấu trúc (ASTNN, CPG-GNN) dễ bị khung code giống nhau
+đánh lừa hơn mấy model transformer.
 {\shorthandoff{"}\input{../workspace/demo_suite_P3_nonclone_sum.tex}
 \input{../workspace/demo_suite_moss_P3_nonclone_sum.tex}}
 
 \subsection{Cặp bẫy skeleton: P1\_nonclone\_fact (cả 5 model đều sai)}
-Cùng skeleton vòng \texttt{for} 1..n và in một số, nhưng một bên tính tổng,
-bên kia tính giai thừa (tích).
-Cả 5 mô hình neural đều kết luận sai là clone: M1 1,000, M2 1,000,
-M3 0,960, M4 0,971, M5 1,000, đều trên ngưỡng.
-MOSS server cho 0,000 nên đúng ở cặp này, nhưng là đúng do mù
-(nó cũng cho 0,000 với cặp clone khó ở mục 6.1) chứ không phải do hiểu code.
-Cặp \texttt{p4\_n\_square} (số nguyên tố so với số chính phương, cùng khung
-\texttt{for} trả lời YES/NO) cũng khiến cả 5 model sai tương tự nên không vẽ
-lại hình. Ngược lại, chiều sai không clone (GT là clone mà cả 5 model đều bảo
-không clone) không xuất hiện trong bộ test: cả 16 cặp clone, kể cả 4 cặp combo
-khó nhất, đều được 5 model bắt đúng.
+Cũng là khung \texttt{for} 1..n rồi in một số, nhưng một bài tính tổng còn bài kia
+tính giai thừa.
+Lần này cả 5 model đều nói sai là clone: M1 1,000, M2 1,000, M3 0,960, M4 0,971, M5 1,000.
+MOSS cho 0,000 nên đúng ở cặp này, nhưng đúng kiểu mù (giống cặp ở mục 6.1) chứ
+không phải hiểu code.
+Cặp \texttt{p4\_n\_square} (số nguyên tố với số chính phương, cùng khung \texttt{for}
+trả lời YES/NO) cũng bị sai y hệt nên không vẽ lại hình.
+Chiều ngược lại thì không có cặp nào: không có cặp nào GT là clone mà cả 5 model
+lại bảo không clone, cả 16 cặp clone đều bắt đúng.
 {\shorthandoff{"}\input{../workspace/demo_suite_P1_nonclone_fact.tex}
 \input{../workspace/demo_suite_moss_P1_nonclone_fact.tex}}
 
 \section{Hạn chế}
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
-\item Hybrid đỉnh ngay epoch đầu rồi overfit; CPG-GNN thì val F1 còn tăng ở epoch cuối.
-\item M1/M2 bản 256 cắt đầu vào 256 token (78,6\% train bị cắt), CPG-GNN chặn 1500 node
-  nên hàm dài bị mất thông tin. Bản 512 đã giảm tỉ lệ cắt xuống 25,5\% và F1 tăng
-  +0,031/+0,048 (mục 3.1), nhưng 1/4 code dài nhất vẫn bị cắt.
+\item Hybrid lên đỉnh ngay epoch đầu rồi overfit, còn CPG-GNN thì val F1 vẫn tăng ở epoch cuối.
+\item M1/M2 bản 256 chỉ lấy 256 token (78,6\% câu train bị cắt), CPG-GNN chặn ở 1500 node
+  nên mấy hàm dài bị mất thông tin. Bản 512 đã giảm tỉ lệ cắt còn 25,5\% và F1 tăng thêm
+  0,031/0,048 (mục 3.1), nhưng 1/4 code dài nhất vẫn bị cắt.
 \end{itemize}
 
 \section{Kế hoạch tiếp theo}
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
-\item Hybrid V2 (giảm LR) không tốt hơn V1 nên giữ V1; tiếp theo thử freeze
-  encoder, chỉ train head rồi mới unfreeze.
-\item Đầu vào 512 token đã thử xong cho M1/M2 (cải thiện rõ);
-  tiếp theo nới giới hạn node của CPG-GNN và thử Hybrid trên nền encoder 512.
+\item Hybrid V2 (giảm LR) không hơn V1 nên giữ V1; tiếp theo thử freeze encoder,
+  chỉ train phần head rồi mới mở ra train tiếp.
+\item M1/M2 đã thử xong 512 token (thấy cải thiện rõ); tiếp theo nới giới hạn node
+  cho CPG-GNN và thử thêm cấu hình cho Hybrid-512.
 \end{itemize}
 
 \end{document}
