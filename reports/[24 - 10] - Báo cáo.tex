@@ -1,0 +1,299 @@
+% !TeX program = xelatex
+% Báo cáo [24 - 10]: bộ test mở rộng nhóm P5 (danh sách liên kết + hướng đối tượng)
+% theo góp ý của thầy: code dài hơn, có hàm, cấu trúc DSLK, hướng đối tượng, và
+% phần struct ↔ class gần như hoàn toàn giống nhau.
+% Biên dịch: xelatex -interaction=nonstopmode "[24 - 10] - Báo cáo.tex"
+% Số liệu: workspace/custom_suite_scores.json (6 model, ngưỡng từ threshold.json)
+%          workspace/demo_suite_evidence.json + workspace/demo_suite_*.tex
+% Code test: data/custom_suite/ (đã chuyển vào git).
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\usepackage[a4paper,top=2.0cm,bottom=2.0cm,left=2.2cm,right=1.9cm]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage[vietnamese]{babel}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{verbatim}
+\definecolor{evyellow}{HTML}{B8860B}
+% Code P5 dài 61-71 dòng: \colorbox mặc định cộng \fboxsep 3pt cả trên/dưới nên mỗi
+% dòng tô màu cao thêm ~6pt, 71 dòng là tràn trang. Giữ 1pt cho vừa một trang A4.
+\setlength{\fboxsep}{1pt}
+\newcommand{\mline}[1]{#1}
+\newcommand{\eline}[1]{\colorbox{evyellow!30}{#1}}
+% Màu cặp tương ứng: hai phía cùng số là hai đoạn model cho là khớp nhau.
+% Màu xoay vòng theo số cặp, cặp 8 trùng màu cặp 0.
+\definecolor{pc0}{HTML}{F4B6C2}
+\definecolor{pc1}{HTML}{B5D8F7}
+\definecolor{pc2}{HTML}{B8E6B8}
+\definecolor{pc3}{HTML}{F7E08B}
+\definecolor{pc4}{HTML}{D9C2F0}
+\definecolor{pc5}{HTML}{F5C99B}
+\definecolor{pc6}{HTML}{A8E0E0}
+\definecolor{pc7}{HTML}{E8C39E}
+\newcommand{\pline}[2]{%
+  \ifcase#1\colorbox{pc0}{#2}\or\colorbox{pc1}{#2}\or\colorbox{pc2}{#2}\or%
+  \colorbox{pc3}{#2}\or\colorbox{pc4}{#2}\or\colorbox{pc5}{#2}\or%
+  \colorbox{pc6}{#2}\or\colorbox{pc7}{#2}\fi}
+
+\title{\vspace{-1.0cm}\textbf{Báo cáo kết quả huấn luyện \& Thử nghiệm}\\[4pt]
+       {\normalsize Đề tài: Phát hiện trùng lặp mã nguồn C/C++ và Python}\\[3pt]
+       {\small Bộ test mở rộng: danh sách liên kết + hướng đối tượng (theo góp ý của thầy)}}
+\date{\today}
+
+\begin{document}
+\maketitle
+\vspace{-0.8cm}
+\section{Kết quả tuần này}
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
+\item Thầy góp ý bộ test còn ngắn: cần thêm code dài, có hàm, cấu trúc danh sách liên
+  kết, hướng đối tượng, và phần \texttt{struct} với \texttt{class} gần như hoàn toàn
+  giống nhau.
+\item Thêm nhóm \textbf{P5} vào bộ test \texttt{custom\_suite}: 6 file, mỗi file
+  59--71 dòng (các bài P1--P4 chỉ 11--17 dòng), dùng \texttt{struct Node} + 4 hàm tự do
+  hoặc \texttt{class IntList} + 4 phương thức trên cùng một thuật toán.
+\item Chấm 8 cặp mới (bộ test từ 26 lên 34 cặp) bằng 6 phương pháp: MOSS server thật
+  (B1) và M1 CodeBERT, M2 GraphCodeBERT, M3 ASTNN, M4 CPG-GNN, M5 Hybrid.
+  M1/M2/M5 dùng bản 512 token, ngưỡng đọc từ \texttt{threshold.json} của từng run.
+\item Chuyển \texttt{data/custom\_suite} vào git (trước đây cả thư mục \texttt{data/}
+  bị ignore) để code test nằm trong repo; hình minh hoạ sinh lại được bằng
+  \texttt{scripts/evidence\_custom\_suite.py}.
+\item Kết quả: \textbf{cả 5 model bắt đúng} cặp \texttt{struct} $\leftrightarrow$
+  \texttt{class} (M1/M2/M5 $\approx$ 1,000; M3 0,915; M4 0,973) — \textbf{MOSS bỏ sót cả
+  hai} cặp clone dạng \texttt{class} (0,000). M3 đúng cả 8 cặp; M4 sai 3 (toàn dương giả).
+\item Hai điều mới lộ ra: (a) cặp cross \texttt{X\_P1P5} (DSLK vs tổng 1..$n$) bị
+  M1/M2/M5 nói sai $\approx$ 1,000 vì hai bài cùng phép toán tổng; (b) cả 6 file P5 đều
+  vượt 512 subword token nên M1/M2/M5 phải cắt tới 25\% code —
+  chi tiết ở §\ref{sec:ketqua}.
+\end{itemize}
+
+\section{Nhóm test P5: danh sách liên kết + hướng đối tượng}
+
+\subsection{Sáu file và tám cặp}
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
+\item \texttt{p5\_base\_list.cpp} (61 dòng): \texttt{struct Node} + 4 hàm tự do
+  \texttt{pushBack}, \texttt{sumList}, \texttt{printList}, \texttt{freeList}; đọc $n$
+  số, in dãy và in tổng.
+\item \texttt{p5\_v\_class.cpp} (71 dòng): \textbf{cùng hành vi}, nhưng viết bằng
+  \texttt{class IntList} + 4 phương thức \texttt{pushBack}, \texttt{sum},
+  \texttt{print}, \texttt{clear}, con trỏ \texttt{head} để trong đối tượng ---
+  đây là cặp thầy muốn xem.
+\item \texttt{p5\_v\_while.cpp} (67), \texttt{p5\_v\_scanf.cpp} (60):
+  biến thể clone dễ (đổi vòng lặp, đổi IO, đổi tên biến).
+\item \texttt{p5\_v\_combo.cpp} (68): biến thể clone khó (while + scanf + đảo điều
+  kiện + biến thừa).
+\item \texttt{p5\_n\_palindrome.cpp} (69): cùng khung \texttt{class} + \texttt{Node}
+  nhưng \textbf{khác ngữ nghĩa} --- kiểm tra dãy đối xứng (in YES/NO) thay vì tính
+  tổng, dùng để thử xem model có bị khung code giống nhau đánh lừa không.
+\end{itemize}
+
+{\scriptsize\centering
+\setlength{\tabcolsep}{5pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcl}
+\toprule
+\textbf{pair\_id} & \textbf{File A / File B} & \textbf{GT} & \textbf{Kiểu} \\
+\midrule
+P5\_struct\_class         & base / v\_class            & clone      & struct + hàm $\to$ class + phương thức \\
+P5\_while                 & base / v\_while            & clone      & for $\to$ while + đổi tên biến \\
+P5\_scanf                 & base / v\_scanf            & clone      & cin/cout $\to$ scanf/printf + đổi tên \\
+P5\_combo                 & base / v\_combo            & clone      & while + scanf + đảo điều kiện + biến thừa \\
+P5\_class\_combo          & v\_class / v\_combo        & clone      & hai dạng biến đổi cùng lúc \\
+P5\_nonclone\_palindrome  & base / n\_palindrome       & non-clone  & cùng khung Node/class, khác ngữ nghĩa \\
+X\_P1P5                   & base / p1\_base\_sum       & non-clone  & cross-problem (DSLK với tổng 1..$n$) \\
+X\_P2P5                   & base / p2\_base\_gcd       & non-clone  & cross-problem (DSLK với UCLN) \\
+\bottomrule
+\end{tabular}}\par}
+
+\subsection{Code: bản \texttt{struct} và bản \texttt{class}}
+Hai bản giống nhau gần như từng câu lệnh; khác ở chỗ bản A để \texttt{Node} và các hàm
+ở ngoài (kiểu C), bản B gói \texttt{Node} vào trong \texttt{class IntList} và biến hàm
+thành phương thức, con trỏ \texttt{head} thành thuộc tính riêng.
+
+\begin{center}
+\begin{minipage}[t]{0.49\textwidth}
+\shorthandoff{"}
+{\footnotesize\textbf{File A --- \texttt{p5\_base\_list.cpp}} (struct + hàm)\par}
+\scriptsize
+\begin{verbatim}
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Node {
+    int val;
+    Node *next;
+};
+
+Node* pushBack(Node *head, int v) {
+    Node *node = new Node;
+    node->val = v;
+    node->next = NULL;
+    if (head == NULL) {
+        return node;
+    }
+    Node *p = head;
+    while (p->next != NULL) {
+        p = p->next;
+    }
+    p->next = node;
+    return head;
+}
+
+long long sumList(Node *head) {
+    long long total = 0;
+    for (Node *p = head; p; p = p->next) {
+        total = total + p->val;
+    }
+    return total;
+}
+\end{verbatim}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}
+\shorthandoff{"}
+{\footnotesize\textbf{File B --- \texttt{p5\_v\_class.cpp}} (class + phương thức)\par}
+\scriptsize
+\begin{verbatim}
+#include <bits/stdc++.h>
+using namespace std;
+
+class IntList {
+public:
+    struct Node {
+        int val;
+        Node *next;
+    };
+
+    IntList() {
+        head = NULL;
+    }
+
+    void pushBack(int v) {
+        Node *node = new Node;
+        node->val = v;
+        node->next = NULL;
+        if (head == NULL) {
+            head = node;
+            return;
+        }
+        Node *p = head;
+        while (p->next != NULL) {
+            p = p->next;
+        }
+        p->next = node;
+    }
+
+    long long sum() {
+        long long total = 0;
+        for (Node *p = head; p; p = p->next) {
+            total = total + p->val;
+        }
+        return total;
+    }
+\end{verbatim}
+\end{minipage}
+\end{center}
+{\footnotesize Trích phần lõi: mỗi thân hàm ở bản B lặp lại gần từng câu lệnh của bản A,
+chỉ thêm một tầng thụt lề và bỏ tham số \texttt{head} (con trỏ \texttt{head} nằm trong đối
+tượng). Hai file còn dài hơn (61 và 71 dòng với \texttt{print}/\texttt{clear} và
+\texttt{main}); xem đủ ở Hình~\ref{fig:p5_align} và trong \texttt{data/custom\_suite/}.}
+
+\section{Kết quả chấm 8 cặp mới}\label{sec:ketqua}
+{\scriptsize\centering
+\setlength{\tabcolsep}{4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Cặp} & \textbf{GT} & \textbf{B1 MOSS} & \textbf{M1} & \textbf{M2} & \textbf{M3} & \textbf{M4} & \textbf{M5} \\
+\midrule
+P5\_struct\_class         & clone     & \textcolor{red}{0,000} & 1,000 & 1,000 & 0,915 & 0,973 & 1,000 \\
+P5\_while                 & clone     & 0,540 & 1,000 & 1,000 & 0,993 & 0,973 & 1,000 \\
+P5\_scanf                 & clone     & 0,710 & 1,000 & 1,000 & 0,995 & 0,973 & 1,000 \\
+P5\_combo                 & clone     & 0,150 & 1,000 & 1,000 & 0,994 & 0,973 & 1,000 \\
+P5\_class\_combo          & clone     & \textcolor{red}{0,000} & 1,000 & 1,000 & 0,907 & 0,973 & 1,000 \\
+P5\_nonclone\_palindrome  & non-clone & 0,000 & 0,002 & 0,000 & 0,270 & \textcolor{red}{0,743} & 0,002 \\
+X\_P1P5                   & non-clone & 0,000 & \textcolor{red}{1,000} & \textcolor{red}{1,000} & 0,179 & \textcolor{red}{0,742} & \textcolor{red}{1,000} \\
+X\_P2P5                   & non-clone & 0,000 & 0,000 & 0,000 & 0,375 & \textcolor{red}{0,710} & 0,000 \\
+\midrule
+Ngưỡng (theo run)         &           & 0,010 & 0,210 & 0,660 & 0,420 & 0,470 & 0,010 \\
+\textbf{Số cặp sai / 8}   &           & 2 & 1 & 1 & \textbf{0} & 3 & 1 \\
+\bottomrule
+\end{tabular}}\par}
+{\footnotesize Số là $P(\mathrm{clone})$ từng phương pháp trả về (0--1). Đỏ = nói sai
+(so với ngưỡng của chính run). Ví dụ: M3 ở \texttt{P5\_struct\_class} được 0,915 $>$
+ngưỡng 0,420 nên nói clone (đúng).}
+
+\subsection*{Cặp \texttt{struct} $\leftrightarrow$ \texttt{class}: cả 5 model đều đúng, MOSS bỏ sót}
+Cặp thầy quan tâm (\texttt{P5\_struct\_class} và \texttt{P5\_class\_combo}) đều được cả 5
+model nhận là clone: M1/M2/M5 $\approx$ 1,000; M3 0,915 và 0,907; M4 0,973 và 0,973. Tức việc bọc
+\texttt{Node} + hàm tự do vào \texttt{class} + phương thức \textbf{không} làm model mất
+dấu. Ngược lại MOSS \textbf{bỏ sót cả hai} (0,000) — đúng hành vi đã thấy ở bộ test cũ:
+server chỉ trả về cặp có chùm fingerprint dài, còn biến đổi cấu trúc nhiều (Type-3/4) thì
+không được gắn cờ. 3 cặp clone còn lại cả 5 model đều đúng ($\ge$ 0,907), MOSS bắt được
+3/5.
+
+\subsection*{Non-clone khó: M4 bị khung code đánh lừa, M3 thì không}
+\texttt{P5\_nonclone\_palindrome} dùng đúng khung \texttt{class} + \texttt{Node} nhưng khác
+ngữ nghĩa (kiểm tra dãy đối xứng thay vì tính tổng). Lần này chỉ \textbf{M4} nói sai
+(0,743 $>$ 0,470); M1 0,002, M2 0,000, M5 0,002 và M3 0,270 đều đúng. Khác bộ test cũ
+(nơi M3 và M4 cùng bị khung code lừa 10 cặp), ở nhóm P5 \textbf{M3 đúng cả 8 cặp} và M4
+là model sai nhiều nhất.
+
+\subsection*{Lỗi mới ở cặp cross: \texttt{X\_P1P5}}
+\texttt{X\_P1P5} (danh sách liên kết vs tính tổng 1..$n$) bị M1/M2/M5 cho $\approx$ 1,000 và M4
+cho 0,742 — \textbf{nói sai là clone}, chỉ M3 đúng (0,179). Đây là lỗi mới: ở 6 cặp cross
+cũ (sum vs gcd/max/prime) M1/M2/M5 đều $\le$ 0,174. Đọc kỹ thì hai bài này \emph{cùng phép
+toán tổng} và cùng khung \texttt{main} (đọc $n$, vòng \texttt{for}, \texttt{cout},
+\texttt{return}), nên cặp khó hơn hẳn về ngữ nghĩa chứ không chỉ về hình thức; MOSS vẫn
+đúng (0,000) vì không thấy chùm fingerprint chung đủ dài. \texttt{X\_P2P5} (DSLK vs UCLN) thì chỉ
+M4 sai.
+
+\subsection*{Giới hạn độ dài đầu vào vừa lộ ra}
+Cả 6 file P5 đều \textbf{vượt 512 subword token} (520 ở \texttt{p5\_v\_scanf} tới 683 ở
+\texttt{p5\_v\_class}), nên M1/M2/M5 (chạy \texttt{max\_length} 512) chỉ đọc được phần đầu:
+cắt 1,7\% ở \texttt{p5\_base\_list} (521 token) và tới \textbf{25\%} ở
+\texttt{p5\_v\_class} (683 token). M3 (cây AST) và M4 (node CPG) không bị cắt theo token:
+CPG của 6 file P5 chỉ 61--95 node, xa trần 1500 node của M4. Nghĩa là
+cặp \texttt{P5\_struct\_class} được quyết định khi bản \texttt{class} hụt 1/4 số token cuối
+(trong đó có cả \texttt{main}) mà cả 5 model vẫn đúng — nhưng nếu code dài hơn nữa thì đây
+sẽ là điểm nghẽn thật, cần nới \texttt{max\_length} hoặc cắt theo hàm (việc đã hoãn từ
+DEC-029). Tổng trên cả 34 cặp: M3 10, M4 13, B1 18, M1 3, M2 3, M5 4 lỗi.
+
+\section{Minh hoạ}
+Cách đọc hình:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
+\item Hai phía cùng màu là hai đoạn mà model cho là khớp nhau.
+\item Mỗi model có một bảng màu riêng.
+\item CodeBERT, GraphCodeBERT, Hybrid ghép theo từng từ (vector encoder).
+\item ASTNN ghép theo câu lệnh (vector RvNN); bỏ các span chiếm hơn 60\% file
+  và chỉ giữ statement cùng cấp, không bôi cả hàm.
+\item CPG-GNN ghép theo dòng (vector node GAT).
+\item MOSS tô đúng vùng khớp mà server Stanford trả về; cặp nào không được
+  gắn cờ thì để trắng.
+\item Ô \colorbox{evyellow!30}{vàng} lẻ là token model dựa vào để cho điểm nhưng không
+  ghép được cặp, phần không tô màu là còn lại.
+\end{itemize}
+\subsection{Cặp clone \texttt{struct} $\leftrightarrow$ \texttt{class}: P5\_struct\_class (M2)}\label{fig:p5_align}
+Bản A (trái) viết \texttt{struct Node} + hàm tự do; bản B (phải) gói \texttt{Node} vào
+\texttt{class IntList} và biến hàm thành phương thức. M2 cho 1,000 (ngưỡng 0,660) — nói đúng
+là clone. Hai phía cùng màu là những chỗ M2 ghép hai bản với nhau: gần như toàn bộ thân
+\texttt{pushBack}/\texttt{sum}/\texttt{print} trùng nhau từng câu lệnh.
+{\shorthandoff{"}\input{../workspace/demo_suite_P5_struct_class.tex}}
+
+\subsection{Cặp cross bị nói sai: X\_P1P5 (M2)}
+Hai bài đều là code C++ dài đọc $n$ rồi in một số, nhưng một bài cộng các phần tử của danh
+sách liên kết còn bài kia cộng $1..n$: \emph{khác đề} nhưng cùng phép toán tổng và cùng
+khung \texttt{main}. M2 cho 0,999967 (ngưỡng 0,660) nên kết luận sai là clone; hình cho
+thấy chỗ ghép chủ yếu nằm ở khung chung (\texttt{main}, \texttt{cin}/\texttt{cout}, vòng
+\texttt{for}, tên biến \texttt{n}, \texttt{x}), không phải ở phần xử lý riêng mỗi bài.
+{\shorthandoff{"}\input{../workspace/demo_suite_X_P1P5.tex}}
+
+\section{Hạn chế}
+% (để trống — sẽ cập nhật sau)
+
+\section{Kế hoạch tiếp theo}
+% (để trống — sẽ cập nhật sau)
+
+\end{document}

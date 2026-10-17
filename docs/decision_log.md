@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.29.0 |
+| **Phiên bản** | 1.30.0 |
 | **Ngày cập nhật** | 2026-10-17 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
@@ -44,6 +44,7 @@
 - [DEC-029 — M5 hybrid soft fusion (EXP-006): fusion mức embedding, không OR/AND](#dec-029--m5-hybrid-soft-fusion-exp-006-fusion-m%E1%BB%A9c-embedding-kh%C3%B4ng-orand)
 - [DEC-030 — Dừng train; chọn phương pháp cuối bằng val F1 + pipeline EXP-FINAL-001](#dec-030--dung-train-chon-phuong-phap-cuoi-bang-val-f1--pipeline-exp-final-001)
 - [DEC-031 — Demo và báo cáo dùng bản 512 cho M1/M2/M5 (thay bản 256)](#dec-031--demo-va-bao-cao-dung-ban-512-cho-m1m2m5-thay-ban-256)
+- [DEC-032 — Bộ test mở rộng nhóm P5: danh sách liên kết + hướng đối tượng](#dec-032--bo-test-mo-rong-nhom-p5-danh-sach-lien-ket--huong-doi-tuong)
 - [Lịch sử thay đổi](#lich-su-thay-doi)
 
 ---
@@ -611,6 +612,80 @@
 
 ---
 
+## DEC-032 — Bộ test mở rộng nhóm P5: danh sách liên kết + hướng đối tượng
+- **Bối cảnh (2026-10-17):** thầy góp ý bộ test `custom_suite` "khá ngắn": P1–P4 chỉ 11–17
+  dòng, chưa có hàm, chưa có cấu trúc dữ liệu, chưa có hướng đối tượng, và chưa có cặp nào
+  gần như hoàn toàn giống nhau giữa `struct` và `class`. Bộ test cũ vì thế chưa kiểm tra
+  đúng loại biến đổi hay gặp nhất ở bài nộp (bọc `struct` + hàm tự do thành `class` +
+  phương thức).
+- **Quyết định 1 — thêm nhóm P5, 6 file C++ dài 59–71 dòng** vào `data/custom_suite/`:
+  `p5_base_list.cpp` là bản gốc (`struct Node` + 4 hàm tự do `pushBack/sumList/printList/freeList`,
+  đọc $n$ số, in dãy rồi in tổng); `p5_v_class.cpp` là **cùng hành vi** nhưng viết bằng
+  `class IntList` + 4 phương thức, con trỏ `head` để trong đối tượng; ba biến thể clone
+  `p5_v_while` (for→while + đổi tên biến), `p5_v_scanf` (cin/cout→scanf/printf + đổi tên),
+  `p5_v_combo` (while + scanf + đảo điều kiện + biến thừa); `p5_n_palindrome.cpp` dùng **cùng
+  khung** `class` + `Node` nhưng khác ngữ nghĩa (kiểm tra dãy đối xứng) làm non-clone khó.
+  Không file nào có comment; giữ `#include <bits/stdc++.h>` + `using namespace std;`, riêng
+  hai bản `scanf` dùng `#include <cstdio>`.
+- **Quyết định 2 — 8 cặp mới trong `pairs.jsonl` (26 → 34 cặp):** `P5_struct_class`
+  (struct ↔ class), `P5_while`, `P5_scanf`, `P5_combo`, `P5_class_combo`,
+  `P5_nonclone_palindrome`, và hai cặp cross `X_P1P5` (DSLK vs tổng 1..n), `X_P2P5`
+  (DSLK vs UCLN).
+- **Kiểm chứng code trước khi chấm:** 6/6 file biên dịch sạch bằng
+  `g++ -std=c++17 -O2 -Wall`; 5 bản tính tổng cho **cùng kết quả** trên cùng input
+  (`1 2 3 4 5` → `1 2 3 4 5` và `15`); `p5_n_palindrome` trả `NO`/`YES` đúng. Mọi dòng ≤ 46
+  ký tự (đo được: minipage 0,49\textwidth chứa ≤ 49 ký tự ở `\footnotesize`, ≤ 54 ở
+  `\scriptsize`) để hình hai cột không bị xuống dòng.
+- **Quyết định 3 — đưa `data/custom_suite` vào git.** `.gitignore` đổi `data/` → `data/*` +
+  `!data/custom_suite/` (git **không** re-include được file khi cả thư mục cha bị loại).
+  Dữ liệu lớn (`data/pairs`, `data/processed`, `data/splits`) vẫn bị ignore. Bộ test là code
+  tự viết (~10 KB) và là nguồn của hình trong báo cáo nên phải nằm trong repo.
+- **Công cụ:** `scripts/score_custom_suite.py` thêm `--pairs` (chấm riêng cặp mới, dùng chung
+  `--merge`); `scripts/evidence_custom_suite.py` thêm `--models` (chỉ vẽ hình cho model được
+  chọn, JSON vẫn đủ 5 model) và `fig_font` tự dùng `\scriptsize` khi file dài (> 48 dòng);
+  `scan_demo_zip.py::_latex_minipage` thêm tham số `font`. Báo cáo mới đặt
+  `\setlength{\fboxsep}{1pt}` vì `\colorbox` mặc định cộng 3pt mỗi phía làm mỗi dòng tô màu
+  cao thêm ~6pt (71 dòng là tràn trang).
+- **Kết quả (6 phương pháp, ngưỡng đọc từ `threshold.json` của từng run):**
+
+  | Cặp | GT | B1 MOSS (0,010) | M1 (0,210) | M2 (0,660) | M3 (0,420) | M4 (0,470) | M5 (0,010) |
+  | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+  | P5_struct_class | clone | **0,000** | 1,000 | 1,000 | 0,915 | 0,973 | 1,000 |
+  | P5_while | clone | 0,540 | 1,000 | 1,000 | 0,993 | 0,973 | 1,000 |
+  | P5_scanf | clone | 0,710 | 1,000 | 1,000 | 0,995 | 0,973 | 1,000 |
+  | P5_combo | clone | 0,150 | 1,000 | 1,000 | 0,994 | 0,973 | 1,000 |
+  | P5_class_combo | clone | **0,000** | 1,000 | 1,000 | 0,907 | 0,973 | 1,000 |
+  | P5_nonclone_palindrome | non-clone | 0,000 | 0,002 | 0,000 | 0,270 | **0,743** | 0,002 |
+  | X_P1P5 | non-clone | 0,000 | **1,000** | **1,000** | 0,179 | **0,742** | **1,000** |
+  | X_P2P5 | non-clone | 0,000 | 0,000 | 0,000 | 0,375 | **0,710** | 0,000 |
+
+  - **Cặp thầy quan tâm** (`P5_struct_class`, `P5_class_combo`): cả 5 model đều nói đúng
+    clone (M1/M2/M5 ≈ 1,000; M3 0,915 / 0,907; M4 0,973), còn **MOSS bỏ sót cả hai** (0,000)
+    — đúng hành vi đã thấy ở bộ test cũ (server chỉ gắn cờ khi có chùm fingerprint dài).
+  - Non-clone khó `P5_nonclone_palindrome`: chỉ **M4** sai (0,743 > 0,470); M3 0,270 và
+    M1/M2/M5 0,000–0,002 đều đúng ⇒ **đảo chiều** so với bộ test cũ, nơi M3 và M4 cùng bị
+    khung code lừa (10 cặp mỗi model).
+  - **Lỗi mới ở cặp cross:** `X_P1P5` bị M1/M2/M5 ≈ 1,000 và M4 0,742 nói sai là clone, chỉ
+    M3 đúng (0,179); ở 6 cặp cross cũ M1/M2/M5 đều ≤ 0,174. Hai bài **cùng phép toán tổng**
+    và cùng khung `main` (đọc $n$, vòng `for`, `cout`, `return`) nên cặp khó hơn hẳn về ngữ
+    nghĩa, không chỉ về hình thức. `X_P2P5` chỉ M4 sai.
+  - Tổng 8 cặp sai: B1 2, M1 1, M2 1, M3 **0**, M4 3, M5 1. Trên cả 34 cặp: B1 18, M1 3,
+    M2 3, M3 10, M4 13, M5 4 lỗi (M3/M4 trước đây mỗi model 10 lỗi trên 26 cặp cũ).
+- **Giới hạn vừa lộ ra:** cả 6 file P5 vượt 512 subword token (520 ở `p5_v_scanf` tới 683 ở
+  `p5_v_class`, đo bằng tokenizer GraphCodeBERT), nên M1/M2/M5 (`max_length: 512`) chỉ đọc
+  phần đầu: cắt 1,7 % ở `p5_base_list` (521 token) và tới **25 %** ở `p5_v_class` (683 token).
+  M3 (cây AST) và M4 (CPG) không bị cắt — CPG của 6 file chỉ 61–95 node, xa trần
+  `max_nodes: 1500`. Muốn test code dài hơn nữa thì phải nới `max_length` hoặc cắt theo hàm
+  (việc đã hoãn từ DEC-029).
+- **Hệ quả:** báo cáo tuần mới `reports/[24 - 10] - Báo cáo.tex` (6 trang, PDF kèm theo) chỉ
+  nói phần này: 6 file + 8 cặp, trích code struct↔class hai cột, bảng điểm 8 cặp × 6 phương
+  pháp, hai hình minh hoạ M2 (`P5_struct_class` đúng, `X_P1P5` sai). `reports/[17 - 10] -
+  Báo cáo.tex` **không đổi** (không động vào số cũ).
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
 ## Lịch sử thay đổi
 
 | No. | Phiên bản | Ngày thay đổi | Nội dung thay đổi |
@@ -714,6 +789,7 @@
 | 28 | 1.27.0 | 2026-10-07 | **Errata row 27:** repo HF đang **private** (anonymous read 401) — dòng "public, không cần token" sai. Local thao tác qua SSH `git@hf.co` (đã push thành công 2 commit). Trên Kaggle notebook vẫn lấy được vì cell 7 truyền `HF_TOKEN` (cell 1 đọc từ Kaggle Secrets) — đúng lời hứa "token của acc này dùng được". |
 | 29 | 1.28.0 | 2026-10-17 | Thêm DEC-030: **dừng train, chuyển sang đánh giá + chọn phương pháp cuối (EXP-FINAL-001)**. Luật chọn = `validation.f1`, ngưỡng đóng băng theo run; winner vs á quân kiểm định cặp trên validation bằng McNemar + paired bootstrap tái dùng `src/evaluation/uncertainty.py`. Thêm `configs/final_pipeline.yaml`, `src/evaluation/leaderboard.py`, `scripts/final_pipeline.py` (`select`/`detect`), `tests/test_final_pipeline.py` (14 test), report `reports/014_final_selection.md`. Theo val F1 winner = M5-512 nhưng chỉ hơn M2-512 +0,0043 (McNemar p=0,081, bootstrap CI chạm 0 ⇒ `mixed`), ngưỡng 0,010 mỏng, thua test F1/AUC ⇒ **khuyến nghị vận hành M2-512**. |
 | 30 | 1.29.0 | 2026-10-17 | Thêm DEC-031: **demo + báo cáo chuyển sang bản 512 cho M1/M2/M5** (`configs/demo_web.yaml` trỏ `results/exp00{2,3,6}_*_512`, `max_length: 512`, `best_checkpoint.pt`), thay mệnh đề "không đụng `demo_web.yaml`" của DEC-030 §4; M3/M4/B1 giữ nguyên vì không có biến thể 512. Chấm lại `data/custom_suite` (26 cặp): lỗi M2 3→2, M5 4→3 (sửa 2 dương giả ở `P2_nonclone_digitsum`), **không cặp nào đổi từ đúng sang sai**; thêm `score_custom_suite.py --merge` + `evidence_custom_suite.py --reuse-moss` để không ghi đè số MOSS service thật; guard `test_transformer_models_use_512_runs`. |
+| 31 | 1.30.0 | 2026-10-17 | Thêm DEC-032: **bộ test mở rộng nhóm P5 — danh sách liên kết + hướng đối tượng** theo góp ý của thầy (test còn ngắn). 6 file C++ 59–71 dòng (`struct Node` + 4 hàm tự do ↔ `class IntList` + 4 phương thức cùng hành vi, 3 biến thể clone, 1 non-clone cùng khung) + 8 cặp mới (26 → 34 cặp): `P5_struct_class`, `P5_while`, `P5_scanf`, `P5_combo`, `P5_class_combo`, `P5_nonclone_palindrome`, `X_P1P5`, `X_P2P5`. Kết quả: **cả 5 model bắt đúng cặp struct↔class** (M1/M2/M5 ≈ 1,000; M3 0,915; M4 0,973) còn **MOSS bỏ sót cả hai** cặp clone dạng `class` (0,000); M3 đúng cả 8 cặp, M4 sai 3 (toàn dương giả); lỗi mới: `X_P1P5` bị M1/M2/M5 ≈ 1,000 vì hai bài cùng phép toán tổng. Cả 6 file vượt 512 subword token (520–683) nên M1/M2/M5 phải cắt tới 25 % code (M3/M4 không bị cắt). Công cụ: `score_custom_suite.py --pairs`, `evidence_custom_suite.py --models` + `fig_font`, `_latex_minipage(font=)`, và `.gitignore` mở ngoại lệ để `data/custom_suite` vào git. Báo cáo tuần mới `reports/[24 - 10] - Báo cáo.tex`. |
 
 ---
 

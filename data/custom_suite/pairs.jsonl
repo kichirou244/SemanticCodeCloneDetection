@@ -1,0 +1,34 @@
+{"a": "p1_base_sum.cpp", "b": "p1_v_while.cpp", "category": "clone_de", "label": 1, "note": "P1 sum: for -> while + doi ten", "pair_id": "P1_while"}
+{"a": "p1_base_sum.cpp", "b": "p1_v_dowhile.cpp", "category": "clone_de", "label": 1, "note": "P1 sum: for -> do-while + doi ten", "pair_id": "P1_dowhile"}
+{"a": "p1_base_sum.cpp", "b": "p1_v_scanf.cpp", "category": "clone_de", "label": 1, "note": "P1 sum: cin/cout -> scanf/printf + doi ten", "pair_id": "P1_scanf"}
+{"a": "p1_base_sum.cpp", "b": "p1_v_combo.cpp", "category": "clone_kho", "label": 1, "note": "P1 sum: combo while+scanf+dao dk+bien thua", "pair_id": "P1_combo"}
+{"a": "p1_base_sum.cpp", "b": "p1_n_fact.cpp", "category": "nonclone_kho", "label": 0, "note": "P1: cung skeleton, tong vs giai thua", "pair_id": "P1_nonclone_fact"}
+{"a": "p2_base_gcd.cpp", "b": "p2_v_for.cpp", "category": "clone_de", "label": 1, "note": "P2 gcd: while -> for + doi ten", "pair_id": "P2_for"}
+{"a": "p2_base_gcd.cpp", "b": "p2_v_dowhile.cpp", "category": "clone_de", "label": 1, "note": "P2 gcd: while -> do-while + doi ten", "pair_id": "P2_dowhile"}
+{"a": "p2_base_gcd.cpp", "b": "p2_v_scanf.cpp", "category": "clone_de", "label": 1, "note": "P2 gcd: cin/cout -> scanf/printf + doi ten", "pair_id": "P2_scanf"}
+{"a": "p2_base_gcd.cpp", "b": "p2_v_combo.cpp", "category": "clone_kho", "label": 1, "note": "P2 gcd: combo do-while+scanf+dao dk+bien thua", "pair_id": "P2_combo"}
+{"a": "p2_base_gcd.cpp", "b": "p2_n_digitsum.cpp", "category": "nonclone_kho", "label": 0, "note": "P2: cung skeleton while+%, UCLN vs tong chu so", "pair_id": "P2_nonclone_digitsum"}
+{"a": "p3_base_max.cpp", "b": "p3_v_while.cpp", "category": "clone_de", "label": 1, "note": "P3 max: for -> while + doi ten", "pair_id": "P3_while"}
+{"a": "p3_base_max.cpp", "b": "p3_v_dowhile.cpp", "category": "clone_de", "label": 1, "note": "P3 max: for -> do-while + doi ten", "pair_id": "P3_dowhile"}
+{"a": "p3_base_max.cpp", "b": "p3_v_scanf.cpp", "category": "clone_de", "label": 1, "note": "P3 max: cin/cout -> scanf/printf + doi ten", "pair_id": "P3_scanf"}
+{"a": "p3_base_max.cpp", "b": "p3_v_combo.cpp", "category": "clone_kho", "label": 1, "note": "P3 max: combo while+scanf+dao dk+bien thua", "pair_id": "P3_combo"}
+{"a": "p3_base_max.cpp", "b": "p3_n_sum.cpp", "category": "nonclone_kho", "label": 0, "note": "P3: cung skeleton, max vs tong mang", "pair_id": "P3_nonclone_sum"}
+{"a": "p4_base_prime.cpp", "b": "p4_v_while.cpp", "category": "clone_de", "label": 1, "note": "P4 prime: for -> while + doi ten", "pair_id": "P4_while"}
+{"a": "p4_base_prime.cpp", "b": "p4_v_dowhile.cpp", "category": "clone_de", "label": 1, "note": "P4 prime: for -> do-while + doi ten", "pair_id": "P4_dowhile"}
+{"a": "p4_base_prime.cpp", "b": "p4_v_scanf.cpp", "category": "clone_de", "label": 1, "note": "P4 prime: cin/cout -> scanf/printf + doi ten", "pair_id": "P4_scanf"}
+{"a": "p4_base_prime.cpp", "b": "p4_v_combo.cpp", "category": "clone_kho", "label": 1, "note": "P4 prime: combo while+scanf+dao dk+bien thua", "pair_id": "P4_combo"}
+{"a": "p4_base_prime.cpp", "b": "p4_n_square.cpp", "category": "nonclone_kho", "label": 0, "note": "P4: cung skeleton YES/NO, SNT vs chinh phuong", "pair_id": "P4_nonclone_square"}
+{"a": "p1_base_sum.cpp", "b": "p2_base_gcd.cpp", "category": "nonclone_de", "label": 0, "note": "cross: 2 bai khac nhau (sum vs gcd)", "pair_id": "X_P1P2"}
+{"a": "p1_base_sum.cpp", "b": "p3_base_max.cpp", "category": "nonclone_de", "label": 0, "note": "cross: 2 bai khac nhau (sum vs max)", "pair_id": "X_P1P3"}
+{"a": "p1_base_sum.cpp", "b": "p4_base_prime.cpp", "category": "nonclone_de", "label": 0, "note": "cross: 2 bai khac nhau (sum vs prime)", "pair_id": "X_P1P4"}
+{"a": "p2_base_gcd.cpp", "b": "p3_base_max.cpp", "category": "nonclone_de", "label": 0, "note": "cross: 2 bai khac nhau (gcd vs max)", "pair_id": "X_P2P3"}
+{"a": "p2_base_gcd.cpp", "b": "p4_base_prime.cpp", "category": "nonclone_de", "label": 0, "note": "cross: 2 bai khac nhau (gcd vs prime)", "pair_id": "X_P2P4"}
+{"a": "p3_base_max.cpp", "b": "p4_base_prime.cpp", "category": "nonclone_de", "label": 0, "note": "cross: 2 bai khac nhau (max vs prime)", "pair_id": "X_P3P4"}
+{"a": "p5_base_list.cpp", "b": "p5_v_class.cpp", "category": "clone_kho", "label": 1, "note": "P5 DSLK: struct + ham -> class + phuong thuc (cung hanh vi)", "pair_id": "P5_struct_class"}
+{"a": "p5_base_list.cpp", "b": "p5_v_while.cpp", "category": "clone_de", "label": 1, "note": "P5 DSLK: for -> while + doi ten bien", "pair_id": "P5_while"}
+{"a": "p5_base_list.cpp", "b": "p5_v_scanf.cpp", "category": "clone_de", "label": 1, "note": "P5 DSLK: cin/cout -> scanf/printf + doi ten", "pair_id": "P5_scanf"}
+{"a": "p5_base_list.cpp", "b": "p5_v_combo.cpp", "category": "clone_kho", "label": 1, "note": "P5 DSLK: combo while+scanf+dao dk+bien thua", "pair_id": "P5_combo"}
+{"a": "p5_v_class.cpp", "b": "p5_v_combo.cpp", "category": "clone_kho", "label": 1, "note": "P5 DSLK: class vs combo (hai dang bien doi cung luc)", "pair_id": "P5_class_combo"}
+{"a": "p5_base_list.cpp", "b": "p5_n_palindrome.cpp", "category": "nonclone_kho", "label": 0, "note": "P5: cung khung Node/class, tong DSLK vs kiem tra doi xung", "pair_id": "P5_nonclone_palindrome"}
+{"a": "p5_base_list.cpp", "b": "p1_base_sum.cpp", "category": "nonclone_de", "label": 0, "note": "cross: DSLK vs sum (2 bai khac nhau)", "pair_id": "X_P1P5"}
+{"a": "p5_base_list.cpp", "b": "p2_base_gcd.cpp", "category": "nonclone_de", "label": 0, "note": "cross: DSLK vs gcd (2 bai khac nhau)", "pair_id": "X_P2P5"}

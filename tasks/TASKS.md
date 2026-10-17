@@ -1,5 +1,30 @@
 # Task log — SemanticCodeCloneDetection
 
+## [COMPLETE] Bộ test mở rộng nhóm P5: DSLK + hướng đối tượng (17-10) — DEC-032
+- Thầy góp ý bộ test còn ngắn → thêm 6 file C++ **dài 59–71 dòng** vào `data/custom_suite/`:
+  bản gốc `struct Node` + 4 hàm tự do (`p5_base_list`), **cùng hành vi** viết bằng
+  `class IntList` + 4 phương thức (`p5_v_class`), 3 biến thể clone
+  (`p5_v_while/scanf/combo`), và `p5_n_palindrome` (cùng khung `class`/`Node`, khác ngữ nghĩa).
+- 8 cặp mới trong `pairs.jsonl` (26 → 34 cặp): `P5_struct_class` (struct ↔ class),
+  `P5_while`, `P5_scanf`, `P5_combo`, `P5_class_combo`, `P5_nonclone_palindrome`,
+  `X_P1P5`, `X_P2P5`.
+- Kiểm chứng code trước khi chấm: 6/6 file biên dịch sạch (`g++ -std=c++17 -O2 -Wall`),
+  5 bản tính tổng cho **cùng kết quả** trên cùng input, palindrome trả `NO`/`YES` đúng.
+- Kết quả: **cả 5 model bắt đúng cặp struct↔class** (M1/M2/M5 ≈ 1,000; M3 0,915; M4 0,973),
+  còn **MOSS bỏ sót cả hai** cặp clone dạng `class` (0,000). M3 **đúng cả 8 cặp**; M4 sai 3
+  (toàn dương giả: `P5_nonclone_palindrome` 0,743 và hai cặp cross).
+  Lỗi mới: `X_P1P5` (DSLK vs tổng 1..n) bị M1/M2/M5 ≈ 1,000 vì hai bài cùng phép toán tổng
+  và cùng khung `main`.
+- Phát hiện phụ: **cả 6 file P5 vượt 512 subword token** (520–683) nên M1/M2/M5
+  (`max_length: 512`) chỉ đọc phần đầu, cắt tới **25 %** ở `p5_v_class`; M3/M4 không bị cắt
+  (CPG 61–95 node so với trần 1500) → muốn test code dài hơn nữa thì phải nới `max_length`
+  hoặc cắt theo hàm (đã hoãn từ DEC-029).
+- Công cụ: `score_custom_suite.py --pairs`, `evidence_custom_suite.py --models` + `fig_font`
+  (`\scriptsize` cho file dài), `_latex_minipage(font=)`, `.gitignore` mở ngoại lệ
+  `!data/custom_suite/` để code test vào git.
+- Báo cáo tuần mới `reports/[24 - 10] - Báo cáo.tex` (+ PDF, 6 trang), build 2 lượt xelatex,
+  0 Overfull: 6 file + 8 cặp, trích code hai cột, bảng điểm 8 × 6, 2 hình minh hoạ M2.
+
 ## [COMPLETE] Dừng train → pipeline cuối: đánh giá + chọn + suy luận (17-10)
 - Quyết định **dừng huấn luyện** (các bản 512 đã chạm trần thực dụng, chênh còn lại
   nằm trong nhiễu) và chuyển sang đánh giá để chốt phương pháp → DEC-030.
@@ -228,6 +253,7 @@ Gom theo từng mạch việc (config → chạy → đánh giá), không tách 
 - Cập nhật bảng val F1 + test trong `reports/[09 - 10] - Báo cáo.tex`, build lại PDF.
 - So sánh Hybrid V2 vs V1 (hết overfit E0 chưa), CPG epoch mới có tăng tiếp không.
 
-## [BACKLOG] Tạm hoãn (vượt quota)
-- ~~Nới giới hạn node CPG-GNN (attention O(n²)).~~ → đã đưa vào kế hoạch tuần sau (21-10).
-- ~~Two-stage Hybrid: freeze encoder 1 epoch đầu rồi unfreeze (nếu V2 vẫn overfit).~~ → đã đưa vào kế hoạch tuần sau (19-10).
+## [BACKLOG] Ý tưởng & tính năng mở rộng (không đẩy lên Notion)
+- **AI vấn đáp nhanh kiểm tra mức độ hiểu code của sinh viên:**
+  - *Ý tưởng:* Khi phát hiện nghi vấn trùng lặp hoặc cần thêm cơ sở đánh giá độ hiểu mã nguồn, AI tự động phân tích code và sinh bộ câu hỏi vấn đáp nhanh (dạng trắc nghiệm nhiều lựa chọn hoặc Đúng/Sai).
+  - *Mục tiêu:* Đánh giá xem sinh viên có thực sự hiểu cấu trúc, luồng thực thi và logic của đoạn code đã nộp hay chỉ sao chép/nhờ công cụ viết hộ; bổ sung thêm một chiều cơ sở dữ liệu định lượng bên cạnh điểm tương đồng của mô hình.

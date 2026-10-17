@@ -11,8 +11,9 @@ SemanticCodeCloneDetection/
 │   ├── datasets/             # poj104.yaml, codenet_python.yaml
 │   ├── models/               # tfidf, codebert, graphcodebert, cpg_gnn, hybrid
 │   └── final_pipeline.yaml   # EXP-FINAL-001: candidate runs + luật chọn + model inference
-├── data/                     # raw/ processed/ splits/ artifacts/ (không commit dữ liệu lớn)
-│                              # library/ = database quét clone (file .c thả vào là quét được)
+├── data/                     # raw/ processed/ splits/ artifacts/ (không commit dữ liệu lớn;
+│   │                         #   ngoại lệ `data/custom_suite/` — bộ test tự viết, nằm trong git)
+│   └── library/              # database quét clone (file .c thả vào là quét được)
 ├── src/
 │   ├── common/               # seed.py, config.py
 │   ├── core/                 # interfaces.py (DatasetAdapter, CloneDetector, ...)
@@ -83,6 +84,14 @@ SemanticCodeCloneDetection/
 
 | Ngày | Nội dung |
 | :--- | :--- |
+| 2026-10-17 | **Bộ test mở rộng nhóm P5 — danh sách liên kết + hướng đối tượng (DEC-032, theo góp ý
+của thầy):** `data/custom_suite` thêm 6 file C++ dài 59–71 dòng (`p5_base_list`: `struct Node`
++ 4 hàm tự do; `p5_v_class`: `class IntList` + 4 phương thức cùng hành vi; `p5_v_while/scanf/combo`;
+`p5_n_palindrome`: cùng khung `class`/`Node` nhưng khác ngữ nghĩa) và 8 cặp mới (26 → 34 cặp).
+`.gitignore` mở ngoại lệ `!data/custom_suite/` để code test vào git;
+`scripts/score_custom_suite.py` thêm `--pairs`; `scripts/evidence_custom_suite.py` thêm `--models`
+và tự dùng `\scriptsize` khi code dài (`scan_demo_zip.py::_latex_minipage` thêm tham số `font`);
+báo cáo tuần mới `reports/[24 - 10] - Báo cáo.tex` |
 | 2026-10-17 | **Demo + báo cáo dùng bản 512 (DEC-031):** `configs/demo_web.yaml` cho M1/M2/M5
 trỏ vào `results/exp00{2,3,6}_*_512` (`max_length: 512`, `best_checkpoint.pt`); M3/M4/B1
 giữ nguyên (không có biến thể 512). `scripts/score_custom_suite.py` thêm `--merge`,

@@ -1,5 +1,8 @@
-# Dữ liệu thô / đã xử lý (không commit dataset lớn)
-data/
+# Dữ liệu thô / đã xử lý (không commit dataset lớn).
+# Ngoại lệ: data/custom_suite là bộ test tự viết (nhỏ, ~10 KB) — commit để code
+# test nằm trong repo; `data/*` (không phải `data/`) + `!` mới re-include được.
+data/*
+!data/custom_suite/
 
 # Kết quả chạy (giữ reports/, bỏ checkpoints nặng)
 results/*/checkpoints/

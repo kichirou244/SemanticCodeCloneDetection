@@ -6,6 +6,8 @@ Chay tu goc repo::
     python scripts/evidence_custom_suite.py --pairs P1_combo       # 1 cap
     python scripts/evidence_custom_suite.py --pairs P1_combo P3_nonclone_sum X_P2P3
     python scripts/evidence_custom_suite.py --reuse-moss --pairs ...   # giu artifact MOSS that
+    python scripts/evidence_custom_suite.py --pairs P5_struct_class --models M2 M5
+        # code dai (70 dong): chi ve hinh 2 model cho gon bao cao
 
 Ra `workspace/demo_suite_<pair>.tex` (5 model M1..M5, giong demo_clone5.tex)
 + `workspace/demo_suite_moss_<pair>.tex` (MOSS server, giong demo_moss_61.tex)
@@ -17,6 +19,9 @@ Joern). B1 lay evidence tu trang match Stanford (can mang + mosspy).
 `--reuse-moss`: giu nguyen `demo_suite_moss_<pair>.tex` va khoi B1 da co trong
 JSON thay vi cham lai. Dung khi may khong khai `MOSS_USER_ID` — luc do B1 roi vao
 fallback winnowing local, va ghi de se lam mat artifact MOSS that cua bao cao.
+
+Code dai (>48 dong, vi du nhom P5 DSLK/OOP) tu dong dung `\\scriptsize` cho
+minipage de hinh con vua mot trang A4 (`fig_font`).
 """
 
 from __future__ import annotations
@@ -49,6 +54,13 @@ def fmt_score(score: float | None) -> str:
     return "---" if score is None else f"{score:.3f}".replace(".", ",")
 
 
+def fig_font(code_a: str, code_b: str) -> str:
+    """Co chu minipage theo do dai code: file dai (>48 dong) dung \\scriptsize
+    de hinh con vua mot trang A4 (nhom P5 DSLK/OOP dai 59-70 dong)."""
+    n = max(code_a.count("\n") + 1, code_b.count("\n") + 1)
+    return "\\scriptsize" if n > 48 else "\\footnotesize"
+
+
 def load_suite() -> tuple[dict, dict]:
     pairs = {}
     with open(DATA_DIR / "pairs.jsonl", encoding="utf-8") as f:
@@ -65,6 +77,7 @@ def render_model_section(
     latex_parts, mid: str, title: str, code_a: str, code_b: str,
     score, verdict: str, ev: dict | None,
     title_a: str = "File A", title_b: str = "File B",
+    font: str = "\\footnotesize",
 ) -> None:
     """Mot model -> subsubsection + 2 minipage (giong demo_clone5.tex)."""
     from scripts.scan_demo_zip import _latex_minipage
@@ -83,9 +96,9 @@ def render_model_section(
     latex_parts.append(f"\\subsubsection*{{{title} --- {fmt_score(score)} ({verdict})}}")
     if note:
         latex_parts.append(f"% kind={kind}; {note}")
-    latex_parts += _latex_minipage(code_a, tok_a, title_a, pair_of_a)
+    latex_parts += _latex_minipage(code_a, tok_a, title_a, pair_of_a, font)
     latex_parts.append("\\hfill")
-    latex_parts += _latex_minipage(code_b, tok_b, title_b, pair_of_b)
+    latex_parts += _latex_minipage(code_b, tok_b, title_b, pair_of_b, font)
     latex_parts.append("")
 
 
@@ -97,7 +110,16 @@ def main() -> None:
                         help="giu nguyen demo_suite_moss_<pair>.tex va khoi B1 da co "
                              "trong JSON thay vi cham lai (dung khi may khong khai "
                              "MOSS_USER_ID, tranh ghi de bang fallback local)")
+    parser.add_argument("--models", nargs="*", default=None,
+                        help="chi ve hinh cac model nay trong demo_suite_<pair>.tex "
+                             "(mac dinh M1..M5). JSON van luu du 5 model; B1/MOSS "
+                             "luon ghi file rieng")
     args = parser.parse_args()
+
+    render_models = args.models or MODEL_ORDER
+    bad = [m for m in render_models if m not in MODEL_ORDER]
+    if bad:
+        parser.error(f"--models chi nhan {MODEL_ORDER}, khong co: {bad}")
 
     from src.demo.registry import ModelRegistry
     from src.demo.service import DemoService
@@ -117,6 +139,7 @@ def main() -> None:
     for pid in args.pairs:
         rec = pairs[pid]
         code_a, code_b = codes[rec["a"]], codes[rec["b"]]
+        font = fig_font(code_a, code_b)
         analyzed = svc.analyze(code_a, code_b)
         scores = {m["model_id"]: m for m in analyzed["models"]}
         entry = {"a": rec["a"], "b": rec["b"], "label": rec["label"],
@@ -145,10 +168,12 @@ def main() -> None:
             }
             short_a = Path(rec["a"]).stem.replace("_", "\\_")
             short_b = Path(rec["b"]).stem.replace("_", "\\_")
+            if mid not in render_models:
+                continue
             render_model_section(
                 tex, mid, MODEL_TITLES[mid], code_a, code_b,
                 sc["score"], VERDICT_VI.get(sc["verdict"], sc["verdict"]), ev,
-                f"File A ({short_a})", f"File B ({short_b})")
+                f"File A ({short_a})", f"File B ({short_b})", font)
         out_tex = ROOT / "workspace" / f"demo_suite_{pid}.tex"
         out_tex.write_text("\n".join(tex), encoding="utf-8")
         print(f"  da ghi {out_tex}")
@@ -185,9 +210,11 @@ def main() -> None:
                 f"report={bev.get('report_url')}",
                 f"% kind={bev.get('kind')}, note={bev.get('note')}",
             ]
-            moss_tex += _latex_minipage(code_a, set(bev.get("tok_a", [])), "File A")
+            moss_tex += _latex_minipage(code_a, set(bev.get("tok_a", [])), "File A",
+                                        font=font)
             moss_tex.append("\\hfill")
-            moss_tex += _latex_minipage(code_b, set(bev.get("tok_b", [])), "File B")
+            moss_tex += _latex_minipage(code_b, set(bev.get("tok_b", [])), "File B",
+                                        font=font)
             out_moss.write_text("\n".join(moss_tex), encoding="utf-8")
             print(f"  da ghi {out_moss}")
         payload[pid] = entry

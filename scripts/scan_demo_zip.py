@@ -148,11 +148,14 @@ def _latex_minipage(
     tok_set: set[int],
     title: str,
     pair_of: dict[int, int] | None = None,
+    font: str = "\\footnotesize",
 ) -> list[str]:
     """Một phía code thành minipage LaTeX: token trong cặp tương ứng →
     \\pline{màu cặp}, token evidence lẻ → \\eline (vàng), còn lại → \\mline.
     Gộp token liên tiếp cùng trạng thái thành một đoạn (khoảng trắng giữa hai
-    token tính vào đoạn trước)."""
+    token tính vào đoạn trước). `font` là cỡ chữ của minipage; mặc định
+    \\footnotesize, file dài (>48 dòng) nên truyền \\scriptsize để hình vừa một
+    trang A4."""
     from src.demo.alignment.lexer import lex_code
 
     lines = lex_code(code)
@@ -161,8 +164,8 @@ def _latex_minipage(
     out = [
         "\\noindent",
         "\\begin{minipage}[t]{0,49\\textwidth}",
-        f"\\footnotesize\\textbf{{{title}}}\\par",
-        "{\\footnotesize\\ttfamily",
+        f"{font}\\textbf{{{title}}}\\par",
+        f"{{{font}\\ttfamily",
     ]
     flat = 0
     for li, tokens in enumerate(lines):
