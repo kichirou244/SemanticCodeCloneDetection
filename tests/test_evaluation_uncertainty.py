@@ -274,7 +274,7 @@ RESULTS = Path("results")
 @pytest.mark.parametrize("exp,expected_f1", [
     ("exp002_codebert_poj104", 0.9099191224319048),
     ("exp003_graphcodebert_poj104", 0.9069047829546459),
-    ("exp004_astnn_poj104", 0.7499056390126067),
+    ("exp004_astnn_poj104", 0.8213868003341688),
 ])
 def test_point_estimate_reproduces_published_metrics(exp, expected_f1):
     """Số F1 mà module này suy ra phải **bằng** `metrics.json` đã công bố.

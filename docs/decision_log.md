@@ -4,8 +4,8 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.27.0 |
-| **Ngày cập nhật** | 2026-10-07 |
+| **Phiên bản** | 1.29.0 |
+| **Ngày cập nhật** | 2026-10-17 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
 
@@ -42,6 +42,8 @@
 - [DEC-027 — M4 schema (b): bỏ CALL/REF/REACHING_DEF, sửa PARAMETER_OUT bằng khớp tên](#dec-027--m4-schema-b-b%E1%BB%8F-callrefreaching_def-s%E1%BB%ADa-parameter_out-b%E1%BA%B1ng-kh%E1%BB%9Bp-t%C3%AAn)
 - [DEC-028 — Baseline chính chuyển sang MOSS service thật (EXP-014); EXP-013 còn lại làm tham chiếu](#dec-028--baseline-ch%C3%ADnh-chuy%E1%BB%83n-sang-moss-service-th%E1%BA%ADt-exp-014-exp-013-c%C3%B2n-l%E1%BA%A1i-l%C3%A0m-tham-chi%E1%BA%BFu)
 - [DEC-029 — M5 hybrid soft fusion (EXP-006): fusion mức embedding, không OR/AND](#dec-029--m5-hybrid-soft-fusion-exp-006-fusion-m%E1%BB%A9c-embedding-kh%C3%B4ng-orand)
+- [DEC-030 — Dừng train; chọn phương pháp cuối bằng val F1 + pipeline EXP-FINAL-001](#dec-030--dung-train-chon-phuong-phap-cuoi-bang-val-f1--pipeline-exp-final-001)
+- [DEC-031 — Demo và báo cáo dùng bản 512 cho M1/M2/M5 (thay bản 256)](#dec-031--demo-va-bao-cao-dung-ban-512-cho-m1m2m5-thay-ban-256)
 - [Lịch sử thay đổi](#lich-su-thay-doi)
 
 ---
@@ -710,6 +712,8 @@
 | 26 | 1.25.0 | 2026-10-07 | DEC-029 **§4 bổ sung — kênh phân phối checkpoint warm start = Hugging Face Hub.** Lý do: checkpoint `*.pt` bị `.gitignore` (M2 1,41GB) không thể trong repo; đồng thời khi chạy notebook EXP-006 trên Kaggle, cell 7 báo *WARM_START MISSING* vì user chưa Add input output EXP-003/EXP-005 **nhưng thật ra EXP-003 mặc định `KEEP_WEIGHTS=False` nên output của nó không hề chứa `best_checkpoint.pt`** — Add input cũng không tìm thấy. Giải pháp: `scripts/export_hybrid_warm_start.py` rút riêng `encoder.*` (M2 475MB/199 khóa, M4 0,4MB/32 khóa; verify warm start M4 missing=0) rồi push lên HF repo `Kichirou24/SemanticCodeCloneDetection` qua `--hf-repo`. Notebook cell 7 pull từ HF (`HF_TOKEN` nếu private), fallback quét `/kaggle/input` output cũ; thiếu checkpoint ⇒ **assert chặn train** để không tạo số không chính thức. |
 | 27 | 1.26.0 | 2026-10-07 | DEC-029 §4 chốt tên HF repo **chính thức**: `Kichirou24/SemanticCodeCloneDetection` (public — SSH `git@hf.co` hoạt động trên máy chủ, không cần token). 2 file encoder đã push lên HF kèm README model card; notebook EXP-006 cell 7 và `export_hybrid_warm_start.py` đổi theo tên repo này. |
 | 28 | 1.27.0 | 2026-10-07 | **Errata row 27:** repo HF đang **private** (anonymous read 401) — dòng "public, không cần token" sai. Local thao tác qua SSH `git@hf.co` (đã push thành công 2 commit). Trên Kaggle notebook vẫn lấy được vì cell 7 truyền `HF_TOKEN` (cell 1 đọc từ Kaggle Secrets) — đúng lời hứa "token của acc này dùng được". |
+| 29 | 1.28.0 | 2026-10-17 | Thêm DEC-030: **dừng train, chuyển sang đánh giá + chọn phương pháp cuối (EXP-FINAL-001)**. Luật chọn = `validation.f1`, ngưỡng đóng băng theo run; winner vs á quân kiểm định cặp trên validation bằng McNemar + paired bootstrap tái dùng `src/evaluation/uncertainty.py`. Thêm `configs/final_pipeline.yaml`, `src/evaluation/leaderboard.py`, `scripts/final_pipeline.py` (`select`/`detect`), `tests/test_final_pipeline.py` (14 test), report `reports/014_final_selection.md`. Theo val F1 winner = M5-512 nhưng chỉ hơn M2-512 +0,0043 (McNemar p=0,081, bootstrap CI chạm 0 ⇒ `mixed`), ngưỡng 0,010 mỏng, thua test F1/AUC ⇒ **khuyến nghị vận hành M2-512**. |
+| 30 | 1.29.0 | 2026-10-17 | Thêm DEC-031: **demo + báo cáo chuyển sang bản 512 cho M1/M2/M5** (`configs/demo_web.yaml` trỏ `results/exp00{2,3,6}_*_512`, `max_length: 512`, `best_checkpoint.pt`), thay mệnh đề "không đụng `demo_web.yaml`" của DEC-030 §4; M3/M4/B1 giữ nguyên vì không có biến thể 512. Chấm lại `data/custom_suite` (26 cặp): lỗi M2 3→2, M5 4→3 (sửa 2 dương giả ở `P2_nonclone_digitsum`), **không cặp nào đổi từ đúng sang sai**; thêm `score_custom_suite.py --merge` + `evidence_custom_suite.py --reuse-moss` để không ghi đè số MOSS service thật; guard `test_transformer_models_use_512_runs`. |
 
 ---
 
@@ -788,5 +792,88 @@
   test_exp006_hybrid.py`) không cần GPU/HF. Nếu M5 vẫn không vượt logistic ⇒ M4
   thừa; nếu vượt ⇒ cải tiến tiếp theo là nâng độ dài text, không phải phân loại
   độ phức tạp.
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
+## DEC-030 — Dừng train; chọn phương pháp cuối bằng val F1 + pipeline EXP-FINAL-001
+- **Bối cảnh (2026-10-17):** đã có 9 run hoàn thành (B0/B1, M1/M2/M5 ở cả 256 và
+  512, M3, M4). Các bản 512 cho trần thực dụng F1 ≥ 0,94; phần chênh còn lại nằm
+  trong nhiễu. Người dùng quyết định **dừng huấn luyện**, chuyển sang đánh giá để
+  chọn phương pháp tốt nhất rồi dựng một pipeline cuối hoàn chỉnh.
+- **Quyết định 1 — luật chọn là `validation.f1`,** không theo test. Test chỉ để
+  báo cáo (giữ nguyên DEC-022). Chỉ run `role: candidate` được chọn; baseline
+  (MOSS) nằm trong bảng để đối chiếu nhưng không thể "thắng".
+- **Quyết định 2 — ngưỡng đóng băng theo từng run** từ `threshold.json`; pipeline
+  tuyệt đối không dò lại ngưỡng trên test (dò lại = rò rỉ nhãn, CI hẹp giả tạo).
+- **Quyết định 3 — lượng hoá độ bất định bằng kiểm định cặp, không so hai cột
+  ±SD:** winner vs á quân so trên **chính tập validation** bằng McNemar (exact
+  binomial) + paired bootstrap CI 95% của ΔF1, **tái dùng `src/evaluation/
+  uncertainty.py`** (không cài đặt lại; module đã có test chống tràn và dùng đúng
+  ngưỡng riêng mỗi model). Hai kiểm định bất đồng ⇒ gắn nhãn `mixed`, không chọn
+  bừa.
+- **Quyết định 4 — dựng pipeline thành 1 CLI 2 chế độ** (`scripts/final_pipeline.py`):
+  `select` (xếp hạng + chọn, chạy được không cần torch/GPU/Joern) và `detect`
+  (chấm một cặp file bằng model đã chọn, ngưỡng đọc từ `threshold.json`). Khai báo
+  ở `configs/final_pipeline.yaml`; **không đụng `configs/demo_web.yaml`** (demo vẫn
+  6 model như cũ).
+- **Kết quả:** theo val F1, **M5-512 thắng** (0,9379 vs M2-512 0,9337) nhưng pipeline
+  nêu 4 cảnh báo: ngưỡng 0,010 rất mỏng; chênh +0,0043 (< 0,01); **McNemar p = 0,0814
+  (chưa ý nghĩa) trong khi paired bootstrap CI95 [+0,0004, +0,0083] vừa chạm khác 0
+  ⇒ bất đồng**; và M2-512 mạnh hơn ở test F1 (0,9550) lẫn AUC (0,9912).
+- **Khuyến nghị vận hành (đã chốt):** dùng **M2-512** cho pipeline cuối (AUC cao
+  nhất, ngưỡng khoẻ 0,66, không cần JVM lúc suy luận) — đặt thẳng
+  `configs/final_pipeline.yaml → inference.default_model: M2_512`. `select` vẫn báo
+  M5-512 là winner theo protocol kèm đủ cảnh báo; gọi M5-512 khi cần bằng
+  `--model M5_512`.
+- **Hệ quả:** thêm `src/evaluation/leaderboard.py`, `scripts/final_pipeline.py`,
+  `tests/test_final_pipeline.py` (14 test, không cần GPU), report
+  `reports/014_final_selection.md`, artifact `results/final_pipeline/`. Biến `k` của
+  kế hoạch train (Hybrid V3, CPG nới node) **tạm gác** — chỉ mở lại nếu cần bằng
+  chứng mạnh hơn cho lựa chọn.
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
+## DEC-031 — Demo và báo cáo dùng bản 512 cho M1/M2/M5 (thay bản 256)
+- **Bối cảnh (2026-10-17):** khi rà lại hình kiến trúc pipeline M2, người dùng phát hiện
+  phần minh hoạ/báo cáo vẫn chấm bằng checkpoint **256**, trong khi bản **512** đã có từ
+  12-10/15-10 và tốt hơn ở cả ba chỉ số test (M1 0,910→0,941; M2 0,907→0,955; M5
+  0,913→0,952). Giữ bản cũ nghĩa là báo cáo đang mô tả một model không còn là bản tốt
+  nhất của nhóm.
+- **Quyết định 1 — `configs/demo_web.yaml` cho M1/M2/M5 trỏ vào run 512**, `max_length: 512`,
+  checkpoint `best_checkpoint.pt`: M1 → `results/exp002_codebert_poj104_512/`,
+  M2 → `results/exp003_graphcodebert_poj104_512/`, M5 → `results/exp006_hybrid_poj104_512/`.
+  **Thay thế** mệnh đề "không đụng `configs/demo_web.yaml`" của DEC-030 §4 — mệnh đề đó
+  chỉ để giữ demo im lặng trong lúc thêm pipeline cuối, không phải để đóng băng demo ở
+  bản 256.
+- **Quyết định 2 — M3/M4/B1 giữ nguyên.** Ba phương pháp này không có biến thể 512: M3 làm
+  việc trên cây AST (theo câu lệnh), M4 trên node CPG, B1 là so khớp winnowing — đều không
+  phụ thuộc `max_length` của encoder text. Đổi chúng chỉ để "cho đủ" là tạo biến giả.
+- **Quyết định 3 — ngưỡng vẫn không dò lại:** mỗi model đọc ngưỡng từ `threshold.json`
+  của chính run (M1-512 0,210; M2-512 0,660; M5-512 0,010), đúng DEC-022 / DEC-030 §2.
+- **Cách chấm lại:** `scripts/score_custom_suite.py --models M1 M2 M5 --merge` (giữ nguyên
+  B1/M3/M4). Thêm hai cờ để việc chấm lại không phá artifact cũ:
+  `score_custom_suite.py --merge` và `evidence_custom_suite.py --reuse-moss` — máy chạy
+  không khai `MOSS_USER_ID` nên B1 sẽ rơi vào fallback winnowing local, ghi đè là mất số
+  MOSS service thật của báo cáo.
+- **Kết quả trên `data/custom_suite` (26 cặp), so với bản 256:**
+  - `P1_combo` (clone): M1 0,999999 · M2 **1,000** · M5 0,999998 — cả 5 vẫn đúng.
+  - `P3_nonclone_sum` (non-clone): M2 0,110 → **0,005**, M5 0,005 → **0,000** — vẫn đúng.
+  - `P1_nonclone_fact` (non-clone): M1 1,000 → **0,999**, M2 1,000 → **0,991**,
+    M5 1,000 → **0,723** — cả 5 vẫn sai (đều trên ngưỡng).
+  - `P2_nonclone_digitsum` (non-clone): M2 0,505 → **0,001**, M5 0,981 → **0,000**
+    — **sửa được 2 lỗi dương giả**.
+  - `X_P1P4`: M1 0,577 → 0,000, M2 0,385 → 0,000 (trước đó đã đúng, nay dứt khoát hơn).
+  - `X_P2P4`: M5 0,542 → 0,027 — **vẫn sai** (vẫn trên ngưỡng 0,010); đây là lỗi dương
+    giả duy nhất còn lại ngoài 2 cặp bẫy skeleton.
+  - Tổng số cặp sai trên 26 cặp: M2 3→**2**, M5 4→**3**; M1 (2), B1 (16), M3 (10), M4 (10)
+    không đổi. Không có cặp nào đổi từ đúng sang sai.
+- **Hệ quả:** hình minh hoạ §4 của `reports/[17 - 10] - Báo cáo.tex` sinh lại từ
+  `workspace/demo_suite_*.tex`; `tests/test_demo_registry.py` thêm
+  `test_transformer_models_use_512_runs` để không ai lùi demo về 256; bản 256 vẫn nằm
+  trong `results/` và bảng huấn luyện/test của báo cáo vẫn in cả hai để đối chiếu.
 
 [🔝 Quay lại mục lục](#top)

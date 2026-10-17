@@ -9,7 +9,8 @@ SemanticCodeCloneDetection/
 ├── .agents/                  # Quy chuẩn agent (có sẵn, không sửa)
 ├── configs/
 │   ├── datasets/             # poj104.yaml, codenet_python.yaml
-│   └── models/               # tfidf, codebert, graphcodebert, cpg_gnn, hybrid
+│   ├── models/               # tfidf, codebert, graphcodebert, cpg_gnn, hybrid
+│   └── final_pipeline.yaml   # EXP-FINAL-001: candidate runs + luật chọn + model inference
 ├── data/                     # raw/ processed/ splits/ artifacts/ (không commit dữ liệu lớn)
 │                              # library/ = database quét clone (file .c thả vào là quét được)
 ├── src/
@@ -37,7 +38,9 @@ SemanticCodeCloneDetection/
 │   │   ├── astnn/            # model.py (M3, vectorize RvNN + bi-GRU)
 │   │   ├── cpg_gnn/          # model.py (M4, GAT 3 tầp có điều kiện nhãn cạnh)
 │   │   └── hybrid/           # model.py (M5, stub, fusion concat_mlp)
-│   ├── evaluation/           # metrics.py (classification + retrieval)
+│   ├── evaluation/           # metrics.py (classification + retrieval) ·
+│   │                          # uncertainty.py (bootstrap + McNemar) ·
+│   │                          # leaderboard.py (xếp hạng + chọn phương pháp cuối)
 │   ├── experiments/          # exp001_tfidf.py (B1 cũ), exp002_codebert.py (M1),
 │   │                          # exp006_moss.py (B1 MOSS baseline mới)
 │   ├── training/             # (phase sau)
@@ -57,7 +60,8 @@ SemanticCodeCloneDetection/
 │   └── utils/
 ├── scripts/                  # audit_dataset, check_leakage, build_dataset, audit_status,
 │                              # smoke_*, env_report, check_toolchain,
-│                              # build_cpg_export (lô gọi Joern + benchmark), serve_demo (uvicorn)
+│                              # build_cpg_export (lô gọi Joern + benchmark), serve_demo (uvicorn),
+│                              # final_pipeline (select/detect — pipeline cuối EXP-FINAL-001)
 │   └── joern/                # export_cpg.sc (Scala, chạy bởi JVM) + joern_smoke.sc
 ├── notebooks/                # exp002/003/004/005 Kaggle (mỗi thí nghiệm 1 file)
 ├── tests/                    # test_baseline, test_splitting, test_metrics, test_leakage,
@@ -67,6 +71,9 @@ SemanticCodeCloneDetection/
 │                              # test_moss (winnowing core)
 ├── results/                  # output experiment (không commit checkpoints nặng)
 ├── reports/                  # research reports paper-ready
+│   ├── figures/              # prompt tạo hình (m2_pipeline_prompt.md) — ảnh sinh ra từ
+│   │                          # prompt rồi chèn vào báo cáo
+│   └── images/               # ảnh chèn vào báo cáo (Pipeline.png: kiến trúc suy luận M2)
 ├── docs/                     # tài liệu nghiên cứu + specs hệ thống có sẵn
 ├── requirements.txt / pyproject.toml / .gitignore
 └── README.md
@@ -76,6 +83,23 @@ SemanticCodeCloneDetection/
 
 | Ngày | Nội dung |
 | :--- | :--- |
+| 2026-10-17 | **Demo + báo cáo dùng bản 512 (DEC-031):** `configs/demo_web.yaml` cho M1/M2/M5
+trỏ vào `results/exp00{2,3,6}_*_512` (`max_length: 512`, `best_checkpoint.pt`); M3/M4/B1
+giữ nguyên (không có biến thể 512). `scripts/score_custom_suite.py` thêm `--merge`,
+`scripts/evidence_custom_suite.py` thêm `--reuse-moss` (máy thiếu `MOSS_USER_ID` thì giữ
+artifact MOSS thật); `tests/test_demo_registry.py` chốt bản 512 bằng test. Chấm lại
+`data/custom_suite` cho M1/M2/M5 rồi cập nhật §4 báo cáo `[17 - 10]` |
+| 2026-10-17 | **Báo cáo tuần `[17 - 10]`:** đánh số mục lại liên tục (bỏ `\setcounter` hack cũ);
+§5 *Kiến trúc suy luận phương pháp M2 (GraphCodeBERT)* đặt sau phần demo, dùng ảnh
+`reports/images/Pipeline.png` (tạo từ prompt `reports/figures/m2_pipeline_prompt.md`, số liệu
+trong ảnh khớp bản M2-512); §6 Hạn chế và §7 Kế hoạch tiếp theo để trống ruột, giữ tiêu đề.
+Bản vẽ TikZ `pipeline_overview*` bỏ cùng lúc với mục *Pipeline chọn phương pháp* (nội dung
+quy trình chọn nay nằm ở câu mở đầu §5) |
+| 2026-10-17 | **Pipeline cuối (EXP-FINAL-001, DEC-030):** `configs/final_pipeline.yaml`,
+`src/evaluation/leaderboard.py` (xếp hạng + chọn theo val F1, McNemar + paired bootstrap
+tái dùng `uncertainty.py`), `scripts/final_pipeline.py` (`select`/`detect`),
+`tests/test_final_pipeline.py`, artifact `results/final_pipeline/`,
+report `reports/014_final_selection.md` |
 | 2026-10-08 | M5 (Hybrid) vào demo: `src/demo/scorers/hybrid_scorer.py` (kế thừa CpgScorer,
 tái dùng `extract_graphs`, evidence saliency nhánh text), `configs/demo_web.yaml`
 thêm M5 (order + preload), `tests/test_demo_registry.py` lên 6 model |

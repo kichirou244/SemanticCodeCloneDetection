@@ -28,15 +28,34 @@ def test_registry_builds_all_six_from_yaml():
     assert isinstance(by_id["M5"], HybridScorer)
 
 
-def test_hybrid_uses_exp006_threshold_and_checkpoint():
-    """Regression: M5 trỏ về EXP-006 — ngưỡng đọc từ threshold.json của hybrid,
-    checkpoint là best_checkpoint.pt đầy đủ."""
+def test_hybrid_uses_exp006_512_threshold_and_checkpoint():
+    """Regression: M5 trỏ về EXP-006 bản 512 (DEC-031) — ngưỡng đọc từ
+    threshold.json của run 512, checkpoint là best_checkpoint.pt đầy đủ."""
     reg = ModelRegistry.from_yaml(YAML, root=ROOT)
     m5 = reg.get("M5")
-    assert m5.results_dir.name == "exp006_hybrid_poj104"
+    assert m5.results_dir.name == "exp006_hybrid_poj104_512"
     assert m5.checkpoint.name == "best_checkpoint.pt"
     assert m5.hf_id == "microsoft/graphcodebert-base"
-    assert m5.max_length == 256
+    assert m5.max_length == 512
+
+
+def test_transformer_models_use_512_runs():
+    """Regression DEC-031: M1/M2 demo phải là bản 512, không được lùi về 256.
+
+    Bản 256 đã đóng băng trong `results/` để đối chiếu, nhưng demo/báo cáo dùng
+    bản 512 — nếu ai đó sửa `demo_web.yaml` về 256 thì điểm demo sẽ lệch khỏi
+    số đã báo cáo.
+    """
+    reg = ModelRegistry.from_yaml(YAML, root=ROOT)
+    for mid, run_name, hf_id in (
+        ("M1", "exp002_codebert_poj104_512", "microsoft/codebert-base"),
+        ("M2", "exp003_graphcodebert_poj104_512", "microsoft/graphcodebert-base"),
+    ):
+        scorer = reg.get(mid)
+        assert scorer.results_dir.name == run_name, mid
+        assert scorer.max_length == 512, mid
+        assert scorer.hf_id == hf_id, mid
+        assert scorer.checkpoint == scorer.results_dir / "best_checkpoint.pt", mid
 
 
 def test_moss_uses_exp014_service_keeps_fallback_params():

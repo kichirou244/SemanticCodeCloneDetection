@@ -5,9 +5,10 @@ scorer, giống hệt `transformer_pair_runner` dùng chung một runner cho EXP
 EXP-003. Nếu tách hai class riêng thì RQ1 so sánh M1 với M2 sẽ lẫn cả khác biệt
 implementation vào kết quả — đúng cái lỗi DEC-020 sinh ra để tránh.
 
-Về `max_length = 256`: đây là ngưỡng đã đóng băng (DEC-016). Demo không tăng lên
-512 để "cho kết quả đẹp hơn" — tăng sẽ ra số khác số đã báo cáo trong
-`metrics.json`, mà chính số đó lại hiện cạnh model trên UI.
+Về `max_length`: **phải bằng đúng `max_length` của run mà scorer trỏ tới**, không
+được tự ý nâng/hạ. Demo dùng bản 512 của M1/M2/M5 (DEC-031), nên `demo_web.yaml`
+khai `max_length: 512`; nếu đổi số này thì điểm hiện cạnh model trên UI sẽ khác
+số trong `metrics.json` của chính run đó.
 
 Về cách dựng encoder: ưu tiên `AutoModel.from_config` để **không tải 500 MB
 pretrained weights** — demo chỉ cần kiến trúc, trọng số đến từ checkpoint của ta.

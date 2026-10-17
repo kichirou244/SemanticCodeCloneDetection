@@ -90,26 +90,28 @@ models:
     show: 1000
     max_matches: 1000
 
+  # M1/M2/M5 trỏ vào BẢN 512 — đây là bản chốt dùng cho demo và báo cáo
+  # (DEC-031). Bản 256 vẫn nằm trong `results/` để đối chiếu trong bảng huấn
+  # luyện/test, nhưng không còn được demo nạp nữa.
   M1:
     label: M1 · CodeBERT
     family: transformer
     kind: transformer
-    results_dir: results/exp002_codebert_poj104
+    results_dir: results/exp002_codebert_poj104_512
     hf_id: microsoft/codebert-base
-    max_length: 256
-    # `resolve_eval_checkpoint` ưu tiên bản nhẹ (chỉ tensor) nếu có.
-    checkpoint: results/exp002_codebert_poj104/best_weights_only.pt
+    max_length: 512
+    # Bản 512 chỉ có `best_checkpoint.pt` đầy đủ (model + optimizer + scheduler);
+    # `load_eval_weights` tự rút `model_state` nên vẫn nạp được.
+    checkpoint: results/exp002_codebert_poj104_512/best_checkpoint.pt
 
   M2:
     label: M2 · GraphCodeBERT
     family: transformer
     kind: transformer
-    results_dir: results/exp003_graphcodebert_poj104
+    results_dir: results/exp003_graphcodebert_poj104_512
     hf_id: microsoft/graphcodebert-base
-    max_length: 256
-    # M2 chưa có bản nhẹ (Kaggle chỉ tải về `best_checkpoint.pt` 1.44 GB).
-    # `load_eval_weights` tự phân biệt theo tên file nên vẫn nạp được.
-    checkpoint: results/exp003_graphcodebert_poj104/best_checkpoint.pt
+    max_length: 512
+    checkpoint: results/exp003_graphcodebert_poj104_512/best_checkpoint.pt
 
   M3:
     label: M3 · ASTNN
@@ -138,9 +140,9 @@ models:
     label: M5 · Hybrid GraphCodeBERT + CPG-GNN
     family: hybrid
     kind: hybrid
-    results_dir: results/exp006_hybrid_poj104
+    results_dir: results/exp006_hybrid_poj104_512
     hf_id: microsoft/graphcodebert-base
-    max_length: 256
+    max_length: 512
     hidden_size: 128
     num_layers: 3
     heads: 4
@@ -148,4 +150,4 @@ models:
     max_nodes: 1500
     # best_checkpoint.pt đầy đủ (model + optimizer + scheduler);
     # `load_eval_weights` tự rút `model_state` nên nạp được.
-    checkpoint: results/exp006_hybrid_poj104/best_checkpoint.pt
+    checkpoint: results/exp006_hybrid_poj104_512/best_checkpoint.pt

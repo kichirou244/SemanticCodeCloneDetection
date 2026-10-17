@@ -1,5 +1,36 @@
 # Task log — SemanticCodeCloneDetection
 
+## [COMPLETE] Dừng train → pipeline cuối: đánh giá + chọn + suy luận (17-10)
+- Quyết định **dừng huấn luyện** (các bản 512 đã chạm trần thực dụng, chênh còn lại
+  nằm trong nhiễu) và chuyển sang đánh giá để chốt phương pháp → DEC-030.
+- Mới: `configs/final_pipeline.yaml`, `src/evaluation/leaderboard.py`,
+  `scripts/final_pipeline.py` (`select`/`detect`), `tests/test_final_pipeline.py`
+  (14 test, không cần GPU), `reports/014_final_selection.md`, artifact
+  `results/final_pipeline/`.
+- `select` xếp hạng 10 run theo **val F1** (ngưỡng đóng băng), so winner vs á quân
+  bằng **McNemar + paired bootstrap tái dùng `uncertainty.py`** trên validation.
+- Kết quả: **M5-512 thắng theo val F1** (0,9379) nhưng hơn M2-512 chỉ +0,0043;
+  McNemar p=0,0814 (không ý nghĩa) vs bootstrap CI95 [+0,0004,+0,0083] (chạm 0) ⇒
+  `mixed`; ngưỡng 0,010 rất mỏng; **M2-512 hơn ở test F1 0,9550 / AUC 0,9912** ⇒
+  **pipeline cuối dùng M2-512 cho `detect`** (`inference.default_model: M2_512`;
+  M5-512 gọi khi cần bằng `--model M5_512`).
+- Kế hoạch train tuần 18–23/10 (Hybrid V3, CPG nới node, Hybrid-512) **tạm gác** —
+  chỉ mở lại nếu cần bằng chứng mạnh hơn cho lựa chọn.
+- Chạy lại: `python scripts/final_pipeline.py select` ·
+  `python scripts/final_pipeline.py detect --a a.cpp --b b.cpp`
+
+## [COMPLETE] Demo + báo cáo chuyển sang bản 512 cho M1/M2/M5 (17-10) — DEC-031
+- `configs/demo_web.yaml`: M1/M2/M5 trỏ `results/exp00{2,3,6}_*_512` (`max_length: 512`,
+  `best_checkpoint.pt`; ngưỡng vẫn đọc từ `threshold.json` của chính run). M3/M4/B1 giữ
+  nguyên vì không có biến thể 512 (AST / node CPG / winnowing đều không phụ thuộc
+  `max_length`).
+- Chấm lại bộ test: `python scripts/score_custom_suite.py --models M1 M2 M5 --merge`
+  (giữ B1/M3/M4) rồi `python scripts/evidence_custom_suite.py --reuse-moss --pairs
+  P1_combo P3_nonclone_sum P1_nonclone_fact` (giữ lại artifact MOSS service thật).
+- Kết quả trên 26 cặp: lỗi M2 3→**2**, M5 4→**3** (sửa 2 dương giả ở `P2_nonclone_digitsum`),
+  **không cặp nào đổi từ đúng sang sai**; §4 báo cáo `[17 - 10]` cập nhật số mới.
+- Guard: `tests/test_demo_registry.py::test_transformer_models_use_512_runs`.
+
 ## [QUY UOC] Bo test mac dinh: `data/custom_suite` (tu 16-10)
 - Moi lan test/demo/bao cao sau nay deu dung `data/custom_suite`
   (26 cap: 16 clone + 10 non-clone), cham bang `scripts/score_custom_suite.py`,
@@ -23,37 +54,32 @@
   (khớp theo tên: có thì cập nhật, chưa có thì tạo mới, không tạo trùng).
 
 ## [TO DO] Kế hoạch tuần 18-10 (CN) → 23-10 (T6), T7 nộp báo cáo
-Mục tiêu: (1) Hybrid hết overfit đỉnh-ngay-E0 bằng freeze encoder rồi unfreeze
-(item trong BACKLOG); (2) CPG-GNN nới giới hạn node để bớt cắt hàm dài;
-(3) thử cấu hình khác cho Hybrid-512.
+Mục tiêu: (1) Hybrid hết overfit đỉnh-ngay-E0 bằng freeze encoder rồi unfreeze;
+(2) CPG-GNN nới giới hạn node để bớt cắt hàm dài; (3) thử cấu hình khác cho Hybrid-512.
+Gom theo từng mạch việc (config → chạy → đánh giá), không tách vụn.
 
-### 18-10 (CN) — Chuẩn bị config
-- Hybrid V3: thêm option `freeze_encoder_epochs` (vd 1–2) vào
-  `src/experiments/exp006_hybrid.py` + `configs/exp006_hybrid.yaml` (đóng băng encoder
-  N epoch đầu, chỉ train head rồi mới unfreeze). Viết/sửa test, chạy `pytest` xanh.
-- CPG-GNN: soạn config `exp005_cpg_gnn` bản nới node `max_nodes` 1500 → 2000.
+### 1. Hybrid V3 (freeze→unfreeze) — 18-10 → 20-10
+- 18-10: sửa `src/experiments/exp006_hybrid.py` + `configs/exp006_hybrid.yaml` thêm
+  `freeze_encoder_epochs` (1–2); viết/sửa test, `pytest` xanh.
+- 19-10: chạy notebook Kaggle (~7–8h), theo dõi val F1 từng epoch (kỳ vọng ≥ V1 0,914,
+  hết đỉnh-ngay-E0).
+- 20-10: so val/test F1 với V1 (0,913/thr 0,370) và V2, quyết định giữ V1 hay chuyển V3.
 
-### 19-10 (T2) — Chạy Hybrid V3
-- Chạy notebook Kaggle Hybrid V3 (freeze→unfreeze), ~7–8h.
-- Theo dõi val F1 từng epoch (kỳ vọng ≥ V1 0,914, hết đỉnh-ngay-E0).
+### 2. CPG-GNN nới node (max_nodes 1500→2000) — 18-10 → 21-10
+- 18-10: soạn config `exp005_cpg_gnn` bản nới node.
+- 20-10: chạy M4 trên Kaggle.
+- 21-10: đánh giá val F1 có vượt 0,842 không + tỉ lệ cắt node (`truncation.json`).
 
-### 20-10 (T3) — Đánh giá V3 + chạy M4
-- Tải `results/exp006_hybrid_poj104_v3/`, so val/test F1 với V1 (0,913, thr 0,370)
-  và V2. Quyết định giữ V1 hay chuyển V3.
-- Chạy M4 CPG-GNN với giới hạn node mới (Kaggle).
+### 3. Hybrid-512 cấu hình mới — 21-10 → 22-10
+- 21-10: chạy cấu hình mới (freeze encoder / epochs / LR khác).
+- 22-10: đánh giá, so M5-512 (test F1 0,952, thr 0,010 rất mỏng) + xem cả verdict.
 
-### 21-10 (T4) — Đánh giá M4 + chạy Hybrid-512
-- Đánh giá M4 nới node: val F1 có vượt 0,842 không + tỉ lệ cắt node (`truncation.json`).
-- Chạy Hybrid-512 với cấu hình mới (freeze encoder / epochs / LR khác).
+### 4. Truncation M1/M2/M5-512 — 22-10
+- Đo lại `truncation.json` bản 512 so với 256.
 
-### 22-10 (T5) — Đánh giá Hybrid-512 + truncation
-- Đánh giá Hybrid-512 cấu hình mới (so M5-512: test F1 0,952, thr 0,010 rất mỏng,
-  xem cả verdict).
-- Đo lại `truncation.json` của M1/M2/M5-512.
-
-### 23-10 (T6) — Chốt số + viết báo cáo (T7 nộp)
+### 5. Chốt số + báo cáo tuần (T7 nộp) — 23-10
 - Chấm lại `data/custom_suite` cho model mới bằng `scripts/score_custom_suite.py`.
-- Cập nhật bảng train/test + mục demo trong báo cáo tuần, build PDF.
+- Cập nhật bảng train/test + mục demo trong báo cáo tuần, build PDF để T7 nộp.
 
 ## [COMPLETE] Bổ sung MOSS + ví dụ khó theo review báo cáo [10-10]
 - Đào từ `test_scores.jsonl` (ngưỡng threshold.json): 11 cặp FN cả 5 mô hình,

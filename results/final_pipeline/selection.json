@@ -1,0 +1,135 @@
+{
+  "pipeline": {
+    "id": "EXP-FINAL-001",
+    "name": "final_clone_detection_pipeline",
+    "dataset": "poj104",
+    "language": "cpp",
+    "seed": 42
+  },
+  "selection_rule": {
+    "metric": "validation.f1",
+    "mode": "max",
+    "tie_break": [
+      "test.roc_auc"
+    ],
+    "comparison_split": "validation",
+    "comparison_n_boot": 500,
+    "min_lead_over_runner_up": 0.01,
+    "min_threshold": 0.05
+  },
+  "winner": {
+    "id": "M5-512",
+    "label": "M5 · Hybrid GraphCodeBERT-512 + CPG-GNN",
+    "family": "hybrid",
+    "role": "candidate",
+    "results_dir": "results/exp006_hybrid_poj104_512",
+    "model": "M5_512",
+    "metrics": {
+      "validation": {
+        "precision": 0.9466286412711347,
+        "recall": 0.9294,
+        "f1": 0.9379352104147745,
+        "threshold": 0.01,
+        "roc_auc": 0.9826052200000001,
+        "pr_auc": 0.9836527947775814,
+        "accuracy": 0.9385,
+        "TP": 4647,
+        "TN": 4738,
+        "FP": 262,
+        "FN": 353
+      },
+      "test": {
+        "precision": 0.9612244897959183,
+        "recall": 0.942,
+        "f1": 0.9515151515151515,
+        "threshold": 0.01,
+        "roc_auc": 0.9878003801652893,
+        "pr_auc": 0.9886523117734777,
+        "accuracy": 0.952,
+        "TP": 5181,
+        "TN": 5291,
+        "FP": 209,
+        "FN": 319
+      }
+    },
+    "threshold": 0.01,
+    "notes": "Val F1 cao nhất nhưng ngưỡng 0,01 rất mỏng — xem cảnh báo selection.json."
+  },
+  "runner_up": {
+    "id": "M2-512",
+    "label": "M2 · GraphCodeBERT (512)",
+    "family": "transformer",
+    "role": "candidate",
+    "results_dir": "results/exp003_graphcodebert_poj104_512",
+    "model": "M2_512",
+    "metrics": {
+      "validation": {
+        "precision": 0.953125,
+        "recall": 0.915,
+        "f1": 0.9336734693877551,
+        "threshold": 0.66,
+        "roc_auc": 0.98107728,
+        "pr_auc": 0.9841762219312467,
+        "accuracy": 0.935,
+        "TP": 4575,
+        "TN": 4775,
+        "FP": 225,
+        "FN": 425
+      },
+      "test": {
+        "precision": 0.951452806352644,
+        "recall": 0.9585454545454546,
+        "f1": 0.9549859614165384,
+        "threshold": 0.66,
+        "roc_auc": 0.9911923305785124,
+        "pr_auc": 0.9916024980673352,
+        "accuracy": 0.9548181818181818,
+        "TP": 5272,
+        "TN": 5231,
+        "FP": 269,
+        "FN": 228
+      }
+    },
+    "threshold": 0.66,
+    "notes": ""
+  },
+  "warnings": [
+    "Ngưỡng của M5-512 rất mỏng (0.01 < 0.05) — verdict nhạy với nhiễu hiệu chỉnh xác suất.",
+    "validation.f1 của M5-512 (0.9379) chỉ hơn M2-512 (0.9337) đúng 0.0043 (< 0.01) — rất sát.",
+    "Theo test F1 thì M2-512 (0.9550) lại hơn M5-512 (0.9515) — nhưng test không dùng để chọn.",
+    "Hai kiểm định M5-512 vs M2-512 KHÔNG nhất quán (McNemar p = 0.0814; bootstrap ghép có khác biệt) — chênh lệch nhỏ và sát ngưỡng, cần thận trọng khi kết luận."
+  ],
+  "comparison": {
+    "split": "validation",
+    "a": "M5-512",
+    "b": "M2-512",
+    "n": 10000,
+    "mcnemar": {
+      "a_correct_b_wrong": 208,
+      "a_wrong_b_correct": 173,
+      "discordant": 381,
+      "p_value": 0.0813949617180573,
+      "threshold_a": 0.01,
+      "threshold_b": 0.66,
+      "note": "p_value < 0.05 => hai mo hinh sai khac nhau co y nghia. Dung cung nguoi bao cao nay thay cho so hai cot +-SD."
+    },
+    "bootstrap": {
+      "delta_f1_point": 0.004261741027019261,
+      "delta_f1_mean": 0.004350261643187006,
+      "delta_f1_sd": 0.0020220743931315113,
+      "delta_f1_ci95": [
+        0.0003765523886409023,
+        0.0082600458464026
+      ],
+      "threshold_a": 0.01,
+      "threshold_b": 0.66,
+      "significant": true,
+      "n_boot": 500,
+      "seed": 42,
+      "alpha": 0.05,
+      "note": "CI cua delta F1 theo bootstrap ghep tren cung mot tap test, moi mo hinh o nguong da ghim cua no. Khong chua 0 => khac biet co y nghia o muc alpha."
+    },
+    "significant_at_0.05": false,
+    "significance": "mixed"
+  }
+}

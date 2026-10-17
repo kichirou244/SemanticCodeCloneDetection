@@ -6,6 +6,8 @@ khong sua code). Chay tu goc repo::
     python scripts/score_custom_suite.py            # all models theo demo_web.yaml
     python scripts/score_custom_suite.py --models B1 M1
     python scripts/score_custom_suite.py --models B1   # nhanh, khong can GPU
+    python scripts/score_custom_suite.py --models M1 M2 M5 --merge   # cham lai 3 model
+                                                                     # 512, giu B1/M3/M4
 
 Ket qua ghi ra `workspace/custom_suite_scores.json`.
 """
@@ -43,6 +45,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="cham bo test custom_suite")
     parser.add_argument("--models", nargs="*", default=None,
                         help="VD: --models B1 M1 (mac dinh: tat ca theo demo_web.yaml)")
+    parser.add_argument("--merge", action="store_true",
+                        help="chi cap nhat cac model trong --models, giu nguyen "
+                             "diem da co cua cac model khac (VD chấm lai M1/M2/M5 "
+                             "ma khong cham B1 khi may thieu MOSS_USER_ID)")
     parser.add_argument("--out", default=str(OUT_PATH))
     args = parser.parse_args()
 
@@ -50,25 +56,34 @@ def main() -> None:
 
     reg = ModelRegistry.from_yaml(ROOT / "configs" / "demo_web.yaml", root=ROOT)
     scorers = reg.selected(args.models)
+    out_path = Path(args.out)
+    out: dict = {}
+    if args.merge:
+        if not out_path.exists():
+            parser.error(f"--merge nhung chua co {out_path} de cap nhat")
+        out = json.loads(out_path.read_text(encoding="utf-8"))
     print("preload:", reg.preload([s.model_id for s in scorers
                                    if s.model_id != "B1"]))
-    out: dict = {}
+    fresh: set[str] = set()
     for rec in load_pairs():
-        row: dict = {"label": rec["label"], "category": rec["category"],
-                     "note": rec["note"], "scores": {}}
+        row = out.setdefault(rec["pair_id"], {"scores": {}})
+        row["label"] = rec["label"]
+        row["category"] = rec["category"]
+        row["note"] = rec["note"]
+        row.setdefault("scores", {})
         for s in scorers:
             r = s.score(rec["code_a"], rec["code_b"])
             row["scores"][s.model_id] = {
                 "score": r.score, "threshold": r.threshold,
                 "verdict": r.verdict, "ok": r.ok, "error": r.error,
             }
-        out[rec["pair_id"]] = row
+            fresh.add(s.model_id)
         cells = {m: (v["score"], v["verdict"] if v["ok"] else "ERR")
-                 for m, v in row["scores"].items()}
+                 for m, v in row["scores"].items() if m in fresh}
         print(f"{rec['pair_id']} (GT={'clone' if rec['label'] else 'non-clone'}): {cells}")
-    Path(args.out).write_text(json.dumps(out, ensure_ascii=False, indent=1),
-                              encoding="utf-8")
-    print(f"da ghi {args.out}")
+    out_path.write_text(json.dumps(out, ensure_ascii=False, indent=1),
+                        encoding="utf-8")
+    print(f"da ghi {out_path}")
 
 
 if __name__ == "__main__":

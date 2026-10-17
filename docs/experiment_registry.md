@@ -4,8 +4,8 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.16.0 |
-| **Ngày cập nhật** | 2026-10-07 |
+| **Phiên bản** | 1.17.0 |
+| **Ngày cập nhật** | 2026-10-17 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
 
@@ -36,8 +36,17 @@
 | EXP-010 | CodeNet Python | M3 ASTNN | CANCELLED | - | DEC-019 |
 | EXP-011 | CodeNet Python | M4 CPG-GNN | CANCELLED | - | DEC-019 |
 | EXP-012 | CodeNet Python | M5 Hybrid | CANCELLED | - | DEC-019 |
+| EXP-FINAL-001 | POJ-104 | Eval + chọn + inference (10 run) | COMPLETED | Xếp hạng theo val F1: **M5-512 thắng** (0,9379) hơn M2-512 (0,9337) chỉ +0,0043; McNemar val p=0,0814 (không ý nghĩa) vs paired bootstrap CI95 [+0,0004,+0,0083] (bất đồng ⇒ `mixed`); ngưỡng M5-512 0,010 rất mỏng; M2-512 hơn ở test F1 0,9550/AUC 0,9912 ⇒ **pipeline cuối dùng M2-512 cho `detect`** (`inference.default_model`). `select` không cần GPU | reports/014_final_selection.md, `results/final_pipeline/` |
 
 Trạng thái: PLANNED / RUNNING / COMPLETED / FAILED / BLOCKED / INVALIDATED / CANCELLED.
+
+**EXP-FINAL-001 (pipeline cuối) — 2026-10-17, DEC-030.** Không train thêm. Đọc artifact
+đã đóng băng của 10 run (baseline + candidate) → xếp hạng theo **val F1** → kiểm định cặp
+winner vs á quân trên validation (McNemar + paired bootstrap) → ghi
+`results/final_pipeline/{leaderboard.json,leaderboard.md,selection.json}`. Cấu hình
+`configs/final_pipeline.yaml`, code `src/evaluation/leaderboard.py` +
+`scripts/final_pipeline.py` (`select` chạy trên CPU, `detect` chấm một cặp file bằng model
+đã chọn). Xem `reports/014_final_selection.md` và `docs/evaluation_protocol.md` §4.
 
 **Scope: chỉ C/C++ (POJ-104)** theo DEC-019. EXP-007…012 hủy vì (a) RQ1–RQ4 không
 phụ thuộc ngôn ngữ — POJ-104 trả lời đủ; (b) EXP-008…012 dự kiến ~11.3h mỗi run
@@ -117,3 +126,4 @@ Config `configs/exp005_cpg_gnn.yaml` mang `status: BLOCKED_ON_JOERN` — xem
 | 15 | 1.14.0 | 2026-10-07 | Chốt tên HF repo chính thức: `Kichirou24/SemanticCodeCloneDetection` (public) — notebook cell 7 + `export_hybrid_warm_start.py` đổi cho khớp; 2 file encoder (`m2_text_encoder.pt` 475MB, `m4_graph_encoder.pt` 0.4MB) đã push lên HF kèm README model card. |
 | 16 | 1.15.0 | 2026-10-07 | **Errata row 15:** repo HF đang để **private** (anonymous 401), không phải public. Push/thao tác local qua **SSH** `git@hf.co` (đã đẩy 2 commit README+weights thành công). Trên Kaggle pull được nhờ `HF_TOKEN` của chính acc (cell 1 → cell 7); README HF ghi rõ điều này. |
 | 17 | 1.16.0 | 2026-10-07 | Chay thử EXP-006 trên Kaggle: cell 7 báo 404 Repository Not Found dù repo vừa push qua SSH thành công. Kết luận vận hành: HF **trả 404 (không phải 401)** khi account của token **không sở hữu/không có quyền** truy cập repo private — che giấu sự tồn tại của repo. Cell 7 được nâng cấp: in whoami() để lộ account của token ngay khi pull lỗi. Khuyến nghị: để repo **public** (không cần token) hoặc dùng token đúng acc sở hữu. |
+| 18 | 1.17.0 | 2026-10-17 | Thêm **EXP-FINAL-001** (DEC-030): pipeline cuối đánh giá + chọn + inference. Xếp hạng 10 run theo val F1 → M5-512 nhỉnh nhất nhưng +0,0043 so M2-512, McNemar p=0,0814 vs bootstrap CI chạm 0 (`mixed`), ngưỡng 0,010 mỏng, thua test F1/AUC ⇒ **pipeline cuối dùng M2-512 cho `detect`**. Artifact `results/final_pipeline/`; report `reports/014_final_selection.md`. |

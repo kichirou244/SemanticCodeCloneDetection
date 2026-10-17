@@ -1,0 +1,141 @@
+# EXP-FINAL-001 — Pipeline cuối: đánh giá → chọn phương pháp → suy luận.
+#
+# Mục đích: "đóng sổ" giai đoạn huấn luyện. Pipeline này (1) gom artifact đã
+# đóng băng của mọi run, (2) xếp hạng và chọn phương pháp tốt nhất theo đúng
+# protocol (val F1, ngưỡng đóng băng trên validation), rồi (3) cung cấp một
+# entrypoint suy luận duy nhất dùng phương pháp đã chọn.
+#
+# Đây KHÔNG phải config train: không có `training`, không đụng checkpoint.
+# Đọc thêm `docs/evaluation_protocol.md` và `docs/decision_log.md` (DEC-022).
+
+pipeline:
+  id: EXP-FINAL-001
+  name: final_clone_detection_pipeline
+  dataset: poj104
+  language: cpp
+  seed: 42
+
+selection:
+  # Chọn theo validation, KHÔNG theo test: test chỉ để báo cáo (DEC-022).
+  metric: validation.f1
+  mode: max
+  tie_break: [test.roc_auc]
+  # So sánh cặp McNemar + bootstrap ghép (tái dùng src/evaluation/uncertainty.py)
+  # giữa winner và á quân trên chính tập đã dùng để chọn.
+  comparison_split: validation
+  comparison_n_boot: 500
+  # Cảnh báo (không tự loại) khi người thắng quá sát hoặc ngưỡng quá mỏng.
+  min_lead_over_runner_up: 0.01
+  min_threshold: 0.05
+
+# Mọi run hoàn thành, có đủ metrics.json + threshold.json để đưa vào bảng.
+# `role: candidate` mới được xét làm "phương pháp tốt nhất"; baseline chỉ để đối
+# chiếu. Bản cũ/v1/v2/smoke KHÔNG khai ở đây để tránh lẫn vào bảng.
+runs:
+  - id: B1
+    label: "B1 · MOSS service Stanford"
+    family: baseline
+    role: baseline
+    results_dir: results/exp014_moss_service_poj104
+    notes: "Baseline chính của báo cáo. Chỉ trả top-N match nên mù Type-3/4."
+  - id: B0
+    label: "B0 · MOSS winnowing local"
+    family: baseline
+    role: baseline
+    results_dir: results/exp013_moss_poj104
+    notes: "Tham khảo/fallback offline; chấm được mọi cặp nên F1 cao hơn service."
+  - id: M3
+    label: "M3 · ASTNN"
+    family: ast
+    role: candidate
+    results_dir: results/exp004_astnn_poj104
+  - id: M4
+    label: "M4 · CPG-GNN"
+    family: cpg
+    role: candidate
+    results_dir: results/exp005_cpg_gnn_poj104
+  - id: M1-256
+    label: "M1 · CodeBERT (256)"
+    family: transformer
+    role: candidate
+    results_dir: results/exp002_codebert_poj104
+  - id: M2-256
+    label: "M2 · GraphCodeBERT (256)"
+    family: transformer
+    role: candidate
+    results_dir: results/exp003_graphcodebert_poj104
+  - id: M5-256
+    label: "M5 · Hybrid (256)"
+    family: hybrid
+    role: candidate
+    results_dir: results/exp006_hybrid_poj104
+  - id: M1-512
+    label: "M1 · CodeBERT (512)"
+    family: transformer
+    role: candidate
+    results_dir: results/exp002_codebert_poj104_512
+    model: M1_512
+  - id: M2-512
+    label: "M2 · GraphCodeBERT (512)"
+    family: transformer
+    role: candidate
+    results_dir: results/exp003_graphcodebert_poj104_512
+    model: M2_512
+  - id: M5-512
+    label: "M5 · Hybrid GraphCodeBERT-512 + CPG-GNN"
+    family: hybrid
+    role: candidate
+    results_dir: results/exp006_hybrid_poj104_512
+    model: M5_512
+    notes: "Val F1 cao nhất nhưng ngưỡng 0,01 rất mỏng — xem cảnh báo selection.json."
+
+# ---------------------------------------------------------------- suy luận
+inference:
+  # "winner" = lấy phương pháp mà `select` đã chọn; hoặc ghi thẳng một id model
+  # bên dưới (ví dụ M2_512) để ép dùng.
+  #
+  # Chốt 2026-10-17 (DEC-030): đặt thẳng **M2_512** thay vì `winner`. Lý do: theo
+  # val F1 thì winner là M5-512 nhưng chỉ hơn M2-512 +0,0043 (McNemar p = 0,081;
+  # bootstrap CI chạm 0 ⇒ `mixed`), ngưỡng 0,010 rất mỏng và cần Joern lúc suy
+  # luận. M2-512 mạnh hơn ở test F1/AUC, ngưỡng 0,66 khoẻ, chạy không cần JVM.
+  default_model: M2_512
+  device: auto
+
+runtime:
+  device: auto
+
+# Model specs cho bước detect — cùng schema `models:` của `configs/demo_web.yaml`,
+# nên `ModelRegistry` dùng lại nguyên vẹn. Chỉ khai các bản 512 (ứng viên thắng),
+# bản 256 vẫn ở demo_web.yaml cho giao diện so sánh.
+models:
+  M1_512:
+    label: M1-512 · CodeBERT (512)
+    family: transformer
+    kind: transformer
+    results_dir: results/exp002_codebert_poj104_512
+    hf_id: microsoft/codebert-base
+    max_length: 512
+    checkpoint: results/exp002_codebert_poj104_512/best_checkpoint.pt
+
+  M2_512:
+    label: M2-512 · GraphCodeBERT (512)
+    family: transformer
+    kind: transformer
+    results_dir: results/exp003_graphcodebert_poj104_512
+    hf_id: microsoft/graphcodebert-base
+    max_length: 512
+    checkpoint: results/exp003_graphcodebert_poj104_512/best_checkpoint.pt
+
+  M5_512:
+    label: M5-512 · Hybrid GraphCodeBERT-512 + CPG-GNN
+    family: hybrid
+    kind: hybrid
+    results_dir: results/exp006_hybrid_poj104_512
+    hf_id: microsoft/graphcodebert-base
+    max_length: 512
+    hidden_size: 128
+    num_layers: 3
+    heads: 4
+    dropout: 0.2
+    max_nodes: 1500
+    checkpoint: results/exp006_hybrid_poj104_512/best_checkpoint.pt

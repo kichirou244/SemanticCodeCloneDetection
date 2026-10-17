@@ -1,0 +1,392 @@
+{
+  "pipeline": {
+    "id": "EXP-FINAL-001",
+    "name": "final_clone_detection_pipeline",
+    "dataset": "poj104",
+    "language": "cpp",
+    "seed": 42
+  },
+  "selection_rule": {
+    "metric": "validation.f1",
+    "mode": "max",
+    "tie_break": [
+      "test.roc_auc"
+    ],
+    "comparison_split": "validation",
+    "comparison_n_boot": 500,
+    "min_lead_over_runner_up": 0.01,
+    "min_threshold": 0.05
+  },
+  "config": "configs\\final_pipeline.yaml",
+  "rows": [
+    {
+      "id": "M5-512",
+      "label": "M5 · Hybrid GraphCodeBERT-512 + CPG-GNN",
+      "family": "hybrid",
+      "role": "candidate",
+      "results_dir": "results/exp006_hybrid_poj104_512",
+      "model": "M5_512",
+      "metrics": {
+        "validation": {
+          "precision": 0.9466286412711347,
+          "recall": 0.9294,
+          "f1": 0.9379352104147745,
+          "threshold": 0.01,
+          "roc_auc": 0.9826052200000001,
+          "pr_auc": 0.9836527947775814,
+          "accuracy": 0.9385,
+          "TP": 4647,
+          "TN": 4738,
+          "FP": 262,
+          "FN": 353
+        },
+        "test": {
+          "precision": 0.9612244897959183,
+          "recall": 0.942,
+          "f1": 0.9515151515151515,
+          "threshold": 0.01,
+          "roc_auc": 0.9878003801652893,
+          "pr_auc": 0.9886523117734777,
+          "accuracy": 0.952,
+          "TP": 5181,
+          "TN": 5291,
+          "FP": 209,
+          "FN": 319
+        }
+      },
+      "threshold": 0.01,
+      "notes": "Val F1 cao nhất nhưng ngưỡng 0,01 rất mỏng — xem cảnh báo selection.json."
+    },
+    {
+      "id": "M2-512",
+      "label": "M2 · GraphCodeBERT (512)",
+      "family": "transformer",
+      "role": "candidate",
+      "results_dir": "results/exp003_graphcodebert_poj104_512",
+      "model": "M2_512",
+      "metrics": {
+        "validation": {
+          "precision": 0.953125,
+          "recall": 0.915,
+          "f1": 0.9336734693877551,
+          "threshold": 0.66,
+          "roc_auc": 0.98107728,
+          "pr_auc": 0.9841762219312467,
+          "accuracy": 0.935,
+          "TP": 4575,
+          "TN": 4775,
+          "FP": 225,
+          "FN": 425
+        },
+        "test": {
+          "precision": 0.951452806352644,
+          "recall": 0.9585454545454546,
+          "f1": 0.9549859614165384,
+          "threshold": 0.66,
+          "roc_auc": 0.9911923305785124,
+          "pr_auc": 0.9916024980673352,
+          "accuracy": 0.9548181818181818,
+          "TP": 5272,
+          "TN": 5231,
+          "FP": 269,
+          "FN": 228
+        }
+      },
+      "threshold": 0.66,
+      "notes": ""
+    },
+    {
+      "id": "M1-512",
+      "label": "M1 · CodeBERT (512)",
+      "family": "transformer",
+      "role": "candidate",
+      "results_dir": "results/exp002_codebert_poj104_512",
+      "model": "M1_512",
+      "metrics": {
+        "validation": {
+          "precision": 0.9328982255761779,
+          "recall": 0.9148,
+          "f1": 0.9237604766232455,
+          "threshold": 0.21000000000000002,
+          "roc_auc": 0.97285998,
+          "pr_auc": 0.9780738479885481,
+          "accuracy": 0.9245,
+          "TP": 4574,
+          "TN": 4671,
+          "FP": 329,
+          "FN": 426
+        },
+        "test": {
+          "precision": 0.9469710918799484,
+          "recall": 0.9350909090909091,
+          "f1": 0.9409935047113713,
+          "threshold": 0.21000000000000002,
+          "roc_auc": 0.9867901652892562,
+          "pr_auc": 0.987315080748081,
+          "accuracy": 0.9413636363636364,
+          "TP": 5143,
+          "TN": 5212,
+          "FP": 288,
+          "FN": 357
+        }
+      },
+      "threshold": 0.21000000000000002,
+      "notes": ""
+    },
+    {
+      "id": "M1-256",
+      "label": "M1 · CodeBERT (256)",
+      "family": "transformer",
+      "role": "candidate",
+      "results_dir": "results/exp002_codebert_poj104",
+      "model": "",
+      "metrics": {
+        "validation": {
+          "precision": 0.9230924099053754,
+          "recall": 0.917,
+          "f1": 0.920036119193338,
+          "threshold": 0.59,
+          "roc_auc": 0.9770076,
+          "pr_auc": 0.9790865837385575,
+          "accuracy": 0.9203,
+          "TP": 4585,
+          "TN": 4618,
+          "FP": 382,
+          "FN": 415
+        },
+        "test": {
+          "precision": 0.9309492105763744,
+          "recall": 0.8898181818181818,
+          "f1": 0.9099191224319048,
+          "threshold": 0.59,
+          "roc_auc": 0.9729241487603306,
+          "pr_auc": 0.9742337252354442,
+          "accuracy": 0.9119090909090909,
+          "TP": 4894,
+          "TN": 5137,
+          "FP": 363,
+          "FN": 606
+        }
+      },
+      "threshold": 0.59,
+      "notes": ""
+    },
+    {
+      "id": "M2-256",
+      "label": "M2 · GraphCodeBERT (256)",
+      "family": "transformer",
+      "role": "candidate",
+      "results_dir": "results/exp003_graphcodebert_poj104",
+      "model": "",
+      "metrics": {
+        "validation": {
+          "precision": 0.9145588528181637,
+          "recall": 0.9184,
+          "f1": 0.9164754016565213,
+          "threshold": 0.43,
+          "roc_auc": 0.97420102,
+          "pr_auc": 0.9784162536409649,
+          "accuracy": 0.9163,
+          "TP": 4592,
+          "TN": 4571,
+          "FP": 429,
+          "FN": 408
+        },
+        "test": {
+          "precision": 0.8826363792806746,
+          "recall": 0.9325454545454546,
+          "f1": 0.9069047829546459,
+          "threshold": 0.43,
+          "roc_auc": 0.9713141652892563,
+          "pr_auc": 0.9736372712238288,
+          "accuracy": 0.9042727272727272,
+          "TP": 5129,
+          "TN": 4818,
+          "FP": 682,
+          "FN": 371
+        }
+      },
+      "threshold": 0.43,
+      "notes": ""
+    },
+    {
+      "id": "M5-256",
+      "label": "M5 · Hybrid (256)",
+      "family": "hybrid",
+      "role": "candidate",
+      "results_dir": "results/exp006_hybrid_poj104",
+      "model": "",
+      "metrics": {
+        "validation": {
+          "precision": 0.9365445026178011,
+          "recall": 0.8944,
+          "f1": 0.9149872122762148,
+          "threshold": 0.37,
+          "roc_auc": 0.97793136,
+          "pr_auc": 0.9799207984551427,
+          "accuracy": 0.9169,
+          "TP": 4472,
+          "TN": 4697,
+          "FP": 303,
+          "FN": 528
+        },
+        "test": {
+          "precision": 0.9050169612569184,
+          "recall": 0.9216363636363636,
+          "f1": 0.9132510584632015,
+          "threshold": 0.37,
+          "roc_auc": 0.9698510578512395,
+          "pr_auc": 0.9737165915794984,
+          "accuracy": 0.9124545454545454,
+          "TP": 5069,
+          "TN": 4968,
+          "FP": 532,
+          "FN": 431
+        }
+      },
+      "threshold": 0.37,
+      "notes": ""
+    },
+    {
+      "id": "M3",
+      "label": "M3 · ASTNN",
+      "family": "ast",
+      "role": "candidate",
+      "results_dir": "results/exp004_astnn_poj104",
+      "model": "",
+      "metrics": {
+        "validation": {
+          "precision": 0.8232909526441865,
+          "recall": 0.8936,
+          "f1": 0.8570058501966049,
+          "threshold": 0.42000000000000004,
+          "roc_auc": 0.92665792,
+          "pr_auc": 0.9212665343090052,
+          "accuracy": 0.8509,
+          "TP": 4468,
+          "TN": 4041,
+          "FP": 959,
+          "FN": 532
+        },
+        "test": {
+          "precision": 0.7598145285935085,
+          "recall": 0.8938181818181818,
+          "f1": 0.8213868003341688,
+          "threshold": 0.42000000000000004,
+          "roc_auc": 0.8893217355371901,
+          "pr_auc": 0.8807129891123808,
+          "accuracy": 0.8056363636363636,
+          "TP": 4916,
+          "TN": 3946,
+          "FP": 1554,
+          "FN": 584
+        }
+      },
+      "threshold": 0.42000000000000004,
+      "notes": ""
+    },
+    {
+      "id": "M4",
+      "label": "M4 · CPG-GNN",
+      "family": "cpg",
+      "role": "candidate",
+      "results_dir": "results/exp005_cpg_gnn_poj104",
+      "model": "",
+      "metrics": {
+        "validation": {
+          "precision": 0.8036497631163362,
+          "recall": 0.916,
+          "f1": 0.8561547808206375,
+          "threshold": 0.47000000000000003,
+          "roc_auc": 0.9381452800000001,
+          "pr_auc": 0.9372986184452412,
+          "accuracy": 0.8461,
+          "TP": 4580,
+          "TN": 3881,
+          "FP": 1119,
+          "FN": 420
+        },
+        "test": {
+          "precision": 0.7232434034983694,
+          "recall": 0.887090909090909,
+          "f1": 0.7968316184876695,
+          "threshold": 0.47000000000000003,
+          "roc_auc": 0.8822615371900827,
+          "pr_auc": 0.8825924434838719,
+          "accuracy": 0.7738181818181818,
+          "TP": 4879,
+          "TN": 3633,
+          "FP": 1867,
+          "FN": 621
+        }
+      },
+      "threshold": 0.47000000000000003,
+      "notes": ""
+    },
+    {
+      "id": "B0",
+      "label": "B0 · MOSS winnowing local",
+      "family": "baseline",
+      "role": "baseline",
+      "results_dir": "results/exp013_moss_poj104",
+      "model": "",
+      "metrics": {
+        "validation": {
+          "f1": 0.7292506043513296,
+          "threshold": 0.0120519306954322,
+          "n": 10000
+        },
+        "test": {
+          "precision": 0.6458435008947454,
+          "recall": 0.7218181818181818,
+          "f1": 0.6817206147505795,
+          "threshold": 0.0120519306954322,
+          "roc_auc": 0.731084958677686,
+          "pr_auc": 0.7491762285353261
+        }
+      },
+      "threshold": 0.0120519306954322,
+      "notes": "Tham khảo/fallback offline; chấm được mọi cặp nên F1 cao hơn service."
+    },
+    {
+      "id": "B1",
+      "label": "B1 · MOSS service Stanford",
+      "family": "baseline",
+      "role": "baseline",
+      "results_dir": "results/exp014_moss_service_poj104",
+      "model": "",
+      "metrics": {
+        "validation": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "tp": 0,
+          "fp": 0,
+          "fn": 5000,
+          "tn": 5000,
+          "threshold": 0.01,
+          "n": 10000,
+          "n_flagged": 0,
+          "n_positive": 5000,
+          "fraction_positive_flagged": 0.0
+        },
+        "test": {
+          "precision": 1.0,
+          "recall": 0.0016363636363636363,
+          "f1": 0.003267380649845707,
+          "tp": 9,
+          "fp": 0,
+          "fn": 5491,
+          "tn": 5500,
+          "threshold": 0.01,
+          "n": 11000,
+          "n_flagged": 9,
+          "n_positive": 5500,
+          "fraction_positive_flagged": 0.0016363636363636363
+        }
+      },
+      "threshold": 0.01,
+      "notes": "Baseline chính của báo cáo. Chỉ trả top-N match nên mù Type-3/4."
+    }
+  ]
+}

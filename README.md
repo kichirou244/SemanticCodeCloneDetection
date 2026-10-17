@@ -89,6 +89,28 @@ chỉ dùng để resume trên Kaggle (DEC-022 §2b, DEC-023).
 Thời gian trên Kaggle T4: **EXP-002 7,03h (đo)** · EXP-003 ~7,8h (đo từ throughput
 EXP-002) · **EXP-004 ~35 phút**. Xem `docs/experiment_registry.md` cho trạng thái từng run.
 
+## Pipeline cuối — đánh giá, chọn phương pháp, suy luận (EXP-FINAL-001)
+
+Giai đoạn huấn luyện đã dừng (DEC-030). Phần còn lại gói trong một CLI hai chế độ,
+dùng chung `configs/final_pipeline.yaml`:
+
+```bash
+# 1) Xếp hạng mọi run đã đóng băng theo val F1 + kiểm định cặp (McNemar + bootstrap)
+#    → results/final_pipeline/{leaderboard.json,leaderboard.md,selection.json}
+#    Không cần torch/GPU/Joern.
+python scripts/final_pipeline.py select
+
+# 2) Suy luận cặp file bằng phương pháp đã chọn (ngưỡng đọc từ threshold.json)
+python scripts/final_pipeline.py detect --a a.cpp --b b.cpp
+python scripts/final_pipeline.py detect --a a.cpp --b b.cpp --model M2_512 --json
+```
+
+Luật chọn là **val F1** (test chỉ để báo cáo). Theo val, M5-512 nhỉnh nhất nhưng chỉ
+hơn M2-512 +0,0043 (McNemar p=0,081; bootstrap CI chạm 0 ⇒ chưa vững), ngưỡng 0,010
+rất mỏng; M2-512 hơn ở test F1/AUC ⇒ **pipeline cuối dùng M2-512 cho `detect`**
+(`inference.default_model`), M5-512 gọi khi cần bằng `--model M5_512`. Chi tiết:
+`reports/014_final_selection.md`.
+
 ## Tài liệu
 
 - Tổng quan: `docs/project_overview.md`

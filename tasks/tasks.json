@@ -1,55 +1,27 @@
 [
   {
     "date": "2026-10-18",
-    "title": "Hybrid V3: thêm freeze_encoder_epochs vào exp006 (freeze encoder N epoch → unfreeze)",
-    "notes": "Sửa src/experiments/exp006_hybrid.py + configs/exp006_hybrid.yaml: đóng băng encoder, chỉ train head rồi mới mở ra train tiếp."
+    "title": "Hybrid V3 (freeze→unfreeze): thêm freeze_encoder_epochs + test, chạy Kaggle & đánh giá",
+    "notes": "18-10: sửa src/experiments/exp006_hybrid.py + configs/exp006_hybrid.yaml thêm freeze_encoder_epochs (1–2), viết/sửa test cho pytest xanh. 19-10: chạy notebook Kaggle ~7–8h, theo dõi val F1 từng epoch (kỳ vọng ≥ V1 0,914, hết đỉnh-ngay-E0). 20-10: tải results/exp006_hybrid_poj104_v3/, so val/test F1 với V1 (0,913/thr 0,370) và V2 rồi quyết định giữ V1 hay chuyển V3."
   },
   {
     "date": "2026-10-18",
-    "title": "Hybrid V3: viết/sửa test và chạy pytest xanh"
-  },
-  {
-    "date": "2026-10-18",
-    "title": "CPG-GNN: soạn config nới node max_nodes 1500 → 2000"
-  },
-  {
-    "date": "2026-10-19",
-    "title": "Chạy Kaggle Hybrid V3 (freeze→unfreeze), ~7–8h"
-  },
-  {
-    "date": "2026-10-19",
-    "title": "Theo dõi val F1 từng epoch (kỳ vọng ≥ 0,914, hết đỉnh-ngay-E0)"
-  },
-  {
-    "date": "2026-10-20",
-    "title": "Đánh giá Hybrid V3: so val/test F1 với V1 (0,913) và V2, quyết định giữ V1 hay V3"
-  },
-  {
-    "date": "2026-10-20",
-    "title": "Chạy M4 CPG-GNN nới node, xem val F1 có vượt 0,842 không"
+    "title": "CPG-GNN nới node (max_nodes 1500→2000): config, chạy M4 & đánh giá",
+    "notes": "18-10: soạn config exp005_cpg_gnn bản nới node. 20-10: chạy M4 trên Kaggle. 21-10: đánh giá val F1 có vượt 0,842 không + tỉ lệ cắt node (truncation.json)."
   },
   {
     "date": "2026-10-21",
-    "title": "Đánh giá M4 CPG-GNN nới node (val F1 + tỉ lệ cắt node)"
-  },
-  {
-    "date": "2026-10-21",
-    "title": "Hybrid-512: chạy cấu hình mới (freeze/epochs/LR), so M5-512 (F1 0,952)"
+    "title": "Hybrid-512 cấu hình mới: chạy & đánh giá (so M5-512 0,952)",
+    "notes": "21-10: chạy Hybrid-512 với cấu hình mới (freeze encoder / epochs / LR khác). 22-10: đánh giá, so M5-512 (test F1 0,952, thr 0,010 rất mỏng) và xem cả verdict."
   },
   {
     "date": "2026-10-22",
-    "title": "Đánh giá Hybrid-512 cấu hình mới (so M5-512)"
-  },
-  {
-    "date": "2026-10-22",
-    "title": "Đo lại truncation.json của M1/M2/M5-512"
+    "title": "Đo lại truncation.json của M1/M2/M5-512",
+    "notes": "Kiểm tra tỉ lệ cắt token bản 512 so với 256."
   },
   {
     "date": "2026-10-23",
-    "title": "Chấm custom_suite cho model mới (scripts/score_custom_suite.py)"
-  },
-  {
-    "date": "2026-10-23",
-    "title": "Cập nhật báo cáo tuần (bảng train/test + demo) và build PDF để T7 nộp"
+    "title": "Chốt số & báo cáo tuần (T7 nộp): chấm custom_suite + build PDF",
+    "notes": "Chấm lại data/custom_suite cho model mới bằng scripts/score_custom_suite.py; cập nhật bảng train/test + mục demo trong báo cáo tuần, build PDF để T7 nộp."
   }
 ]

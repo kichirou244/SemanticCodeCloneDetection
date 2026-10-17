@@ -30,6 +30,8 @@ reports/*.out
 reports/*.lot
 reports/*.lof
 reports/*.gz
+reports/figures/*.aux
+reports/figures/*.log
 
 *.zip
 

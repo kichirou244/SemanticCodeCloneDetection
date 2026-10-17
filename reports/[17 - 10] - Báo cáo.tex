@@ -1,7 +1,9 @@
 % !TeX program = xelatex
-% Báo cáo ngắn gọn: 5 phương pháp + demo custom_suite + hạn chế + kế hoạch.
+% Báo cáo ngắn gọn: 5 phương pháp + kiến trúc suy luận M2 + demo custom_suite + hạn chế + kế hoạch.
 % Biên dịch: xelatex -interaction=nonstopmode "[17 - 10] - Báo cáo.tex"
 % Số liệu: results/*/metrics.json + threshold.json, ngưỡng chọn trên validation.
+% Hình kiến trúc M2: images/Pipeline.png (tạo từ prompt reports/figures/m2_pipeline_prompt.md;
+% số liệu trong ảnh khớp bản M2-512: max_length 512, ngưỡng 0,66, P(clone) 1,000).
 \documentclass[11pt,a4paper]{article}
 
 \usepackage{fontspec}
@@ -12,6 +14,7 @@
 \usepackage{enumitem}
 \usepackage[vietnamese]{babel}
 \usepackage{xcolor}
+\usepackage{float}
 \definecolor{evyellow}{HTML}{B8860B}
 \newcommand{\mline}[1]{#1}
 \newcommand{\eline}[1]{\colorbox{evyellow!30}{#1}}
@@ -43,6 +46,8 @@
   đổi IO và tên biến, thêm cặp non-clone khó.
 \item 12-10: chạy thêm M1-512, M2-512 (warm-start từ checkpoint 256, \texttt{max\_length} 512, 2 epoch).
 \item 15-10: chạy thêm M5-512 (Hybrid trên nền encoder 512, 2 epoch).
+\item 17-10: chuyển demo và mục minh hoạ sang bản 512 cho M1/M2/M5 (ngưỡng lấy theo
+  \texttt{threshold.json} của run 512), chấm lại bộ test \texttt{custom\_suite}.
 \end{itemize}
 
 \section{Kết quả huấn luyện}
@@ -81,7 +86,7 @@ Trong đó: M1 = CodeBERT, M2 = GraphCodeBERT, M3 = ASTNN, M4 = CPG-GNN, M5 = Hy
 \toprule
 \textbf{PP} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} & \textbf{AUC} & \textbf{Ngưỡng} \\
 \midrule
-M3            & 0,760 & 0,894 & 0,821 & 0,889 & 0,557 \\
+M3            & 0,760 & 0,894 & 0,821 & 0,889 & 0,420 \\
 M4            & 0,723 & 0,887 & 0,797 & 0,882 & 0,470 \\
 M1-256        & 0,931 & 0,890 & 0,910 & 0,973 & 0,590 \\
 M2-256        & 0,883 & 0,933 & 0,907 & 0,971 & 0,430 \\
@@ -100,10 +105,10 @@ Lên 512 token thì cả ba đều tăng điểm:
 \item M5: 0,913 $\to$ 0,952.
 \end{itemize}
 
-% Mục 5 cũ là bảng điểm demo đã bỏ, điểm số chuyển vào 6.1, 6.2 và 6.3.
-% Giữ số mục Minh hoạ là 6 cho khớp cấu trúc đã chốt.
-\setcounter{section}{5}
 \section{Minh hoạ}
+Minh hoạ dùng bộ test \texttt{data/custom\_suite} (26 cặp). M1, M2 và M5 chấm bằng bản
+512 — bản đã chốt dùng cho demo và báo cáo; M3 và M4 không có biến thể 512 (một cái làm
+việc trên cây AST, một cái trên node CPG) nên giữ nguyên bản gốc.\\[2pt]
 Cách đọc hình:
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
 \item Hai phía cùng màu là hai đoạn mà model cho là khớp nhau.
@@ -131,7 +136,7 @@ Type-3/4 viết lại nhiều không được gắn cờ.
 \subsection{Cặp không clone khó: P3\_nonclone}
 Cùng khung đọc mảng bằng \texttt{for} rồi in một số, nhưng một bài tìm
 \texttt{max} còn bài kia tính tổng.
-M1 (0,000), M2 (0,110) và M5 (0,005) đều dưới ngưỡng nên nói đúng là không clone;
+M1 (0,000), M2 (0,005) và M5 (0,000) đều dưới ngưỡng nên nói đúng là không clone;
 ngược lại M3 (0,852) và M4 (0,973) vượt ngưỡng nên nói sai.
 MOSS cho 0,000 nên cũng đúng ở cặp này.
 Qua đây thấy mấy model cấu trúc (ASTNN, CPG-GNN) dễ bị khung code giống nhau
@@ -142,30 +147,30 @@ Qua đây thấy mấy model cấu trúc (ASTNN, CPG-GNN) dễ bị khung code g
 \subsection{Cặp bẫy skeleton: P1\_nonclone\_fact (cả 5 model đều sai)}
 Cũng là khung \texttt{for} 1..n rồi in một số, nhưng một bài tính tổng còn bài kia
 tính giai thừa.
-Lần này cả 5 model đều nói sai là clone: M1 1,000, M2 1,000, M3 0,960, M4 0,971, M5 1,000.
-MOSS cho 0,000 nên đúng ở cặp này, nhưng đúng kiểu mù (giống cặp ở mục 6.1) chứ
+Lần này cả 5 model đều nói sai là clone: M1 0,999, M2 0,991, M3 0,960, M4 0,971, M5 0,723.
+MOSS cho 0,000 nên đúng ở cặp này, nhưng đúng kiểu mù (giống cặp ở mục 4.1) chứ
 không phải hiểu code.
 Cặp \texttt{p4\_n\_square} (số nguyên tố với số chính phương, cùng khung \texttt{for}
 trả lời YES/NO) cũng bị sai y hệt nên không vẽ lại hình.
 Chiều ngược lại thì không có cặp nào: không có cặp nào GT là clone mà cả 5 model
 lại bảo không clone, cả 16 cặp clone đều bắt đúng.
+So với bản 256, việc chuyển M1/M2/M5 sang bản 512 sửa thêm 2 chỗ sai nữa trên bộ
+test (M2 và M5 ở cặp non-clone \texttt{P2\_nonclone\_digitsum}: 0,505 $\to$ 0,001 và
+0,981 $\to$ 0,000) và không làm hỏng cặp nào.
 {\shorthandoff{"}\input{../workspace/demo_suite_P1_nonclone_fact.tex}
 \input{../workspace/demo_suite_moss_P1_nonclone_fact.tex}}
 
+\section{Kiến trúc phương pháp chính dự kiến (GraphCodeBERT)}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/Pipeline.png}
+\end{figure}
+
 \section{Hạn chế}
-\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
-\item Hybrid lên đỉnh ngay epoch đầu rồi overfit, còn CPG-GNN thì val F1 vẫn tăng ở epoch cuối.
-\item M1/M2 bản 256 chỉ lấy 256 token (78,6\% câu train bị cắt), CPG-GNN chặn ở 1500 node
-  nên mấy hàm dài bị mất thông tin. Bản 512 đã giảm tỉ lệ cắt còn 25,5\% và F1 tăng thêm
-  0,031/0,048 (mục 3.1), nhưng 1/4 code dài nhất vẫn bị cắt.
-\end{itemize}
+% (để trống — sẽ cập nhật sau)
 
 \section{Kế hoạch tiếp theo}
-\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=2pt,parsep=0pt]
-\item Hybrid V2 (giảm LR) không hơn V1 nên giữ V1; tiếp theo thử freeze encoder,
-  chỉ train phần head rồi mới mở ra train tiếp.
-\item M1/M2 đã thử xong 512 token (thấy cải thiện rõ); tiếp theo nới giới hạn node
-  cho CPG-GNN và thử thêm cấu hình cho Hybrid-512.
-\end{itemize}
+% (để trống — sẽ cập nhật sau)
 
 \end{document}
