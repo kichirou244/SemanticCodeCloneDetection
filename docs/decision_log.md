@@ -4,8 +4,8 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.30.0 |
-| **Ngày cập nhật** | 2026-10-17 |
+| **Phiên bản** | 1.32.0 |
+| **Ngày cập nhật** | 2026-10-25 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
 
@@ -45,6 +45,8 @@
 - [DEC-030 — Dừng train; chọn phương pháp cuối bằng val F1 + pipeline EXP-FINAL-001](#dec-030--dung-train-chon-phuong-phap-cuoi-bang-val-f1--pipeline-exp-final-001)
 - [DEC-031 — Demo và báo cáo dùng bản 512 cho M1/M2/M5 (thay bản 256)](#dec-031--demo-va-bao-cao-dung-ban-512-cho-m1m2m5-thay-ban-256)
 - [DEC-032 — Bộ test mở rộng nhóm P5: danh sách liên kết + hướng đối tượng](#dec-032--bo-test-mo-rong-nhom-p5-danh-sach-lien-ket--huong-doi-tuong)
+- [DEC-034 — Mở rộng non-clone 16 → 64 cặp (4×) và tổng hợp mean ± SD](#dec-034--mo-rong-non-clone-16--64-cap-4-va-tong-hop-mean--sd)
+- [DEC-033 — Thay nhóm P6 (126–148 dòng) bằng nhóm P6 83–93 dòng; chấm lại toàn bộ](#dec-033--thay-nhom-p6-126148-dong-bang-nhom-p6-8393-dong-cham-lai-toan-bo)
 - [Lịch sử thay đổi](#lich-su-thay-doi)
 
 ---
@@ -612,13 +614,101 @@
 
 ---
 
+## DEC-034 — Mở rộng non-clone 16 → 64 cặp (4×) và tổng hợp mean ± SD
+- **Bối cảnh (2026-10-25):** bộ `custom_suite` 41 cặp chỉ có 16 non-clone, trong khi
+  đầu vào thực tế chủ yếu là cặp không trùng lặp. Bộ nhỏ làm F1 bị chi phối bởi 25 cặp
+  clone (hầu hết dễ) và gần như không đo được dương giả — đúng loại lỗi đang cần tìm.
+  Yêu cầu: "mẫu không trùng lặp thì dễ, cho thật nhiều vào để đúng với thực tế".
+- **Quyết định 1 — thêm 48 non-clone, tổng 89 cặp (25 clone + 64 non-clone, đúng
+  4,0× bản cũ).** Giữ nguyên 41 cặp cũ, id và thứ tự; chỉ nối thêm. Ba luật sinh tất
+  định, không chấm tay:
+  1. **24 cặp cùng bài, khác lõi:** mỗi `pX_n_*.cpp` với 4 biến thể clone còn lại của
+     cùng bài (bỏ cặp với `base` vì đã có từ trước) ⇒ nhóm `nonclone_kho`.
+  2. **6 cặp base–base còn thiếu:** `X_P1P6`, `X_P2P6`, `X_P3P6`, `X_P4P6`,
+     `X_P3P5`, `X_P4P5`.
+  3. **18 cặp khác bài cùng kiểu biến đổi:** `while` 4, `dowhile` 4, `scanf` 4,
+     `combo` 6 (gồm 2 cặp bổ sung P2×P5, P3×P6) ⇒ nhóm `nonclone_de`.
+  Sau khi thêm: `nonclone_kho` 30, `nonclone_de` 34; theo bài P1–P4 mỗi bài 4 clone +
+  5 non-clone, P5 5 + 5, P6 4 + 5, khác bài 34 non-clone.
+- **Quyết định 2 — sinh bằng script, không sửa tay `pairs.jsonl`.**
+  `scripts/build_custom_suite_negatives.py` có `--check`/`--write`, idempotent (chạy
+  lại không thêm dòng trùng), chặn cặp tự thân / trùng cặp / thiếu file. Bất biến được
+  khoá bằng `tests/test_custom_suite_manifest.py`: đúng 89 cặp, 25/64, không cặp trùng,
+  mọi tệp tồn tại, `label` khớp `category`, và 41 cặp cũ giữ nguyên.
+- **Quyết định 3 — chấm theo lô để không khởi động lại JVM.**
+  `score_custom_suite.py` thêm `--only-new` và `--batch-pairs 16`; M1/M2/M3/M5 gọi
+  `score_batch`, M4/M5 chỉ chạy Joern **một lần** cho toàn bộ tệp duy nhất. B1 vẫn chỉ
+  có điểm trên 41 cặp gốc vì máy không có `MOSS_USER_ID` (winnowing cục bộ), nên **không
+  so B1 trên 89 cặp**.
+- **Quyết định 4 — chuẩn hoá báo cáo mean ± SD.**
+  `scripts/summarize_custom_suite.py` đọc `workspace/custom_suite_scores.json`, xuất
+  `workspace/custom_suite_summary.{json,md,tex}`. Điểm thô báo mean ± SD theo lớp và
+  theo nhóm (độ phân tán giữa các cặp); F1 báo mean ± SD bằng **bootstrap 2.000 lần
+  trên các cặp** (độ bất định của ước lượng), ngưỡng đóng băng theo từng run. Thêm phạm
+  vi **common** = giao các cặp có điểm của mọi mô hình được chọn (41 cặp) để so công bằng.
+- **Kết quả (89 cặp, ngưỡng đóng băng):** cả 5 mô hình đạt recall 1,000 (25/25 clone).
+  F1: M2 **0,694**, M1 0,685, M5 0,658, M3 0,500, M4 0,446. Dương giả trên 64 non-clone:
+  M1 23, M2 22, M5 26, M3 50, M4 62. Khoảng cách điểm clone/non-clone: M5 0,753,
+  M1 0,650, M2 0,638, M3 0,197, M4 0,093 — M3/M4 gần như không phân biệt hai lớp
+  (điểm non-clone trung bình 0,706 ± 0,263 và 0,870 ± 0,149).
+- **Trên 41 cặp chung:** F1 M2 0,909, M1 0,893, M5 0,877, M3 0,794, M4 0,758,
+  B1 0,400. Chênh lệch M1/M2/M5 chỉ 0,032, nhỏ hơn SD bootstrap 0,04–0,05 ⇒ **chưa thể
+  kết luận ba mô hình khác nhau có ý nghĩa**; B1 thấp vì chỉ bắt 7/25 clone.
+- **Hệ quả:** `data/custom_suite/README.md` và `docs/evaluation_protocol.md` (v1.2.0,
+  §3.1) cập nhật theo; báo cáo `reports/[24 - 10] - Báo cáo.tex` (9 trang) thêm bốn bảng
+  tổng hợp và ghi rõ bảng chi tiết chỉ phủ 41 cặp gốc. Bản điểm cũ được giữ tại
+  `workspace/custom_suite_scores_before_2510.json`. Không đổi ngưỡng, checkpoint hay
+  recipe của bất kỳ mô hình nào.
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
+## DEC-033 — Thay nhóm P6 (126–148 dòng) bằng nhóm P6 83–93 dòng; chấm lại toàn bộ với B1 winnowing cục bộ
+- **Bối cảnh (2026-10-24):** nhóm P6 cũ dài 126–148 dòng (1.291–1.701 token) nên M1/M2/M5
+  bị cắt 60–70 % đầu vào, làm kết quả lẫn giữa "mô hình kém" và "mất phần cuối tệp"; bản
+  non-clone cũ lại chỉ khác ở cuối tệp nên không tách bạch được lỗi "nhìn khung, không nhìn lõi".
+- **Quyết định 1 — thay 6 tệp P6 bằng bài "danh sách liên kết chèn theo thứ tự":**
+  `p6_base_list.cpp` (84 dòng, `struct Node` + `insertSorted/removeDuplicates/sumList/printList/freeList`),
+  ba biến thể clone `p6_v_while` (while→for/do-while + đổi tên), `p6_v_scanf` (cin/cout→scanf/printf),
+  `p6_v_combo` (for/do-while + scanf + đảo điều kiện + biến thừa), bản `p6_v_class.cpp` (86 dòng,
+  `class IntList` + constructor + `~IntList()` + phương thức, cùng hành vi) và bản non-clone
+  `p6_n_filter.cpp` (88 dòng, `pushBack` + `removeGreater` + `countOdd`; khác biệt nằm ở **giữa**
+  tệp). Cả 6 tệp biên dịch sạch (`-std=c++17 -O2 -Wall -Wextra`), 5 bản clone in ra cùng kết quả
+  trên 5 bộ dữ liệu vào. Kích thước 83–93 dòng, 818–1.016 token ⇒ **vẫn bị cắt 37–50 %**; giới hạn
+  512 là cứng trong kiến trúc CodeBERT/GraphCodeBERT (vector vị trí tối đa 514), không nới được
+  nếu không huấn luyện lại.
+- **Quyết định 2 — giữ nguyên 7 cặp và id cũ**, chỉ đổi `P6_nonclone_reverse` →
+  `P6_nonclone_filter`; tổng vẫn 41 cặp (25 trùng lặp + 16 không trùng lặp).
+- **Quyết định 3 — lần chấm này B1 chạy winnowing cục bộ.** Máy không có `MOSS_USER_ID` hợp lệ;
+  `MossServiceClient` rơi về id mặc định của nhóm rồi treo ở lần nộp thật (giữ kết nối HTTPS,
+  0 % CPU/GPU suốt 4 phút). Ép chế độ offline bằng `MOSS_USER_ID=local` (client lỗi ngay ⇒
+  `MossScorer` rơi về nhánh local, không sửa code). Hệ quả: **B1 19 lỗi/41** — bỏ sót 3 cặp
+  clone `combo` (0,000) và gắn cờ cả 16 cặp không trùng lặp; **không so trực tiếp** được với số
+  MOSS service thật của các báo cáo trước.
+- **Kết quả (41 cặp, ngưỡng đóng băng theo từng run):** M1 6 lỗi, M2 5, M3 13, M4 16, M5 7.
+  Riêng nhóm P6: cả 6 phương pháp bắt đúng 4/4 cặp clone (M5 cho `struct`↔`class` 1,000, trước
+  là 0,050), nhưng **cả 6 vẫn gọi `P6_nonclone_filter` là clone** (M1 1,000; M5 0,866),
+  `X_P5P6` sai ở cả 6, `X_P5P6_class` chỉ M2 đúng (0,554 < 0,660) ⇒ điểm mù "bám khung" **không
+  do cắt token**. M4 bão hoà 0,967–0,973 cho cả 7 cặp P6.
+- **Cách chấm:** hai đợt rồi `--merge` — (a) `--models B1 M1 M2 M3` cho 41 cặp, (b)
+  `--models M4 M5 --pairs <7 cặp P6>` vì Joern khởi động JVM ~2 phút mỗi cặp (chấm cả 41 cặp
+  một lượt sẽ mất gần 1 giờ). Điểm M4/M5 của các cặp không đổi được giữ nguyên. Xoá khoá cặp cũ
+  khỏi `workspace/custom_suite_scores.json`, cập nhật `data/custom_suite/README.md` +
+  `workspace/token_lengths.json`. Báo cáo `reports/[24 - 10] - Báo cáo.tex` viết lại ngắn
+  (4 mục, mục kế hoạch để trống theo yêu cầu).
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
 ## DEC-032 — Bộ test mở rộng nhóm P5: danh sách liên kết + hướng đối tượng
 - **Bối cảnh (2026-10-17):** thầy góp ý bộ test `custom_suite` "khá ngắn": P1–P4 chỉ 11–17
   dòng, chưa có hàm, chưa có cấu trúc dữ liệu, chưa có hướng đối tượng, và chưa có cặp nào
   gần như hoàn toàn giống nhau giữa `struct` và `class`. Bộ test cũ vì thế chưa kiểm tra
   đúng loại biến đổi hay gặp nhất ở bài nộp (bọc `struct` + hàm tự do thành `class` +
   phương thức).
-- **Quyết định 1 — thêm nhóm P5, 6 file C++ dài 59–71 dòng** vào `data/custom_suite/`:
+- **Quyết định 1 — thêm nhóm P5, 6 file C++ dài 59–70 dòng** vào `data/custom_suite/`:
   `p5_base_list.cpp` là bản gốc (`struct Node` + 4 hàm tự do `pushBack/sumList/printList/freeList`,
   đọc $n$ số, in dãy rồi in tổng); `p5_v_class.cpp` là **cùng hành vi** nhưng viết bằng
   `class IntList` + 4 phương thức, con trỏ `head` để trong đối tượng; ba biến thể clone
@@ -789,7 +879,9 @@
 | 28 | 1.27.0 | 2026-10-07 | **Errata row 27:** repo HF đang **private** (anonymous read 401) — dòng "public, không cần token" sai. Local thao tác qua SSH `git@hf.co` (đã push thành công 2 commit). Trên Kaggle notebook vẫn lấy được vì cell 7 truyền `HF_TOKEN` (cell 1 đọc từ Kaggle Secrets) — đúng lời hứa "token của acc này dùng được". |
 | 29 | 1.28.0 | 2026-10-17 | Thêm DEC-030: **dừng train, chuyển sang đánh giá + chọn phương pháp cuối (EXP-FINAL-001)**. Luật chọn = `validation.f1`, ngưỡng đóng băng theo run; winner vs á quân kiểm định cặp trên validation bằng McNemar + paired bootstrap tái dùng `src/evaluation/uncertainty.py`. Thêm `configs/final_pipeline.yaml`, `src/evaluation/leaderboard.py`, `scripts/final_pipeline.py` (`select`/`detect`), `tests/test_final_pipeline.py` (14 test), report `reports/014_final_selection.md`. Theo val F1 winner = M5-512 nhưng chỉ hơn M2-512 +0,0043 (McNemar p=0,081, bootstrap CI chạm 0 ⇒ `mixed`), ngưỡng 0,010 mỏng, thua test F1/AUC ⇒ **khuyến nghị vận hành M2-512**. |
 | 30 | 1.29.0 | 2026-10-17 | Thêm DEC-031: **demo + báo cáo chuyển sang bản 512 cho M1/M2/M5** (`configs/demo_web.yaml` trỏ `results/exp00{2,3,6}_*_512`, `max_length: 512`, `best_checkpoint.pt`), thay mệnh đề "không đụng `demo_web.yaml`" của DEC-030 §4; M3/M4/B1 giữ nguyên vì không có biến thể 512. Chấm lại `data/custom_suite` (26 cặp): lỗi M2 3→2, M5 4→3 (sửa 2 dương giả ở `P2_nonclone_digitsum`), **không cặp nào đổi từ đúng sang sai**; thêm `score_custom_suite.py --merge` + `evidence_custom_suite.py --reuse-moss` để không ghi đè số MOSS service thật; guard `test_transformer_models_use_512_runs`. |
-| 31 | 1.30.0 | 2026-10-17 | Thêm DEC-032: **bộ test mở rộng nhóm P5 — danh sách liên kết + hướng đối tượng** theo góp ý của thầy (test còn ngắn). 6 file C++ 59–71 dòng (`struct Node` + 4 hàm tự do ↔ `class IntList` + 4 phương thức cùng hành vi, 3 biến thể clone, 1 non-clone cùng khung) + 8 cặp mới (26 → 34 cặp): `P5_struct_class`, `P5_while`, `P5_scanf`, `P5_combo`, `P5_class_combo`, `P5_nonclone_palindrome`, `X_P1P5`, `X_P2P5`. Kết quả: **cả 5 model bắt đúng cặp struct↔class** (M1/M2/M5 ≈ 1,000; M3 0,915; M4 0,973) còn **MOSS bỏ sót cả hai** cặp clone dạng `class` (0,000); M3 đúng cả 8 cặp, M4 sai 3 (toàn dương giả); lỗi mới: `X_P1P5` bị M1/M2/M5 ≈ 1,000 vì hai bài cùng phép toán tổng. Cả 6 file vượt 512 subword token (520–683) nên M1/M2/M5 phải cắt tới 25 % code (M3/M4 không bị cắt). Công cụ: `score_custom_suite.py --pairs`, `evidence_custom_suite.py --models` + `fig_font`, `_latex_minipage(font=)`, và `.gitignore` mở ngoại lệ để `data/custom_suite` vào git. Báo cáo tuần mới `reports/[24 - 10] - Báo cáo.tex`. |
+| 31 | 1.30.0 | 2026-10-17 | Thêm DEC-032: **bộ test mở rộng nhóm P5 — danh sách liên kết + hướng đối tượng** theo góp ý của thầy (test còn ngắn). 6 file C++ 59–70 dòng (`struct Node` + 4 hàm tự do ↔ `class IntList` + 4 phương thức cùng hành vi, 3 biến thể clone, 1 non-clone cùng khung) + 8 cặp mới (26 → 34 cặp): `P5_struct_class`, `P5_while`, `P5_scanf`, `P5_combo`, `P5_class_combo`, `P5_nonclone_palindrome`, `X_P1P5`, `X_P2P5`. Kết quả: **cả 5 model bắt đúng cặp struct↔class** (M1/M2/M5 ≈ 1,000; M3 0,915; M4 0,973) còn **MOSS bỏ sót cả hai** cặp clone dạng `class` (0,000); M3 đúng cả 8 cặp, M4 sai 3 (toàn dương giả); lỗi mới: `X_P1P5` bị M1/M2/M5 ≈ 1,000 vì hai bài cùng phép toán tổng. Cả 6 file vượt 512 subword token (520–683) nên M1/M2/M5 phải cắt tới 25 % code (M3/M4 không bị cắt). Công cụ: `score_custom_suite.py --pairs`, `evidence_custom_suite.py --models` + `fig_font`, `_latex_minipage(font=)`, và `.gitignore` mở ngoại lệ để `data/custom_suite` vào git. Báo cáo tuần mới `reports/[24 - 10] - Báo cáo.tex`. |
+| 32 | 1.31.0 | 2026-10-24 | Thêm DEC-033: **thay nhóm P6 126–148 dòng bằng nhóm P6 83–93 dòng** (bài danh sách liên kết chèn theo thứ tự; `p6_n_filter` là non-clone cùng khung, khác lõi ở giữa tệp) vì bộ cũ bị cắt 60–70 % đầu vào và non-clone chỉ khác ở cuối tệp. 7 cặp giữ nguyên id, tổng vẫn 41. Chấm lại: M1 6 lỗi, M2 5, M3 13, M4 16, M5 7; **B1 chạy winnowing cục bộ** (`MOSS_USER_ID=local`) nên 19 lỗi — không so trực tiếp với số MOSS dịch vụ thật. Nhóm P6: cả 6 bắt đúng 4/4 clone (M5 `struct`↔`class` 1,000, trước 0,050) nhưng cả 6 vẫn gọi non-clone là clone ⇒ điểm mù "bám khung" **không do cắt token**. |
+| 33 | 1.32.0 | 2026-10-25 | Thêm DEC-034: **mở rộng non-clone 16 → 64 cặp (4,0×), tổng 89 cặp** bằng 48 cặp sinh tất định (24 cùng bài khác lõi, 6 base–base còn thiếu, 18 khác bài cùng biến đổi); giữ nguyên 41 cặp cũ. Chấm theo lô (`--only-new`, `--batch-pairs 16`, Joern một lần cho M4/M5). Kết quả 89 cặp: recall 1,000 cho cả 5 mô hình nhưng F1 M2 0,694, M1 0,685, M5 0,658, M3 0,500, M4 0,446; dương giả non-clone 23/22/26/50/62 trên 64. Trên 41 cặp chung: M2 0,909, M1 0,893, M5 0,877, M3 0,794, M4 0,758, B1 0,400; chênh M1/M2/M5 < SD bootstrap ⇒ chưa kết luận khác biệt. Thêm `build_custom_suite_negatives.py`, `summarize_custom_suite.py` (mean ± SD + bootstrap), `test_custom_suite_manifest.py`; cập nhật README, `evaluation_protocol` §3.1 và báo cáo 9 trang. |
 
 ---
 

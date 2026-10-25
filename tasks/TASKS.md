@@ -1,7 +1,87 @@
 # Task log — SemanticCodeCloneDetection
 
+## [TO DO] Kế hoạch tuần 25-10 (CN) → 31-10 (T7): độ đo + non-clone + báo cáo tổng hợp
+**Ghi chú từ yêu cầu ngày 25-10:**
+- Nghiên cứu thêm các **độ đo trùng lặp** và giải thích rõ ràng (công thức, trực giác,
+  ưu/nhược, khi nào dùng, đọc số thế nào).
+- **Lấy thêm nhiều cặp không trùng lặp** — bộ 89 cặp hiện có 64 non-clone; cần dày hơn nữa
+  cho sát thực tế và để F1 không bị chi phối bởi nhóm clone dễ.
+- **Gộp báo cáo từ trước đến nay** khi báo cáo: một báo cáo tổng hợp duy nhất thay vì
+  nhiều báo cáo tuần rời rạc.
+
+**Mục tiêu tuần:** có tài liệu độ đo dùng được lâu dài; bộ non-clone ≥100 cặp và đã chấm
+lại; một báo cáo tổng hợp 001–014 + các báo cáo tuần, số liệu khớp nguồn JSON.
+
+### 1. Nghiên cứu độ đo trùng lặp + viết giải thích (25-10 → 26-10)
+- Rà soát và phân loại độ đo theo 3 tầng:
+  - **Mức cặp:** similarity score, ngưỡng, TP/FP/TN/FN, precision, recall, F1, accuracy,
+    MCC, ROC-AUC/PR-AUC, calibration (Brier/ECE), bootstrap CI, McNemar.
+  - **Giữa hai đoạn code:** token (Jaccard, TF-IDF cosine, winnowing/MOSS fingerprint,
+    LCS/edit distance, NCD); AST (tree edit distance, subtree hash, ASTNN embedding);
+    graph (graph edit distance, WL kernel, GNN embedding); embedding (cosine
+    CodeBERT/GraphCodeBERT).
+  - **Theo loại clone Type-1..4:** độ đo nào bắt được loại nào, loại nào là điểm mù.
+- Giải thích rõ vì sao **điểm thô giữa B1/M1–M5 không so sánh trực tiếp được** (khác thang
+  điểm, khác ngưỡng, khác mục tiêu huấn luyện) và cách báo cáo đúng: P/R/F1 tại ngưỡng
+  đóng băng + khoảng bất định, tách "điểm trung bình ± SD của điểm thô" khỏi "F1 ± SD
+  bootstrap".
+- **Đầu ra:** `docs/clone_metrics.md` (công thức + trực giác + ưu/nhược + ví dụ lấy từ
+  `custom_suite`), bảng map **độ đo → mô hình → thang điểm → ngưỡng**, và đưa bản rút gọn
+  vào báo cáo tổng hợp.
+
+### 2. Lấy thêm nhiều cặp không trùng lặp (27-10 → 28-10)
+- Mở rộng non-clone **64 → mục tiêu 100–120 cặp** (tổng 125–145), ưu tiên ca khó:
+  (a) cùng bài khác lõi; (b) khác bài cùng khung/biến đổi; (c) cùng skeleton nhưng khác
+  cấu trúc dữ liệu/điều kiện biên; (d) mẫu hard-negative lấy từ **FP thật** của M1–M5
+  trên validation/test (dùng làm ý tưởng thiết kế, không copy code nếu vướng license).
+- Mở rộng `scripts/build_custom_suite_negatives.py` (luật tất định, chặn trùng/tự thân/
+  thiếu file), cập nhật `tests/test_custom_suite_manifest.py` + `data/custom_suite/README.md`.
+- Chấm lại M1–M5 theo lô (`--only-new --batch-pairs`), giữ B1 41 cặp gốc; cập nhật
+  `workspace/custom_suite_summary.{json,md,tex}`.
+- **Tiêu chí xong:** ≥100 non-clone, không cặp trùng, mọi file biên dịch sạch, nhãn được
+  kiểm chứng, có bảng delta FP/F1 so với bản 89 cặp.
+
+### 3. Gộp báo cáo từ trước đến nay (29-10 → 30-10)
+- Tạo **một báo cáo tổng hợp** (dự kiến `reports/[31 - 10] - Báo cáo tổng hợp.tex` + PDF),
+  gộp `001–014` và các báo cáo tuần `[03-10]`, `[06-10]`, `[09-10]`, `[10-10]`, `[17-10]`,
+  `[24-10]`:
+  1. Bài toán + phạm vi C/C++.
+  2. Dữ liệu POJ-104: audit, leakage, dedup, pair generation.
+  3. Sáu phương pháp B1/M1–M5 + kiến trúc, checkpoint, ngưỡng.
+  4. Quá trình thực nghiệm 001–014 + bảng kết quả validation/test.
+  5. Lịch sử bộ `custom_suite` 26 → 34 → 41 → 89 cặp và lý do từng lần đổi.
+  6. Phân tích lỗi: FP/FN, truncation 512, "bám khung", khoảng cách điểm.
+  7. Độ đo và cách đọc số (trỏ `docs/clone_metrics.md`).
+  8. Hạn chế + kế hoạch tiếp theo.
+- Số liệu lấy từ **một nguồn duy nhất** (`workspace/*.json`, `results/*/metrics.json`,
+  `reports/014_final_selection.md`), không chép lại prose cũ. Kèm **phụ lục truy vết**:
+  mỗi báo cáo cũ → mục tương ứng. **Không sửa/xoá báo cáo cũ.**
+
+### 4. Chốt số + build PDF + cập nhật tài liệu (31-10, T7 nộp)
+- Chốt bộ test dùng cho báo cáo (89 hoặc bản mở rộng), ghi rõ từng bảng đang tính trên
+  bao nhiêu cặp.
+- Build 2 lượt xelatex (**0 error / 0 Overfull**), kiểm tra bảng/biểu đồ vừa trang.
+- Cập nhật `data/custom_suite/README.md`, `docs/decision_log.md` (DEC mới cho mở rộng
+  non-clone + metric glossary), `project_structure.md`, `tasks/TASKS.md`.
+- Kiểm tra chéo: mọi số trong báo cáo tổng hợp khớp `workspace/custom_suite_summary.json`
+  và `reports/014_final_selection.md`.
+
+## [COMPLETE] Mở rộng non-clone 16 → 64 cặp, tổng 89 cặp (25-10) — DEC-034
+- Bộ 41 cặp chỉ có 16 non-clone, không đại diện đầu vào thực tế → thêm **48 cặp non-clone**
+  sinh tất định bằng `scripts/build_custom_suite_negatives.py`: 24 cùng bài khác lõi,
+  6 base–base còn thiếu, 18 khác bài cùng biến đổi. Tổng **89 cặp: 25 clone + 64 non-clone
+  (4,0× bản cũ)**, giữ nguyên 41 cặp và id cũ.
+- Chấm theo lô (`--only-new --batch-pairs 16`; Joern một lần cho M4/M5); B1 vẫn chỉ có
+  41 cặp gốc nên so sánh công bằng trên 41 cặp chung.
+- Kết quả 89 cặp: recall 1,000 cho cả 5 mô hình; F1 M2 0,694, M1 0,685, M5 0,658,
+  M3 0,500, M4 0,446; dương giả non-clone 23/22/26/50/62 trên 64. Trên 41 cặp chung:
+  M2 0,909, M1 0,893, M5 0,877, M3 0,794, M4 0,758, B1 0,400.
+- Tổng hợp mean ± SD + F1 bootstrap: `scripts/summarize_custom_suite.py` →
+  `workspace/custom_suite_summary.{json,md,tex}`; báo cáo `reports/[24 - 10] - Báo cáo.tex`
+  (9 trang); bất biến manifest khoá bằng `tests/test_custom_suite_manifest.py`.
+
 ## [COMPLETE] Bộ test mở rộng nhóm P5: DSLK + hướng đối tượng (17-10) — DEC-032
-- Thầy góp ý bộ test còn ngắn → thêm 6 file C++ **dài 59–71 dòng** vào `data/custom_suite/`:
+- Thầy góp ý bộ test còn ngắn → thêm 6 file C++ **dài 59–70 dòng** vào `data/custom_suite/`:
   bản gốc `struct Node` + 4 hàm tự do (`p5_base_list`), **cùng hành vi** viết bằng
   `class IntList` + 4 phương thức (`p5_v_class`), 3 biến thể clone
   (`p5_v_while/scanf/combo`), và `p5_n_palindrome` (cùng khung `class`/`Node`, khác ngữ nghĩa).
@@ -58,7 +138,7 @@
 
 ## [QUY UOC] Bo test mac dinh: `data/custom_suite` (tu 16-10)
 - Moi lan test/demo/bao cao sau nay deu dung `data/custom_suite`
-  (26 cap: 16 clone + 10 non-clone), cham bang `scripts/score_custom_suite.py`,
+  (89 cap: 25 clone + 64 non-clone, tu 25-10), cham bang `scripts/score_custom_suite.py`,
   sinh hinh bang `scripts/evidence_custom_suite.py`. Khong them comment vao file
   test (da xoa sach 16-10). `data/custom_hard/` giu lai lam tham khao.
 - Ket qua full 16-10 (khong comment): 16/16 clone ca 5 model neural dung;
@@ -78,33 +158,51 @@
 - Sync kế hoạch từ `tasks/tasks.json` lên Notion: `node tasks/notion.js`
   (khớp theo tên: có thì cập nhật, chưa có thì tạo mới, không tạo trùng).
 
-## [TO DO] Kế hoạch tuần 18-10 (CN) → 23-10 (T6), T7 nộp báo cáo
-Mục tiêu: (1) Hybrid hết overfit đỉnh-ngay-E0 bằng freeze encoder rồi unfreeze;
-(2) CPG-GNN nới giới hạn node để bớt cắt hàm dài; (3) thử cấu hình khác cho Hybrid-512.
-Gom theo từng mạch việc (config → chạy → đánh giá), không tách vụn.
+## [ARCHIVED] Kế hoạch tuần 18-10 (CN) → 23-10 (T6), T7 nộp báo cáo
+> Đã đóng: nhóm P6 ≥120 dòng được thay bằng bản 83–93 dòng và chấm lại toàn bộ 41 cặp
+> theo **DEC-033 (24-10)**. Giữ mục này để tra cứu lịch sử, không còn là việc đang làm.
+**Đổi hướng theo feedback sau báo cáo `[17 - 10]`:** bộ test còn khá ngắn → tuần này
+chọn thêm code **dùng hàm**, **cấu trúc DSLK**, **hướng đối tượng**; code dài và có
+phần **giống nhau gần như hoàn toàn giữa `struct` và `class`** → làm **nhóm P6**.
+Toàn bộ kế hoạch huấn luyện tuần trước (Hybrid V3, CPG nới node, Hybrid-512 cấu hình
+mới, đo lại truncation) đã **chuyển sang `Cancelled` trên Notion** (khớp tinh thần
+DEC-030: tạm dừng huấn luyện) — chỉ giữ lại phần truncation vì code dài >512 token
+thì bắt buộc phải xử lý.
 
-### 1. Hybrid V3 (freeze→unfreeze) — 18-10 → 20-10
-- 18-10: sửa `src/experiments/exp006_hybrid.py` + `configs/exp006_hybrid.yaml` thêm
-  `freeze_encoder_epochs` (1–2); viết/sửa test, `pytest` xanh.
-- 19-10: chạy notebook Kaggle (~7–8h), theo dõi val F1 từng epoch (kỳ vọng ≥ V1 0,914,
-  hết đỉnh-ngay-E0).
-- 20-10: so val/test F1 với V1 (0,913/thr 0,370) và V2, quyết định giữ V1 hay chuyển V3.
+### 1. Nhóm test P6: 6 file ≥120 dòng (hàm + DSLK + OOP) — 18-10
+- Soạn `data/custom_suite/p6_*`: base = hàm tách nhỏ (`nhap/xuLy/in`) + `struct Node`
+  + DSLK; bản clone **cùng hành vi** viết bằng `class` + phương thức → cặp
+  `P6_struct_class` đo đúng ca "struct ↔ class gần như giống hoàn toàn".
+- Thêm biến thể `v_while` / `v_scanf` / `v_combo`, 1 non-clone khó cùng khung
+  class/Node khác ngữ nghĩa, và cặp cross P6↔P5.
+- Thêm 6–8 cặp vào `data/custom_suite/pairs.jsonl` (34 → ~41 cặp). Giữ quy ước:
+  không comment trong file test.
 
-### 2. CPG-GNN nới node (max_nodes 1500→2000) — 18-10 → 21-10
-- 18-10: soạn config `exp005_cpg_gnn` bản nới node.
-- 20-10: chạy M4 trên Kaggle.
-- 21-10: đánh giá val F1 có vượt 0,842 không + tỉ lệ cắt node (`truncation.json`).
+### 2. Kiểm chứng + truncation 512 token — 19-10
+- 6/6 file biên dịch sạch (`g++ -std=c++17 -O2 -Wall`), các bản clone cùng input →
+  cùng kết quả; non-clone khác kết quả đúng thiết kế.
+- Đo subword token/`truncation.json`: P5 đã 520–683 token nên P6 chắc chắn vượt
+  `max_length: 512` → chọn nới `max_length` hoặc cắt theo hàm (hoãn từ DEC-029),
+  ghi tỉ lệ bị cắt để báo cáo giải thích được.
 
-### 3. Hybrid-512 cấu hình mới — 21-10 → 22-10
-- 21-10: chạy cấu hình mới (freeze encoder / epochs / LR khác).
-- 22-10: đánh giá, so M5-512 (test F1 0,952, thr 0,010 rất mỏng) + xem cả verdict.
+### 3. Chấm điểm + evidence + phân tích lỗi — 20-10 → 21-10
+- `python scripts/score_custom_suite.py --pairs <cặp P6> --models B1 M1 M2 M3 M4 M5 --merge`.
+- `python scripts/evidence_custom_suite.py --pairs P6_struct_class P6_nonclone_*`.
+- Phân tích: model nào bắt/miss cặp struct↔class dài, lỗi mới ở non-clone khó + cross,
+  so với P5 (MOSS bỏ sót hai cặp `class`; M1/M2/M5 ≈ 1,000 nhưng bị cắt token).
 
-### 4. Truncation M1/M2/M5-512 — 22-10
-- Đo lại `truncation.json` bản 512 so với 256.
+### 4. Chốt số + báo cáo tuần (T7 nộp) — 22-10 → 23-10
+- Cập nhật `reports/[24 - 10] - Báo cáo.tex`: mục nhóm P6 + bảng điểm 8 × 6 + hình,
+  điền mục Hạn chế và Kế hoạch tiếp theo.
+- Build PDF 2 lượt xelatex (0 error/0 Overfull), cập nhật `data/custom_suite/README.md`.
 
-### 5. Chốt số + báo cáo tuần (T7 nộp) — 23-10
-- Chấm lại `data/custom_suite` cho model mới bằng `scripts/score_custom_suite.py`.
-- Cập nhật bảng train/test + mục demo trong báo cáo tuần, build PDF để T7 nộp.
+## [QUYET DINH] Huỷ 4 task huấn luyện trên Notion, dồn tuần cho bộ test dài (18-10)
+- `Cancelled` trên Notion: Hybrid V3 (freeze→unfreeze), CPG-GNN nới node,
+  Hybrid-512 cấu hình mới, Đo lại truncation 512.
+- Task cũ "Chốt số & báo cáo tuần (T7 nộp)" được **cập nhật tại chỗ** (khớp theo tên,
+  không tạo trùng), mô tả mới gắn với nhóm P6.
+- 3 task P6 mới đã tạo trên Notion (Due 18/19/20-10), gắn relation project
+  `[HUSC] NLP: SemanticCodeCloneDetection`.
 
 ## [COMPLETE] Bổ sung MOSS + ví dụ khó theo review báo cáo [10-10]
 - Đào từ `test_scores.jsonl` (ngưỡng threshold.json): 11 cặp FN cả 5 mô hình,
@@ -257,3 +355,6 @@ Gom theo từng mạch việc (config → chạy → đánh giá), không tách 
 - **AI vấn đáp nhanh kiểm tra mức độ hiểu code của sinh viên:**
   - *Ý tưởng:* Khi phát hiện nghi vấn trùng lặp hoặc cần thêm cơ sở đánh giá độ hiểu mã nguồn, AI tự động phân tích code và sinh bộ câu hỏi vấn đáp nhanh (dạng trắc nghiệm nhiều lựa chọn hoặc Đúng/Sai).
   - *Mục tiêu:* Đánh giá xem sinh viên có thực sự hiểu cấu trúc, luồng thực thi và logic của đoạn code đã nộp hay chỉ sao chép/nhờ công cụ viết hộ; bổ sung thêm một chiều cơ sở dữ liệu định lượng bên cạnh điểm tương đồng của mô hình.
+
+  - nghiên cứu thêm các độ đo trùng lặp
+  - lấy thêm nhiều cặp k trùng lặp

@@ -4,8 +4,8 @@
 
 | Mục | Nội dung |
 | :--- | :--- |
-| **Phiên bản** | 1.1.0 |
-| **Ngày cập nhật** | 2026-10-17 |
+| **Phiên bản** | 1.2.0 |
+| **Ngày cập nhật** | 2026-10-25 |
 | **Tác giả** | Nhóm nghiên cứu |
 | **Trạng thái** | Draft |
 
@@ -16,6 +16,7 @@
 - [1. Classification](#1-classification)
 - [2. Retrieval](#2-retrieval)
 - [3. Error analysis](#3-error-analysis)
+- [3.1 Tổng hợp bộ test nhỏ (custom_suite)](#31-tong-hop-bo-test-nho-custom_suite)
 - [4. Chọn phương pháp cuối (EXP-FINAL-001)](#4-chon-phuong-phap-cuoi-exp-final-001)
 - [5. Lịch sử thay đổi](#5-lich-su-thay-doi)
 
@@ -47,6 +48,39 @@ language, dataset, experiment_id` qua `src/analysis/errors.py` vào
 `results/errors/`. Phân tích nhóm lỗi: lexical cao/semantics khác, lexical
 thấp/semantics giống, AST giống/chức năng khác, graph khác/chức năng giống,
 lỗi Transformer/Graph/Hybrid.
+
+[🔝 Quay lại mục lục](#top)
+
+---
+
+## 3.1 Tổng hợp bộ test nhỏ (custom_suite)
+
+`data/custom_suite` là bộ cặp tự viết (không trùng với POJ-104), dùng để kiểm tra
+định tính/định lượng nhanh. Sau khi mở rộng non-clone (2026-10-25), bộ có **89
+cặp: 25 clone + 64 non-clone**. Vì mỗi mô hình chỉ cho **một** điểm/cặp, không
+thể lấy SD bằng cách chạy lại model; phải định nghĩa rõ hai đại lượng:
+
+- **Điểm theo cặp — `score mean ± SD`**: trung bình cộng và độ lệch chuẩn (ddof=1)
+  của điểm thô trên các cặp trong một nhóm. Đo **độ phân tán điểm**, trả lời câu
+  "nhóm non-clone có dễ không".
+- **F1 bootstrap — `F1 mean ± SD`**: resample các cặp có hoàn lại (2.000 lần,
+  seed 42), tính lại F1 mỗi lần, lấy trung bình + SD của phân phối bootstrap.
+  Đo **độ bất định do tập test hữu hạn**, tái dùng
+  `src/evaluation/uncertainty.py::bootstrap_single`; ngưỡng **ghim** theo
+  `threshold.json`, không dò lại.
+
+Vì B1/MOSS service thật chỉ có điểm trên 41 cặp lõi (48 cặp mới chấm bằng các
+mô hình neural), báo cáo in thêm bảng **common**: giao các cặp có đủ điểm cho
+mọi mô hình, để so sánh công bằng thay vì đặt hai cột `±` trên hai bộ test khác
+nhau.
+
+```bash
+python scripts/score_custom_suite.py --models M1 M2 M3 M4 M5 --only-new --merge
+python scripts/summarize_custom_suite.py
+```
+
+Output: `workspace/custom_suite_summary.{json,md,tex}`. Test manifest:
+`tests/test_custom_suite_manifest.py`.
 
 [🔝 Quay lại mục lục](#top)
 
@@ -88,3 +122,4 @@ python scripts/final_pipeline.py detect --a a.cpp --b b.cpp  # suy luận bằng
 | :--- | :--- | :--- | :--- |
 | 1 | 1.0.0 | 2026-09-20 | Khởi tạo ở phase INIT. |
 | 2 | 1.1.0 | 2026-10-17 | Thêm §4 EXP-FINAL-001: luật chọn phương pháp cuối theo `validation.f1`, ngưỡng đóng băng, McNemar + paired bootstrap tái dùng `uncertainty.py`; pipeline `select`/`detect` (`scripts/final_pipeline.py`). |
+| 3 | 1.2.0 | 2026-10-25 | Thêm §3.1: tổng hợp `custom_suite` (89 cặp, 64 non-clone) theo `score mean ± SD` (độ phân tán điểm) và `F1 mean ± SD` (bootstrap trên cặp); bảng common cho B1/MOSS; `score_custom_suite.py --only-new`, `summarize_custom_suite.py`. |

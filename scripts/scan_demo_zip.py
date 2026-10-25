@@ -149,13 +149,16 @@ def _latex_minipage(
     title: str,
     pair_of: dict[int, int] | None = None,
     font: str = "\\footnotesize",
+    max_lines: int | None = None,
 ) -> list[str]:
     """Một phía code thành minipage LaTeX: token trong cặp tương ứng →
     \\pline{màu cặp}, token evidence lẻ → \\eline (vàng), còn lại → \\mline.
     Gộp token liên tiếp cùng trạng thái thành một đoạn (khoảng trắng giữa hai
     token tính vào đoạn trước). `font` là cỡ chữ của minipage; mặc định
     \\footnotesize, file dài (>48 dòng) nên truyền \\scriptsize để hình vừa một
-    trang A4."""
+    trang A4. `max_lines` (tuỳ chọn): chỉ render n dòng đầu rồi thêm dòng
+    \\ldots đánh dấu phần còn lại — code quá dài (nhóm P6, 126–148 dòng) thì
+    hai cột A|B không còn vừa một trang bất kể cỡ chữ."""
     from src.demo.alignment.lexer import lex_code
 
     lines = lex_code(code)
@@ -169,6 +172,8 @@ def _latex_minipage(
     ]
     flat = 0
     for li, tokens in enumerate(lines):
+        if max_lines is not None and li >= max_lines:
+            break
         # File trong data.zip xuống dòng \r\n: cắt \r cuối dòng, nếu không
         # \r lọt vào đoạn LaTeX và xé mỗi dòng thành hai.
         text = src_lines[li].removesuffix("\r") if li < len(src_lines) else ""
@@ -195,6 +200,8 @@ def _latex_minipage(
             _latex_seg(state, seg) for state, seg in segments if seg
         )
         out.append(f"{parts}\\\\")
+    if max_lines is not None and len(lines) > max_lines:
+        out.append(f"\\ldots\\ (con {len(lines) - max_lines} dong nua)\\\\")
     out += ["}", "\\end{minipage}"]
     return out
 

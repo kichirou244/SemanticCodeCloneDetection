@@ -32,3 +32,58 @@
 {"a": "p5_base_list.cpp", "b": "p5_n_palindrome.cpp", "category": "nonclone_kho", "label": 0, "note": "P5: cung khung Node/class, tong DSLK vs kiem tra doi xung", "pair_id": "P5_nonclone_palindrome"}
 {"a": "p5_base_list.cpp", "b": "p1_base_sum.cpp", "category": "nonclone_de", "label": 0, "note": "cross: DSLK vs sum (2 bai khac nhau)", "pair_id": "X_P1P5"}
 {"a": "p5_base_list.cpp", "b": "p2_base_gcd.cpp", "category": "nonclone_de", "label": 0, "note": "cross: DSLK vs gcd (2 bai khac nhau)", "pair_id": "X_P2P5"}
+{"a": "p6_base_list.cpp", "b": "p6_v_class.cpp", "category": "clone_kho", "label": 1, "note": "P6 DSLK: struct + ham -> class + phuong thuc + destructor (cung hanh vi)", "pair_id": "P6_struct_class"}
+{"a": "p6_base_list.cpp", "b": "p6_v_while.cpp", "category": "clone_de", "label": 1, "note": "P6 DSLK: while -> for/do-while + doi ten bien", "pair_id": "P6_while"}
+{"a": "p6_base_list.cpp", "b": "p6_v_scanf.cpp", "category": "clone_de", "label": 1, "note": "P6 DSLK: cin/cout -> scanf/printf + doi ten", "pair_id": "P6_scanf"}
+{"a": "p6_base_list.cpp", "b": "p6_v_combo.cpp", "category": "clone_kho", "label": 1, "note": "P6 DSLK: combo for/do-while + scanf + dao dieu kien + bien thua", "pair_id": "P6_combo"}
+{"a": "p6_base_list.cpp", "b": "p6_n_filter.cpp", "category": "nonclone_kho", "label": 0, "note": "P6: cung khung Node/DSLK, chen co thu tu + xoa trung vs them cuoi + xoa lon hon nguong + dem le", "pair_id": "P6_nonclone_filter"}
+{"a": "p5_base_list.cpp", "b": "p6_base_list.cpp", "category": "nonclone_de", "label": 0, "note": "cross: 2 bai DSLK khac nhau (tong DSLK vs chen co thu tu + xoa trung)", "pair_id": "X_P5P6"}
+{"a": "p5_v_class.cpp", "b": "p6_v_class.cpp", "category": "nonclone_de", "label": 0, "note": "cross: 2 file class DSLK khac nhau (P5 vs P6)", "pair_id": "X_P5P6_class"}
+{"a": "p1_n_fact.cpp", "b": "p1_v_while.cpp", "category": "nonclone_kho", "label": 0, "note": "P1: tong 1..n vs giai thua (bien the while)", "pair_id": "P1_nonclone_fact__while"}
+{"a": "p1_n_fact.cpp", "b": "p1_v_dowhile.cpp", "category": "nonclone_kho", "label": 0, "note": "P1: tong 1..n vs giai thua (bien the dowhile)", "pair_id": "P1_nonclone_fact__dowhile"}
+{"a": "p1_n_fact.cpp", "b": "p1_v_scanf.cpp", "category": "nonclone_kho", "label": 0, "note": "P1: tong 1..n vs giai thua (bien the scanf)", "pair_id": "P1_nonclone_fact__scanf"}
+{"a": "p1_n_fact.cpp", "b": "p1_v_combo.cpp", "category": "nonclone_kho", "label": 0, "note": "P1: tong 1..n vs giai thua (bien the combo)", "pair_id": "P1_nonclone_fact__combo"}
+{"a": "p2_n_digitsum.cpp", "b": "p2_v_for.cpp", "category": "nonclone_kho", "label": 0, "note": "P2: UCLN vs tong chu so (bien the for)", "pair_id": "P2_nonclone_digitsum__for"}
+{"a": "p2_n_digitsum.cpp", "b": "p2_v_dowhile.cpp", "category": "nonclone_kho", "label": 0, "note": "P2: UCLN vs tong chu so (bien the dowhile)", "pair_id": "P2_nonclone_digitsum__dowhile"}
+{"a": "p2_n_digitsum.cpp", "b": "p2_v_scanf.cpp", "category": "nonclone_kho", "label": 0, "note": "P2: UCLN vs tong chu so (bien the scanf)", "pair_id": "P2_nonclone_digitsum__scanf"}
+{"a": "p2_n_digitsum.cpp", "b": "p2_v_combo.cpp", "category": "nonclone_kho", "label": 0, "note": "P2: UCLN vs tong chu so (bien the combo)", "pair_id": "P2_nonclone_digitsum__combo"}
+{"a": "p3_n_sum.cpp", "b": "p3_v_while.cpp", "category": "nonclone_kho", "label": 0, "note": "P3: max mang vs tong mang (bien the while)", "pair_id": "P3_nonclone_sum__while"}
+{"a": "p3_n_sum.cpp", "b": "p3_v_dowhile.cpp", "category": "nonclone_kho", "label": 0, "note": "P3: max mang vs tong mang (bien the dowhile)", "pair_id": "P3_nonclone_sum__dowhile"}
+{"a": "p3_n_sum.cpp", "b": "p3_v_scanf.cpp", "category": "nonclone_kho", "label": 0, "note": "P3: max mang vs tong mang (bien the scanf)", "pair_id": "P3_nonclone_sum__scanf"}
+{"a": "p3_n_sum.cpp", "b": "p3_v_combo.cpp", "category": "nonclone_kho", "label": 0, "note": "P3: max mang vs tong mang (bien the combo)", "pair_id": "P3_nonclone_sum__combo"}
+{"a": "p4_n_square.cpp", "b": "p4_v_while.cpp", "category": "nonclone_kho", "label": 0, "note": "P4: so nguyen to vs so chinh phuong (bien the while)", "pair_id": "P4_nonclone_square__while"}
+{"a": "p4_n_square.cpp", "b": "p4_v_dowhile.cpp", "category": "nonclone_kho", "label": 0, "note": "P4: so nguyen to vs so chinh phuong (bien the dowhile)", "pair_id": "P4_nonclone_square__dowhile"}
+{"a": "p4_n_square.cpp", "b": "p4_v_scanf.cpp", "category": "nonclone_kho", "label": 0, "note": "P4: so nguyen to vs so chinh phuong (bien the scanf)", "pair_id": "P4_nonclone_square__scanf"}
+{"a": "p4_n_square.cpp", "b": "p4_v_combo.cpp", "category": "nonclone_kho", "label": 0, "note": "P4: so nguyen to vs so chinh phuong (bien the combo)", "pair_id": "P4_nonclone_square__combo"}
+{"a": "p5_n_palindrome.cpp", "b": "p5_v_class.cpp", "category": "nonclone_kho", "label": 0, "note": "P5: tong DSLK vs kiem tra doi xung (bien the class)", "pair_id": "P5_nonclone_palindrome__class"}
+{"a": "p5_n_palindrome.cpp", "b": "p5_v_while.cpp", "category": "nonclone_kho", "label": 0, "note": "P5: tong DSLK vs kiem tra doi xung (bien the while)", "pair_id": "P5_nonclone_palindrome__while"}
+{"a": "p5_n_palindrome.cpp", "b": "p5_v_scanf.cpp", "category": "nonclone_kho", "label": 0, "note": "P5: tong DSLK vs kiem tra doi xung (bien the scanf)", "pair_id": "P5_nonclone_palindrome__scanf"}
+{"a": "p5_n_palindrome.cpp", "b": "p5_v_combo.cpp", "category": "nonclone_kho", "label": 0, "note": "P5: tong DSLK vs kiem tra doi xung (bien the combo)", "pair_id": "P5_nonclone_palindrome__combo"}
+{"a": "p6_n_filter.cpp", "b": "p6_v_class.cpp", "category": "nonclone_kho", "label": 0, "note": "P6: chen co thu tu + xoa trung vs loc nguong + dem le (bien the class)", "pair_id": "P6_nonclone_filter__class"}
+{"a": "p6_n_filter.cpp", "b": "p6_v_while.cpp", "category": "nonclone_kho", "label": 0, "note": "P6: chen co thu tu + xoa trung vs loc nguong + dem le (bien the while)", "pair_id": "P6_nonclone_filter__while"}
+{"a": "p6_n_filter.cpp", "b": "p6_v_scanf.cpp", "category": "nonclone_kho", "label": 0, "note": "P6: chen co thu tu + xoa trung vs loc nguong + dem le (bien the scanf)", "pair_id": "P6_nonclone_filter__scanf"}
+{"a": "p6_n_filter.cpp", "b": "p6_v_combo.cpp", "category": "nonclone_kho", "label": 0, "note": "P6: chen co thu tu + xoa trung vs loc nguong + dem le (bien the combo)", "pair_id": "P6_nonclone_filter__combo"}
+{"a": "p1_base_sum.cpp", "b": "p6_base_list.cpp", "category": "nonclone_de", "label": 0, "note": "cross: sum 1..n vs DSLK co thu tu (2 bai khac nhau)", "pair_id": "X_P1P6"}
+{"a": "p2_base_gcd.cpp", "b": "p6_base_list.cpp", "category": "nonclone_de", "label": 0, "note": "cross: UCLN vs DSLK co thu tu (2 bai khac nhau)", "pair_id": "X_P2P6"}
+{"a": "p3_base_max.cpp", "b": "p6_base_list.cpp", "category": "nonclone_de", "label": 0, "note": "cross: max mang vs DSLK co thu tu (2 bai khac nhau)", "pair_id": "X_P3P6"}
+{"a": "p4_base_prime.cpp", "b": "p6_base_list.cpp", "category": "nonclone_de", "label": 0, "note": "cross: so nguyen to vs DSLK co thu tu (2 bai khac nhau)", "pair_id": "X_P4P6"}
+{"a": "p3_base_max.cpp", "b": "p5_base_list.cpp", "category": "nonclone_de", "label": 0, "note": "cross: max mang vs DSLK co ban + OOP (2 bai khac nhau)", "pair_id": "X_P3P5"}
+{"a": "p4_base_prime.cpp", "b": "p5_base_list.cpp", "category": "nonclone_de", "label": 0, "note": "cross: so nguyen to vs DSLK co ban + OOP (2 bai khac nhau)", "pair_id": "X_P4P5"}
+{"a": "p1_v_while.cpp", "b": "p2_v_for.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu while nhung sum 1..n vs UCLN (2 bai khac nhau)", "pair_id": "X_P1P2_while"}
+{"a": "p3_v_while.cpp", "b": "p4_v_while.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu while nhung max mang vs so nguyen to (2 bai khac nhau)", "pair_id": "X_P3P4_while"}
+{"a": "p5_v_while.cpp", "b": "p6_v_while.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu while nhung DSLK co ban + OOP vs DSLK co thu tu (2 bai khac nhau)", "pair_id": "X_P5P6_while"}
+{"a": "p1_v_while.cpp", "b": "p3_v_while.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu while nhung sum 1..n vs max mang (2 bai khac nhau)", "pair_id": "X_P1P3_while"}
+{"a": "p1_v_dowhile.cpp", "b": "p2_v_dowhile.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu dowhile nhung sum 1..n vs UCLN (2 bai khac nhau)", "pair_id": "X_P1P2_dowhile"}
+{"a": "p2_v_dowhile.cpp", "b": "p3_v_dowhile.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu dowhile nhung UCLN vs max mang (2 bai khac nhau)", "pair_id": "X_P2P3_dowhile"}
+{"a": "p3_v_dowhile.cpp", "b": "p4_v_dowhile.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu dowhile nhung max mang vs so nguyen to (2 bai khac nhau)", "pair_id": "X_P3P4_dowhile"}
+{"a": "p1_v_dowhile.cpp", "b": "p4_v_dowhile.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu dowhile nhung sum 1..n vs so nguyen to (2 bai khac nhau)", "pair_id": "X_P1P4_dowhile"}
+{"a": "p1_v_scanf.cpp", "b": "p2_v_scanf.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu scanf nhung sum 1..n vs UCLN (2 bai khac nhau)", "pair_id": "X_P1P2_scanf"}
+{"a": "p3_v_scanf.cpp", "b": "p4_v_scanf.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu scanf nhung max mang vs so nguyen to (2 bai khac nhau)", "pair_id": "X_P3P4_scanf"}
+{"a": "p5_v_scanf.cpp", "b": "p6_v_scanf.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu scanf nhung DSLK co ban + OOP vs DSLK co thu tu (2 bai khac nhau)", "pair_id": "X_P5P6_scanf"}
+{"a": "p1_v_scanf.cpp", "b": "p3_v_scanf.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu scanf nhung sum 1..n vs max mang (2 bai khac nhau)", "pair_id": "X_P1P3_scanf"}
+{"a": "p1_v_combo.cpp", "b": "p2_v_combo.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu combo nhung sum 1..n vs UCLN (2 bai khac nhau)", "pair_id": "X_P1P2_combo"}
+{"a": "p3_v_combo.cpp", "b": "p4_v_combo.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu combo nhung max mang vs so nguyen to (2 bai khac nhau)", "pair_id": "X_P3P4_combo"}
+{"a": "p5_v_combo.cpp", "b": "p6_v_combo.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu combo nhung DSLK co ban + OOP vs DSLK co thu tu (2 bai khac nhau)", "pair_id": "X_P5P6_combo"}
+{"a": "p2_v_combo.cpp", "b": "p3_v_combo.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu combo nhung UCLN vs max mang (2 bai khac nhau)", "pair_id": "X_P2P3_combo"}
+{"a": "p2_v_combo.cpp", "b": "p5_v_combo.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu combo nhung UCLN vs DSLK co ban + OOP (2 bai khac nhau)", "pair_id": "X_P2P5_combo"}
+{"a": "p3_v_combo.cpp", "b": "p6_v_combo.cpp", "category": "nonclone_de", "label": 0, "note": "cross: cung kieu combo nhung max mang vs DSLK co thu tu (2 bai khac nhau)", "pair_id": "X_P3P6_combo"}

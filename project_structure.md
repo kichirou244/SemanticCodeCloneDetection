@@ -62,14 +62,16 @@ SemanticCodeCloneDetection/
 ├── scripts/                  # audit_dataset, check_leakage, build_dataset, audit_status,
 │                              # smoke_*, env_report, check_toolchain,
 │                              # build_cpg_export (lô gọi Joern + benchmark), serve_demo (uvicorn),
-│                              # final_pipeline (select/detect — pipeline cuối EXP-FINAL-001)
+│                              # final_pipeline (select/detect — pipeline cuối EXP-FINAL-001),
+│                              # score_custom_suite + summarize_custom_suite +
+│                              # build_custom_suite_negatives (bộ test 89 cặp)
 │   └── joern/                # export_cpg.sc (Scala, chạy bởi JVM) + joern_smoke.sc
 ├── notebooks/                # exp002/003/004/005 Kaggle (mỗi thí nghiệm 1 file)
 ├── tests/                    # test_baseline, test_splitting, test_metrics, test_leakage,
 │                              # test_configs, test_cleaning, test_dedup_groups,
 │                              # test_pairs, test_pair_leakage, test_exp00{1..4},
 │                              # test_cpg_gnn, test_cpg_scripts, test_demo_{lexer,aligner,server},
-│                              # test_moss (winnowing core)
+│                              # test_moss (winnowing core), test_custom_suite_manifest
 ├── results/                  # output experiment (không commit checkpoints nặng)
 ├── reports/                  # research reports paper-ready
 │   ├── figures/              # prompt tạo hình (m2_pipeline_prompt.md) — ảnh sinh ra từ
@@ -84,8 +86,25 @@ SemanticCodeCloneDetection/
 
 | Ngày | Nội dung |
 | :--- | :--- |
+| 2026-10-25 | **Mở rộng non-clone 16 → 64 cặp, tổng 89 cặp (DEC-034):** thêm 48 cặp non-clone sinh
+tất định bằng `scripts/build_custom_suite_negatives.py` (24 cùng bài khác lõi, 6 base–base còn
+thiếu, 18 khác bài cùng biến đổi), giữ nguyên 41 cặp cũ. `scripts/score_custom_suite.py` thêm
+`--only-new` + `--batch-pairs` (Joern một lần cho M4/M5); `scripts/summarize_custom_suite.py`
+xuất mean ± SD + bootstrap ra `workspace/custom_suite_summary.{json,md,tex}`; thêm
+`tests/test_custom_suite_manifest.py`. Kết quả 89 cặp: recall 1,000 cho cả 5 mô hình, F1 M2
+0,694 / M1 0,685 / M5 0,658 / M3 0,500 / M4 0,446; B1 chỉ có 41 cặp gốc nên so trên 41 cặp
+chung (M2 0,909 dẫn đầu, B1 0,400). Cập nhật `data/custom_suite/README.md`,
+`docs/evaluation_protocol.md` §3.1 và báo cáo `reports/[24 - 10] - Báo cáo.tex` (9 trang) |
+| 2026-10-24 | **Thay nhóm P6 126–148 dòng bằng nhóm P6 83–93 dòng (DEC-033):** `data/custom_suite`
+đổi 6 tệp P6 sang bài danh sách liên kết chèn theo thứ tự (`p6_base_list`, `p6_v_class`,
+`p6_v_while/scanf/combo`, non-clone `p6_n_filter` thay `p6_n_reverse`; khác biệt nằm ở giữa
+tệp), 7 cặp giữ nguyên id, tổng vẫn 41. Chấm lại hai đợt (`B1 M1 M2 M3` cho 41 cặp; `M4 M5`
+cho 7 cặp P6 vì Joern khởi động ~2 phút/cặp) rồi `--merge`: M1 6 lỗi, M2 5, M3 13, M4 16,
+M5 7; B1 chạy winnowing cục bộ nên 19 lỗi. Cập nhật `workspace/token_lengths.json`,
+`data/custom_suite/README.md`, báo cáo `reports/[24 - 10] - Báo cáo.tex` (viết ngắn, mục
+kế hoạch để trống) |
 | 2026-10-17 | **Bộ test mở rộng nhóm P5 — danh sách liên kết + hướng đối tượng (DEC-032, theo góp ý
-của thầy):** `data/custom_suite` thêm 6 file C++ dài 59–71 dòng (`p5_base_list`: `struct Node`
+của thầy):** `data/custom_suite` thêm 6 file C++ dài 59–70 dòng (`p5_base_list`: `struct Node`
 + 4 hàm tự do; `p5_v_class`: `class IntList` + 4 phương thức cùng hành vi; `p5_v_while/scanf/combo`;
 `p5_n_palindrome`: cùng khung `class`/`Node` nhưng khác ngữ nghĩa) và 8 cặp mới (26 → 34 cặp).
 `.gitignore` mở ngoại lệ `!data/custom_suite/` để code test vào git;
