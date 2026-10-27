@@ -39,6 +39,10 @@ def main() -> None:
     parser.add_argument("--full", action="store_true", help="Tải toàn bộ train/validation/test")
     parser.add_argument("--split", type=str, default=None, help="Split cụ thể (train/validation/test)")
     parser.add_argument("--max-samples", type=int, default=None, help="Giới hạn số mẫu")
+    parser.add_argument("--splits-custom", action="store_true", help="Tải train, validation, test với số mẫu tùy chỉnh")
+    parser.add_argument("--train-samples", type=int, default=50000)
+    parser.add_argument("--val-samples", type=int, default=5000)
+    parser.add_argument("--test-samples", type=int, default=5000)
     parser.add_argument("--seed", type=int, default=42, help="Seed ngẫu nhiên")
     args = parser.parse_args()
 
@@ -74,6 +78,19 @@ def main() -> None:
             loader.save_parquet(samples, target_parquet)
             logger.info("Đã lưu %s: %s (%d mẫu)", sp, target_parquet, len(samples))
 
+    if args.splits_custom:
+        targets = [
+            ("train", args.train_samples),
+            ("validation", args.val_samples),
+            ("test", args.test_samples),
+        ]
+        for sp, max_s in targets:
+            logger.info("Đang tải split: %s (max: %s)...", sp, max_s)
+            samples = loader.load_from_hf(split=sp, max_samples=max_s, streaming=True)
+            target_parquet = out_dir / f"bcb_{sp}.parquet"
+            loader.save_parquet(samples, target_parquet)
+            logger.info("Đã lưu: %s (%d mẫu)", target_parquet, len(samples))
+
     if args.split:
         use_streaming = args.max_samples is not None
         logger.info("Đang tải split: %s (max: %s, streaming=%s)...", args.split, args.max_samples, use_streaming)
@@ -81,6 +98,12 @@ def main() -> None:
         target_parquet = out_dir / f"bcb_{args.split}.parquet"
         loader.save_parquet(samples, target_parquet)
         logger.info("Đã lưu: %s (%d mẫu)", target_parquet, len(samples))
+
+    logger.info("Hoàn tất tác vụ chuẩn bị dữ liệu BigCloneBench.")
+    sys.stdout.flush()
+    sys.stderr.flush()
+    import os
+    os._exit(0)
 
 
 if __name__ == "__main__":
