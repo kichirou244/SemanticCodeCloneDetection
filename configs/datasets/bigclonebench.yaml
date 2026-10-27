@@ -1,0 +1,41 @@
+dataset:
+  name: bigclonebench
+  language: java
+  hf_id: google/code_x_glue_cc_clone_detection_big_clone_bench
+
+splits:
+  official: [train, validation, test]
+  official_sizes:
+    train: 901028
+    validation: 415416
+    test: 415416
+
+subsets:
+  smoke:
+    n_samples: 500
+    balance_labels: true
+    seed: 42
+    target_file: data/raw/bigclonebench/bcb_smoke.parquet
+  dev:
+    n_samples: 20000
+    balance_labels: true
+    seed: 42
+    target_file: data/raw/bigclonebench/bcb_dev.parquet
+  full:
+    train_file: data/raw/bigclonebench/bcb_train.parquet
+    val_file: data/raw/bigclonebench/bcb_validation.parquet
+    test_file: data/raw/bigclonebench/bcb_test.parquet
+
+task:
+  type: pairwise_binary_classification
+  label_mapping:
+    0: non-clone
+    1: clone
+  primary_metric: f1
+  secondary_metrics: [precision, recall, accuracy, roc_auc, pr_auc]
+  clone_types:
+    - Type-1 (Exact clones)
+    - Type-2 (Renamed/parameterized clones)
+    - Strongly Type-3 (ST3, >= 70% syntactic similarity)
+    - Moderately Type-3 (MT3, 50-70% syntactic similarity)
+    - Weakly Type-3 / Type-4 (WT3/T4, < 50% syntactic similarity, semantic clones)

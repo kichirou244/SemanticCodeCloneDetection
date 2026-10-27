@@ -19,6 +19,7 @@ tree-sitter>=0.21.0
 # Bắt buộc cho EXP-004 (M3 ASTNN): src/representations/ast/extract.py import
 # `tree_sitter_cpp` ở module level ⇒ thiếu gói này thì runner EXP-004 chết lúc import.
 tree-sitter-cpp>=0.20.0
+tree-sitter-java>=0.23.0
 # Ghi chú: cần thêm language grammar riêng cho ngôn ngữ khác (CodeNet Python):
 #   tree-sitter-python (hiện chưa dùng — scope đã thu hẹp về POJ-104 C/C++, DEC-019)
 # Joern (cho CPG C/C++) được gọi qua CLI ngoài Python, không nằm trong requirements.

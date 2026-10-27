@@ -1,0 +1,50 @@
+experiment:
+  id: EXP-BCB-005
+  name: cpg_gnn_bigclonebench
+  seed: 42
+
+dataset:
+  name: bigclonebench
+  language: java
+  hf_id: google/code_x_glue_cc_clone_detection_big_clone_bench
+  data_dir: data/raw/bigclonebench
+  smoke_file: data/raw/bigclonebench/bcb_smoke.parquet
+
+model:
+  id: M4
+  type: cpg_gnn
+  backbone: gat
+  language: java
+  hidden_dim: 128
+  num_layers: 3
+  heads: 4
+  edge_dim: 32
+  dropout: 0.2
+
+cpg:
+  tool: joern
+  frontend: javasrc2cpg
+  max_nodes: 1500
+
+training:
+  seed: 42
+  epochs: 5
+  batch_size: 32
+  learning_rate: 0.0005
+  weight_decay: 0.0001
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+
+early_stopping:
+  enabled: true
+  monitor: val_f1
+  patience: 2
+  mode: max
+
+threshold:
+  method: validation_f1
+  grid_step: 0.01
+
+evaluation:
+  metrics: [precision, recall, f1, roc_auc, pr_auc, accuracy]
+  clone_types: [Type-1, Type-2, Strongly-Type-3, Moderately-Type-3, Weakly-Type-3-Type-4]

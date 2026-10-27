@@ -1,0 +1,53 @@
+experiment:
+  id: EXP-BCB-006
+  name: hybrid_bigclonebench
+  seed: 42
+
+dataset:
+  name: bigclonebench
+  language: java
+  hf_id: google/code_x_glue_cc_clone_detection_big_clone_bench
+  data_dir: data/raw/bigclonebench
+  smoke_file: data/raw/bigclonebench/bcb_smoke.parquet
+
+model:
+  id: M5
+  type: hybrid
+  language: java
+  text_encoder: microsoft/graphcodebert-base
+  text_dim: 768
+  graph_hidden: 128
+  graph_num_layers: 3
+  graph_heads: 4
+  graph_dropout: 0.2
+  head_hidden: 1024
+  head_dropout: 0.1
+  fusion: concat_mlp
+
+tokenizer:
+  max_length: 512
+  truncation: true
+  padding: dynamic
+
+training:
+  seed: 42
+  epochs: 5
+  batch_size: 16
+  learning_rate: 0.00005
+  weight_decay: 0.01
+  gradient_accumulation_steps: 2
+  max_grad_norm: 1.0
+
+early_stopping:
+  enabled: true
+  monitor: val_f1
+  patience: 2
+  mode: max
+
+threshold:
+  method: validation_f1
+  grid_step: 0.01
+
+evaluation:
+  metrics: [precision, recall, f1, roc_auc, pr_auc, accuracy]
+  clone_types: [Type-1, Type-2, Strongly-Type-3, Moderately-Type-3, Weakly-Type-3-Type-4]

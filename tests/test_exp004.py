@@ -67,7 +67,7 @@ def test_language_gate():
     """Thư viện giữ hỗ trợ Python (DEC-019 chỉ huỷ *thí nghiệm* Python, không
     xoá năng lực), nhưng ngôn ngữ lạ phải bị chặn và config EXP-004 phải ghim C++."""
     with pytest.raises(ValueError):
-        get_parser("java")
+        get_parser("ruby")
     cfg = yaml.safe_load(Path("configs/exp004_astnn.yaml").read_text(encoding="utf-8"))
     assert cfg["model"]["language"] == "cpp"
     assert cfg["dataset"]["language"] == "cpp"

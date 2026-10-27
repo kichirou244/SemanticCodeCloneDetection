@@ -73,6 +73,21 @@ int classify(int n) {
 }
 """
 
+SMOKE_CODE_JAVA = """public class SmokeClass {
+    public int classify(int n) {
+        int total = 0;
+        for (int i = 0; i < n; i++) {
+            if (i % 2 == 0) {
+                total = total + i;
+            } else {
+                System.out.println(total);
+            }
+        }
+        return total;
+    }
+}
+"""
+
 
 def _as_argv(joern_cmd: str | list[str]) -> list[str]:
     """Chuẩn hoá lệnh Joern thành argv.
@@ -167,8 +182,8 @@ def read_samples(processed: Path, split: str | None, limit: int) -> list[dict]:
     return rows
 
 
-def write_batch(samples: list[dict], batch_dir: Path) -> Path:
-    """Gom lô thành thư mục `*.cpp` + `index.tsv` (tên file -> sample_id).
+def write_batch(samples: list[dict], batch_dir: Path, language: str = "cpp") -> Path:
+    """Gom lô thành thư mục `*.cpp` hoặc `*.java` + `index.tsv` (tên file -> sample_id).
 
     Joern chỉ thấy *tên file*, không thấy `sample_id` của dataset; nên phải ánh xạ
     ngược bằng file index, không đoán từ tên file (sample_id dạng `poj104-train-7`
@@ -176,9 +191,13 @@ def write_batch(samples: list[dict], batch_dir: Path) -> Path:
     """
     batch_dir.mkdir(parents=True, exist_ok=True)
     lines = []
+    ext = ".java" if language == "java" else ".cpp"
     for i, r in enumerate(samples):
-        fname = f"{i:05d}.cpp"
-        (batch_dir / fname).write_text(r["code"], encoding="utf-8")
+        fname = f"{i:05d}{ext}"
+        code = r["code"]
+        if language == "java" and "class " not in code:
+            code = f"public class Wrapper_{i:05d} {{\n{code}\n}}"
+        (batch_dir / fname).write_text(code, encoding="utf-8")
         lines.append(f"{fname}\t{r['sample_id']}")
     index = batch_dir / "index.tsv"
     index.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -192,7 +211,7 @@ def _log(work_dir: Path, tag: str, cmd: list[str], proc: subprocess.CompletedPro
         encoding="utf-8")
 
 
-def run_smoke(code: str, work_dir: Path, joern_cmd: str, timeout_s: int) -> str:
+def run_smoke(code: str, work_dir: Path, joern_cmd: str, timeout_s: int, language: str = "cpp") -> str:
     """Chạy `joern_smoke.sc` trên MỘT đoạn code và trả về stdout để đối chiếu tên step.
 
     Cố ý **không** đọc dataset: smoke test phải chạy được trước cả bước dựng
@@ -200,7 +219,8 @@ def run_smoke(code: str, work_dir: Path, joern_cmd: str, timeout_s: int) -> str:
     phép kiểm tra mà phải tải dữ liệu mới chạy được thì không phải smoke test.
     """
     work_dir.mkdir(parents=True, exist_ok=True)
-    src = work_dir / "smoke.cpp"
+    ext = ".java" if language == "java" else ".cpp"
+    src = work_dir / f"smoke{ext}"
     src.write_text(code, encoding="utf-8")
     cmd = _as_argv(joern_cmd) + ["--script", str(SMOKE_SCRIPT),
                                    "--param", _param_value(f"srcFile={src}")]
@@ -232,9 +252,9 @@ def run_probe(joern_cmd: str, work_dir: Path, timeout_s: int) -> str:
 
 
 def run_batch(samples: list[dict], out_dir: Path, work_dir: Path, joern_cmd: str | list[str],
-              batch_dir: Path, timeout_s: int) -> tuple[int, int]:
+              batch_dir: Path, timeout_s: int, language: str = "cpp") -> tuple[int, int]:
     """Một lần khởi động Joern cho cả lô. Trả về (số OK, số lỗi)."""
-    index = write_batch(samples, batch_dir)
+    index = write_batch(samples, batch_dir, language=language)
     cmd = _as_argv(joern_cmd) + ["--script", str(EXPORT_SCRIPT),
            "--param", _param_value(f"srcDir={batch_dir}"),
            "--param", _param_value(f"indexFile={index}"),
@@ -394,6 +414,8 @@ def main() -> None:
     ap.add_argument("--joern", default=joern_or_die(), help="lệnh Joern")
     ap.add_argument("--timeout-s", type=int, default=3600)
     ap.add_argument("--no-resume", action="store_true")
+    ap.add_argument("--language", choices=["cpp", "java"], default="cpp",
+                    help="ngôn ngữ nguồn để xuất CPG (cpp hoặc java)")
     ap.add_argument("--smoke", action="store_true",
                     help="chạy joern_smoke.sc trên 1 đoạn C và in output "
                          "(không cần dataset — chạy cái này TRƯỚC mọi bước khác)")
@@ -419,9 +441,10 @@ def main() -> None:
         # Đặt TRƯỚC khi đọc dataset: smoke không được phụ thuộc
         # `data/processed/...` — nếu phụ thuộc thì nó phải chạy sau khi tải
         # dataset, tức là tốn hàng trăm MB để kiểm tra 60 giây.
+        default_smoke = SMOKE_CODE_JAVA if args.language == "java" else SMOKE_CODE
         code = (Path(args.smoke_file).read_text(encoding="utf-8")
-                if args.smoke_file else SMOKE_CODE)
-        print(run_smoke(code, work_dir, args.joern, args.timeout_s))
+                if args.smoke_file else default_smoke)
+        print(run_smoke(code, work_dir, args.joern, args.timeout_s, language=args.language))
         return
 
     if args.probe:
@@ -448,7 +471,7 @@ def main() -> None:
     for i in range(0, len(todo), args.batch_size):
         batch = todo[i:i + args.batch_size]
         ok, err = run_batch(batch, out_dir, work_dir, args.joern,
-                            work_dir / f"batch_{i:06d}", args.timeout_s)
+                            work_dir / f"batch_{i:06d}", args.timeout_s, language=args.language)
         n_ok += ok
         n_err += err
         el = time.perf_counter() - t0

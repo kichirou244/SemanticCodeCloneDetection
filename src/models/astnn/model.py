@@ -28,7 +28,7 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pack_padded_sequence
 
-from src.representations.ast.extract import N_LEAF, N_STMT
+from src.representations.ast.extract import N_LEAF, N_STMT, N_STMT_CPP
 
 
 def to_device(batch: dict[str, np.ndarray], device: torch.device) -> dict[str, torch.Tensor]:
@@ -48,10 +48,10 @@ def to_device(batch: dict[str, np.ndarray], device: torch.device) -> dict[str, t
 class VectorizedRvNN(nn.Module):
     """RvNN duyệt tầng theo độ sâu, batch hoàn toàn trên GPU."""
 
-    def __init__(self, hidden: int = 200):
+    def __init__(self, hidden: int = 200, n_stmt: int = N_STMT_CPP):
         super().__init__()
         self.hidden = hidden
-        self.stmt_emb = nn.Embedding(N_STMT, hidden)
+        self.stmt_emb = nn.Embedding(n_stmt, hidden)
         self.leaf_emb = nn.Embedding(N_LEAF, hidden)
         self.W_s = nn.Linear(hidden, hidden)
         self.W_x = nn.Linear(hidden, hidden, bias=False)
@@ -112,10 +112,10 @@ class VectorizedRvNN(nn.Module):
 class ASTNNPairClassifier(nn.Module):
     """M3 ASTNN cho bài toán clone *pair* — cùng head với M1/M2 (DEC-016)."""
 
-    def __init__(self, hidden: int = 200, dropout: float = 0.1):
+    def __init__(self, hidden: int = 200, dropout: float = 0.1, n_stmt: int = N_STMT_CPP):
         super().__init__()
         self.hidden = hidden
-        self.rvnn = VectorizedRvNN(hidden)
+        self.rvnn = VectorizedRvNN(hidden, n_stmt=n_stmt)
         # Bi-GRU 1 lớp, 2 hướng, mỗi hướng hidden//2 → encode_dim = hidden.
         self.enc_dim = 2 * (hidden // 2)
         self.gru = nn.GRU(hidden, hidden // 2, batch_first=True,

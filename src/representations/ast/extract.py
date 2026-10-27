@@ -24,14 +24,18 @@ import numpy as np
 from tree_sitter import Language, Node, Parser
 import tree_sitter_cpp
 
-SUPPORTED = {"cpp": "tree-sitter-cpp", "python": "tree-sitter-python"}
+SUPPORTED = {
+    "cpp": "tree-sitter-cpp",
+    "python": "tree-sitter-python",
+    "java": "tree-sitter-java",
+}
 
 # --- node lá: 3 lớp abstraction ------------------------------------------
 LEAF_ID, LEAF_NUM, LEAF_STR = 0, 1, 2
 LEAF_LABELS = ("ID", "NUM", "STR")
 
 # --- node trong: loại statement ------------------------------------------
-STMT_TYPES = (
+STMT_TYPES_CPP = (
     "translation_unit", "function_definition", "declaration", "compound_statement",
     "if_statement", "for_statement", "while_statement", "do_statement",
     "switch_statement", "return_statement", "expression_statement",
@@ -41,8 +45,18 @@ STMT_TYPES = (
     "enum_specifier", "template_declaration", "namespace_definition",
     "lambda_expression", "array_declarator", "init_declarator",
 )
+STMT_TYPES_JAVA = (
+    "program", "method_declaration", "constructor_declaration", "class_declaration",
+    "interface_declaration", "enum_declaration", "record_declaration",
+    "block", "local_variable_declaration", "enhanced_for_statement",
+    "throw_statement", "try_with_resources_statement", "finally_clause",
+    "synchronized_statement", "assert_statement", "yield_statement",
+    "switch_block_statement_group", "switch_rule",
+)
+STMT_TYPES = STMT_TYPES_CPP + STMT_TYPES_JAVA
 
 N_LEAF = len(LEAF_LABELS)
+N_STMT_CPP = len(STMT_TYPES_CPP)
 N_STMT = len(STMT_TYPES)
 # Vị trí 0 trong `LABEL_NAMES` dùng cho code rỗng / không có node nào.
 LABEL_NAMES = ("NONE",) + LEAF_LABELS + STMT_TYPES
@@ -52,15 +66,25 @@ STMT_OFFSET = 1 + N_LEAF
 
 _STMT_INDEX = {t: i for i, t in enumerate(STMT_TYPES)}
 
-_STR_TYPES = ("string_literal", "raw_string_literal", "concatenated_string",
-              "string_content", "escape_sequence", "char_literal")
-_NUM_TYPES = ("number_literal", "integer_literal", "float_literal",
-              "hex_integer_literal", "binary_integer_literal",
-              "octal_integer_literal", "decimal_floating_literal",
-              "hex_floating_literal", "char_literal", "char_literal_text")
-_ID_TYPES = ("identifier", "field_identifier", "type_identifier",
-             "primitive_type", "sized_type_specifier", "namespace_identifier",
-             "statement_identifier")
+_STR_TYPES = (
+    "string_literal", "raw_string_literal", "concatenated_string",
+    "string_content", "escape_sequence", "char_literal",
+    "character_literal", "text_block",
+)
+_NUM_TYPES = (
+    "number_literal", "integer_literal", "float_literal",
+    "hex_integer_literal", "binary_integer_literal",
+    "octal_integer_literal", "decimal_floating_literal",
+    "hex_floating_literal", "char_literal", "char_literal_text",
+    "decimal_integer_literal", "decimal_floating_point_literal",
+    "hex_floating_point_literal",
+)
+_ID_TYPES = (
+    "identifier", "field_identifier", "type_identifier",
+    "primitive_type", "sized_type_specifier", "namespace_identifier",
+    "statement_identifier",
+    "integral_type", "floating_point_type", "boolean_type", "void_type",
+)
 
 
 def check_toolchain() -> dict:
@@ -86,6 +110,10 @@ def get_parser(language: str = "cpp") -> Parser:
         raise ValueError(f"chưa hỗ trợ ngôn ngữ {language!r}; có {sorted(SUPPORTED)}")
     if language == "cpp":
         return Parser(Language(tree_sitter_cpp.language()))
+    if language == "java":
+        import tree_sitter_java
+
+        return Parser(Language(tree_sitter_java.language()))
     import tree_sitter_python
 
     return Parser(Language(tree_sitter_python.language()))

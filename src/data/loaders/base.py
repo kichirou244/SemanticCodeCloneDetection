@@ -11,9 +11,24 @@ class CodeSample:
     sample_id: str
     code: str  # raw source — không bao giờ bị ghi đè bởi normalization
     problem_id: str  # problem/task identity — dùng để split chống leakage
-    language: str  # "cpp" | "python"
+    language: str  # "cpp" | "python" | "java"
     split: str = ""  # train | validation | test
     normalized_code: str = ""  # chỉ dùng cho dedup/leakage, không thay raw
+    metadata: dict | None = None
+
+
+@dataclass
+class ClonePairSample:
+    """Một cặp mã nguồn đối sánh trong bài toán phát hiện clone (như BigCloneBench)."""
+
+    pair_id: str
+    id1: str
+    id2: str
+    func1: str
+    func2: str
+    label: int  # 1: clone, 0: non-clone
+    language: str = "java"
+    split: str = ""  # train | validation | test
     metadata: dict | None = None
 
 
