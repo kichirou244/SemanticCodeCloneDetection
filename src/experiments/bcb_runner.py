@@ -134,7 +134,7 @@ def load_pairs_data(cfg: dict[str, Any], split: str = "train", max_samples: int 
     # Fallback trực tiếp nạp từ Hugging Face
     logger.info("Chưa có file local, stream dữ liệu split '%s' từ Hugging Face...", split)
     hf_split = "validation" if split in ("val", "validation") else split
-    return loader.load_from_hf(split=hf_split, max_samples=max_samples or 1000)
+    return loader.load_from_hf(split=hf_split, max_samples=max_samples or 1000, streaming=True)
 
 
 def compute_metrics(y_true: np.ndarray, y_prob: np.ndarray, threshold: float = 0.5) -> dict[str, float]:

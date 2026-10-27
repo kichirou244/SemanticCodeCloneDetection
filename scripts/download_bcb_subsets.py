@@ -75,8 +75,9 @@ def main() -> None:
             logger.info("Đã lưu %s: %s (%d mẫu)", sp, target_parquet, len(samples))
 
     if args.split:
-        logger.info("Đang tải split: %s (max: %s)...", args.split, args.max_samples)
-        samples = loader.load_from_hf(split=args.split, max_samples=args.max_samples)
+        use_streaming = args.max_samples is not None
+        logger.info("Đang tải split: %s (max: %s, streaming=%s)...", args.split, args.max_samples, use_streaming)
+        samples = loader.load_from_hf(split=args.split, max_samples=args.max_samples, streaming=use_streaming)
         target_parquet = out_dir / f"bcb_{args.split}.parquet"
         loader.save_parquet(samples, target_parquet)
         logger.info("Đã lưu: %s (%d mẫu)", target_parquet, len(samples))
