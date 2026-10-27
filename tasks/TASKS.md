@@ -42,7 +42,7 @@
     - Node lá đưa về 3 lớp trừu tượng: `ID` (tên biến, hàm), `NUM` (số), `STR` (chuỗi ký tự).
     - Node con bên trong statement bị nén phẳng (flatten) gắn vào statement cha.
   - Sinh mảng numpy phẳng lưu cấu trúc cây để tăng tốc quá trình đóng lô (batch collation) cho PyTorch.
-- **Tiêu chí hoàn thành (DoD):** Trích xuất AST thành công trên tập mẫu Java; unit test `tests/test_ast_extract_java.py` đạt 100% pass.
+- **Tiêu chí hoàn thành (DoD):** Unit test `tests/test_ast_extract_java.py` đạt 100% pass; Đã chạy hoàn tất trên Kaggle CPU (`kichirou/semanticcodeclonedetection` Version 39), biên dịch và lưu thành công `bcb_ast_cache.npz` (1.2 MB, 9.126 hàm Java duy nhất từ toàn bộ 1.731.860 cặp BigCloneBench, tốc độ 1.076 hàm/s).
 
 ### [BCB-04] Chuyển đổi pipeline sinh CPG Java bằng Joern cho CPG-GNN (M4) & Hybrid (M5)
 - **Trạng thái:** Done
@@ -51,7 +51,7 @@
   - Joern hỗ trợ Java gốc rất mạnh thông qua frontend `javasrc2cpg` (vượt trội hơn C/C++ do không bị lỗi thiếu include header).
   - Cập nhật script `src/representations/cpg/ingest.py` để xuất đồ thị CPG đa cạnh (AST edge, Control Flow Graph - CFG, Data Dependency Graph - DDG/CDG) cho các hàm `.java`.
   - Chuẩn hóa schema đồ thị tương thích với PyTorch Geometric: định nghĩa feature ma trận node (loại node, code token) và tensor ma trận kề cạnh theo từng loại quan hệ.
-- **Tiêu chí hoàn thành (DoD):** Chạy thử nghiệm trích xuất 200 đồ thị Java mẫu; nạp thành công vào lớp `Data` của PyTorch Geometric mà không gặp xung đột kiểu dữ liệu.
+- **Tiêu chí hoàn thành (DoD):** Chạy thử nghiệm trích xuất 200 đồ thị Java mẫu; nạp thành công vào lớp `Data` của PyTorch Geometric mà không gặp xung đột kiểu dữ liệu. Đã xuất thành công toàn bộ 9.122 đồ thị CPG bằng Joern `javasrc2cpg` trên Kaggle CPU (`kichirou/semanticcodeclonedetection` Version 41) và đóng gói vào `bcb_cpg_export.tar.gz` (21.4 MB, 100% CPU, 0% GPU quota).
 
 ### [BCB-05] Thích ứng Baseline B1 (TF-IDF + Cosine) cho Java
 - **Trạng thái:** Cancelled (Không cần thiết — Baseline dùng trực tiếp dịch vụ Stanford MOSS gốc qua API/service với `language="java"`, không cần huấn luyện mô hình TF-IDF)
