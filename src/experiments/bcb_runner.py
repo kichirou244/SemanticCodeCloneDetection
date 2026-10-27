@@ -38,8 +38,6 @@ from src.data.loaders.base import ClonePairSample
 from src.data.loaders.bigclonebench import BigCloneBenchLoader
 from src.data.pairs.bcb_dataset import BCBPairDataset, collate_ast_pairs, collate_cpg_pairs, collate_text_pairs
 from src.models.astnn.model import ASTNNPairClassifier
-from src.models.cpg_gnn.model import CPGEncoder, CPGGNNPairClassifier
-from src.models.hybrid.model import HybridPairClassifier
 from src.models.transformer_pair import TransformerPairClassifier, load_tokenizer
 from src.representations.ast.extract import N_STMT
 from src.representations.ast.store import ASTTreeStore
@@ -100,6 +98,7 @@ def build_model(cfg: dict[str, Any], device: torch.device) -> tuple[nn.Module, A
         return model, None
 
     if model_id == "M4" or model_cfg.get("type") == "cpg_gnn":
+        from src.models.cpg_gnn.model import CPGGNNPairClassifier
         hidden = int(model_cfg.get("hidden_dim", 128))
         num_layers = int(model_cfg.get("num_layers", 3))
         heads = int(model_cfg.get("heads", 4))
