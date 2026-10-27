@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import numpy as np
 from tree_sitter import Language, Node, Parser
-import tree_sitter_cpp
 
 SUPPORTED = {
     "cpp": "tree-sitter-cpp",
@@ -109,6 +108,8 @@ def get_parser(language: str = "cpp") -> Parser:
     if language not in SUPPORTED:
         raise ValueError(f"chưa hỗ trợ ngôn ngữ {language!r}; có {sorted(SUPPORTED)}")
     if language == "cpp":
+        import tree_sitter_cpp
+
         return Parser(Language(tree_sitter_cpp.language()))
     if language == "java":
         import tree_sitter_java
