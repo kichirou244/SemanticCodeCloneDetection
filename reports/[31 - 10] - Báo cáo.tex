@@ -160,58 +160,59 @@ Non-clone Khác bài (Cross-problem) & 525 & 25,7\% & \textbf{81,7\%} & 34,3\% &
 }
 \end{table}
 
-\subsection{Kết quả kiểm thử trên tập C/C++ (720 cặp)}
-Tập kiểm thử gồm 121 tệp mã nguồn C/C++ được biên soạn tương đương 15 bài toán giải thuật, chấm bằng 4 checkpoint POJ-104 tại ngưỡng đóng băng.
+\subsection{Kết quả kiểm thử trên tập C/C++ (720 cặp) với các mô hình huấn luyện trên Java}
+Nhằm đánh giá năng lực chuyển dịch ngôn ngữ (Cross-lingual Transfer), 121 tệp mã nguồn C/C++ (tương đương 15 bài toán giải thuật) được kiểm thử trực tiếp bằng chính 4 mô hình đã được huấn luyện trên tập Java (BigCloneBench) tại ngưỡng đóng băng chuẩn.
 
 \begin{table}[htbp]
 \centering
-\caption{Hiệu năng đối chứng Trước và Sau khi huấn luyện trên tập kiểm thử C/C++ (720 cặp --- Tỉ lệ 1:5)}
+\caption{Hiệu năng đối chứng Trên tập C/C++ khi sử dụng các mô hình huấn luyện từ Java (720 cặp --- Tỉ lệ 1:5)}
 \label{tab:test_cpp_overall}
 \resizebox{\textwidth}{!}{
 \begin{tabular}{llccccccr}
 \toprule
-\textbf{Mô hình} & \textbf{Trạng thái huấn luyện} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
+\textbf{Mô hình} & \textbf{Trạng thái huấn luyện (Java BCB)} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
 \midrule
-\multirow{3}{*}{\textbf{M1 (CodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,99 & 30,03\% & 17,80\% & \textbf{95,83\%} & 25,56\% & 115 / 531 / 69 / 5 \\
- & Sau huấn luyện (Fine-tuned POJ) & 0,21 & 53,75\% \scriptsize{(+23,72\%)} & 38,95\% \scriptsize{(+21,15\%)} & 86,67\% \scriptsize{(-9,16\%)} & 75,14\% \scriptsize{(+49,58\%)} & 104 / 163 / 437 / 16 \\
+\multirow{3}{*}{\textbf{M1 (CodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,99 & 30,03\% & 17,80\% & 95,83\% & 25,56\% & 115 / 531 / 69 / 5 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,88 & 31,29\% \scriptsize{(+1,26\%)} & 18,55\% \scriptsize{(+0,75\%)} & \textbf{100,00\%} \scriptsize{(+4,17\%)} & 26,81\% \scriptsize{(+1,25\%)} & 120 / 527 / 73 / 0 \\
  & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,60 & \textbf{53,85\%} \scriptsize{(+23,82\%)} & \textbf{63,64\%} \scriptsize{(+45,84\%)} & 46,67\% \scriptsize{(-49,16\%)} & \textbf{86,67\%} \scriptsize{(+61,11\%)} & 56 / 32 / 568 / 64 \\
 \midrule
 \multirow{3}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{65,35\%} & \textbf{61,94\%} & 69,17\% & \textbf{87,78\%} & 83 / 51 / 549 / 37 \\
- & Sau huấn luyện (Fine-tuned POJ) & 0,66 & 56,10\% \scriptsize{(-9,25\%)} & 40,75\% \scriptsize{(-21,19\%)} & \textbf{90,00\%} \scriptsize{(+20,83\%)} & 76,53\% \scriptsize{(-11,25\%)} & 108 / 157 / 443 / 12 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,94 & 52,76\% \scriptsize{(-12,59\%)} & 37,77\% \scriptsize{(-24,17\%)} & \textbf{87,50\%} \scriptsize{(+18,33\%)} & 73,89\% \scriptsize{(-13,89\%)} & 105 / 173 / 427 / 15 \\
  & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,20 & 52,13\% \scriptsize{(-13,22\%)} & 60,44\% \scriptsize{(-1,50\%)} & 45,83\% \scriptsize{(-23,34\%)} & 85,97\% \scriptsize{(-1,81\%)} & 55 / 36 / 564 / 65 \\
 \midrule
 \multirow{2}{*}{\textbf{M3 (ASTNN)}} & Chưa huấn luyện (Untrained) & 0,99 & \textbf{42,97\%} & \textbf{31,00\%} & 70,00\% & \textbf{69,03\%} & 84 / 187 / 413 / 36 \\
- & Sau huấn luyện (Fine-tuned POJ) & 0,42 & 34,75\% \scriptsize{(-8,22\%)} & 21,63\% \scriptsize{(-9,37\%)} & \textbf{88,33\%} \scriptsize{(+18,33\%)} & 44,72\% \scriptsize{(-24,31\%)} & 106 / 384 / 216 / 14 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,52 & 30,03\% \scriptsize{(-12,94\%)} & 18,88\% \scriptsize{(-12,12\%)} & \textbf{73,33\%} \scriptsize{(+3,33\%)} & 43,06\% \scriptsize{(-25,97\%)} & 88 / 378 / 222 / 32 \\
 \midrule
-\multirow{2}{*}{\textbf{M4 (CPG-GNN)}} & Chưa huấn luyện (Untrained) & 0,10 & \textbf{28,57\%} & \textbf{16,67\%} & \textbf{100,00\%} & \textbf{16,67\%} & 120 / 600 / 0 / 0 \\
- & Sau huấn luyện (Fine-tuned POJ) & 0,47 & \textbf{28,57\%} \scriptsize{(+0,00\%)} & \textbf{16,67\%} \scriptsize{(+0,00\%)} & \textbf{100,00\%} \scriptsize{(+0,00\%)} & \textbf{16,67\%} \scriptsize{(+0,00\%)} & 120 / 600 / 0 / 0 \\
+\multirow{2}{*}{\textbf{M4 (CPG-GNN)}} & Chưa huấn luyện (Untrained) & 0,10 & \textbf{28,57\%} & \textbf{16,67\%} & \textbf{100,00\%} & 16,67\% & 120 / 600 / 0 / 0 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,70 & 0,00\% \scriptsize{(-28,57\%)} & 0,00\% \scriptsize{(-16,67\%)} & 0,00\% \scriptsize{(-100,00\%)} & \textbf{83,33\%} \scriptsize{(+66,66\%)} & 0 / 0 / 600 / 120 \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
-\textbf{Nhận xét đối chứng Trước vs Sau huấn luyện trên tập C/C++:}
+\textbf{Nhận xét đối chứng năng lực chuyển dịch ngôn ngữ Java $\rightarrow$ C/C++:}
 \begin{itemize}
-\item \textbf{M1 (CodeBERT):} Bản đóng băng 12 tầng (\textbf{Freeze Backbone}) đạt độ chuẩn xác (Precision) cao nhất trong toàn bộ các cấu hình M1: Precision tăng vọt từ 17,80\% (Zero-shot) và 38,95\% (Fine-tuned POJ) lên tới \textbf{63,64\%} (+45,84\% so với ban đầu). Số ca dương tính giả (FP) giảm mạnh từ 531 ca xuống chỉ còn \textbf{32 ca}, đưa Accuracy lên đỉnh \textbf{86,67\%} và F1 đạt \textbf{53,85\%}.
-\item \textbf{M2 (GraphCodeBERT):} Bản Freeze Backbone loại bỏ hầu hết các ca báo động giả trên C/C++: số ca FP giảm từ 157 ca (Fine-tuned POJ) xuống còn \textbf{36 ca} (giảm 77\% báo động nhầm), duy trì Precision ở mức cao \textbf{60,44\%} và Accuracy đạt \textbf{85,97\%}.
+\item \textbf{Khả năng bao phủ tuyệt đối của M1 (CodeBERT):} Mô hình CodeBERT sau khi huấn luyện trên BigCloneBench nhận diện được \textbf{100,00\% (120/120 cặp)} clone trên C/C++, không bỏ sót bất kỳ cặp tương đồng ngữ nghĩa nào. Tuy nhiên, do ngưỡng đóng băng 0,88 từ Java bị nhạy cảm trước cú pháp C/C++, bản Freeze Backbone ($\tau = 0,60$) giúp cân bằng vượt trội: Precision tăng vọt từ 17,80\% lên \textbf{63,64\%} và Accuracy đạt đỉnh \textbf{86,67\%}.
+\item \textbf{Sự bền bỉ của GraphCodeBERT (M2):} M2 giữ vững năng lực chuyển dịch tốt nhất trong các kiến trúc: ROC-AUC đạt tới \textbf{89,82\%} khi kiểm thử trên C/C++. Khi hiệu chỉnh ngưỡng tối ưu ($\tau = 0,98$), F1 của M2 đạt tới \textbf{70,00\%} (Precision 65,00\%, Recall 75,83\%). Bản Freeze Backbone giúp M2 giảm số ca dương tính giả từ 173 xuống chỉ còn \textbf{36 ca}, giữ Precision ở mức \textbf{60,44\%}.
+\item \textbf{Thách thức của ASTNN (M3) và CPG-GNN (M4):} M3 có tập statement types Java (45 types) khác biệt với C++ (27 types), dẫn đến F1 giảm từ 42,97\% xuống 30,03\%. M4 tại ngưỡng 0,70 quá khắt khe khiến Recall rơi về 0,00\%, khẳng định các mô hình dựa trên đồ thị/cây phụ thuộc nặng vào cú pháp riêng của từng ngôn ngữ hơn so với Transformer đa ngôn ngữ.
 \end{itemize}
 
 \begin{table}[htbp]
 \centering
-\caption{Độ chính xác chi tiết theo từng loại Clone và Cạm bẫy trên tập C/C++ (\%)}
+\caption{Độ chính xác chi tiết theo từng loại Clone và Cạm bẫy trên tập C/C++ khi dùng mô hình Java (\%)}
 \label{tab:test_cpp_detail}
 \resizebox{\textwidth}{!}{
 \begin{tabular}{lcrrrr}
 \toprule
 \textbf{Phân loại kiểm thử} & \textbf{Số cặp} & \textbf{M1 (CodeBERT)} & \textbf{M2 (GraphCodeBERT)} & \textbf{M3 (ASTNN)} & \textbf{M4 (CPG-GNN)} \\
 \midrule
-Type-1 (Đổi tên, định dạng) & 15 & \textbf{100,0\%} & \textbf{100,0\%} & \textbf{100,0\%} & \textbf{100,0\%} \\
-Type-2 (Đổi kiểu, wrapper/vector) & 30 & \textbf{100,0\%} & \textbf{100,0\%} & \textbf{100,0\%} & \textbf{100,0\%} \\
-Type-3 (Vòng lặp, luồng điều khiển) & 30 & 93,3\% & \textbf{100,0\%} & \textbf{100,0\%} & \textbf{100,0\%} \\
-Type-4 (Semantic Clones khác giải thuật) & 45 & 68,9\% & \textbf{73,3\%} & 68,9\% & \textbf{100,0\%} \\
+Type-1 (Đổi tên, định dạng) & 15 & \textbf{100,0\%} & \textbf{100,0\%} & \textbf{100,0\%} & 0,0\% \\
+Type-2 (Đổi kiểu, wrapper/vector) & 30 & \textbf{100,0\%} & \textbf{100,0\%} & 86,7\% & 0,0\% \\
+Type-3 (Vòng lặp, luồng điều khiển) & 30 & \textbf{100,0\%} & 96,7\% & 86,7\% & 0,0\% \\
+Type-4 (Semantic Clones khác giải thuật) & 45 & \textbf{100,0\%} & 68,9\% & 46,7\% & 0,0\% \\
 \midrule
-Non-clone Khó (Cạm bẫy khung sườn) & 75 & \textbf{33,3\%} & 25,3\% & 21,3\% & 0,0\% \\
-Non-clone Khác bài (Cross-problem) & 525 & 78,5\% & \textbf{80,8\%} & 38,1\% & 0,0\% \\
+Non-clone Khó (Cạm bẫy khung sườn) & 75 & 6,7\% & 36,0\% & 25,3\% & \textbf{100,0\%} \\
+Non-clone Khác bài (Cross-problem) & 525 & 13,0\% & 76,2\% & 38,7\% & \textbf{100,0\%} \\
 \bottomrule
 \end{tabular}
 }
@@ -220,11 +221,11 @@ Non-clone Khác bài (Cross-problem) & 525 & 78,5\% & \textbf{80,8\%} & 38,1\% &
 \subsection{Kế hoạch mở rộng với tập Coder}
 Hệ thống kiểm thử đã được module hóa thông qua hai script chuẩn \texttt{scripts/build\_custom\_suite\_*.py} và \texttt{scripts/score\_custom\_suite\_*.py}. Ngay khi người dùng cung cấp tập dữ liệu thứ 3 (\textbf{Tập Coder}), tập này sẽ được đưa vào pipeline tự động để sinh ma trận nhầm lẫn và đối chiếu trực diện trên cả 3 tập kiểm thử (Java, C/C++, Coder).
 
-\subsection{So sánh hành vi đa ngôn ngữ của các mô hình}
+\subsection{So sánh hành vi chuyển dịch đa ngôn ngữ của các mô hình}
 \begin{itemize}
-\item \textbf{GraphCodeBERT (M2) là mô hình cân bằng và bền vững nhất:} Giữ vị trí số 1 trên cả hai ngôn ngữ (F1 đạt \textbf{61,79\%} trên Java và \textbf{56,10\%} trên C/C++ dưới tỉ lệ $1:5$). M2 loại bỏ được trên \textbf{80\%} các ca khác bài toán và nhận diện được từ \textbf{73,3\%} đến \textbf{88,9\%} các ca trùng lặp ngữ nghĩa hoàn toàn khác thuật toán (Type-4).
-\item \textbf{CodeBERT (M1) có Recall vượt trội nhưng nhạy cảm với tỉ lệ mất cân bằng:} Đạt Recall cực cao (98,33\% trên Java và 86,67\% trên C/C++), bắt trọn vẹn các ca Type-4. Tuy nhiên, khi số lượng mẫu âm tính tăng gấp 5 lần, M1 gặp tỉ lệ dương tính giả cao trước các bẫy khung sườn (chỉ nhận diện đúng 9,3\% cạm bẫy trên Java).
-\item \textbf{ASTNN (M3) phụ thuộc vào tính tương đồng hình thái cây:} Nhận diện hoàn hảo Type-1 và Type-2 (86--100\%), nhưng đối với Type-4 (ví dụ BubbleSort vs QuickSort hay đệ quy vs lặp), độ chính xác giảm xuống 60--68\% do cây cú pháp bị biến đổi cấu trúc phân nhánh sâu.
+\item \textbf{GraphCodeBERT (M2) là mô hình chuyển dịch ngôn ngữ bền vững nhất:} Giữ vững vị trí số 1 trên cả hai ngôn ngữ (F1 đạt \textbf{61,79\%} trên Java và \textbf{52,76\%} trên C/C++ tại ngưỡng đóng băng, và đạt tới \textbf{70,00\%} F1 khi hiệu chỉnh ngưỡng $\tau = 0,98$ với ROC-AUC lên tới \textbf{89,82\%}). Đồ thị DFG giúp M2 loại bỏ trên 76\% các ca khác bài toán C/C++ ngay cả khi chỉ được huấn luyện bằng mã nguồn Java.
+\item \textbf{CodeBERT (M1) có độ bao phủ chuyển dịch tuyệt đối nhưng nhạy cảm với âm tính giả:} Đạt Recall cực cao (98,33\% trên Java và \textbf{100,00\%} trên C/C++), bắt trọn vẹn 120/120 cặp clone C/C++. Phiên bản Freeze Backbone giúp M1 giải quyết triệt để vấn đề âm tính giả trên C/C++, nâng Precision lên \textbf{63,64\%} và Accuracy lên \textbf{86,67\%}.
+\item \textbf{ASTNN (M3) và CPG-GNN (M4) gặp rào cản ngữ pháp riêng của từng ngôn ngữ:} ASTNN được huấn luyện với tập 45 loại câu lệnh Java nên khi gặp cấu trúc con trỏ và macro của C++ chỉ đạt F1 30,03\%. M4 đòi hỏi ngưỡng phân phối được hiệu chỉnh riêng cho từng ngôn ngữ do mật độ đồ thị CPG của Java và C++ khác biệt đáng kể.
 \end{itemize}
 
 %======================================================================
