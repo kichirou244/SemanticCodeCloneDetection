@@ -1,0 +1,58 @@
+{
+  "experiment_id": "exp_bcb_004",
+  "model_id": "M3",
+  "best_epoch": 1,
+  "best_f1": 0.2466,
+  "best_threshold": 0.52,
+  "total_training_time_s": 164.2,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.692,
+      "val_loss": 0.7217,
+      "val_f1": 0.2466,
+      "optimal_threshold": 0.52,
+      "metrics": {
+        "threshold": 0.52,
+        "precision": 0.1444,
+        "recall": 0.8458,
+        "f1": 0.2466,
+        "accuracy": 0.2962,
+        "roc_auc": 0.5795
+      },
+      "elapsed_s": 54.0
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.6934,
+      "val_loss": 0.6982,
+      "val_f1": 0.2397,
+      "optimal_threshold": 0.1,
+      "metrics": {
+        "threshold": 0.1,
+        "precision": 0.1362,
+        "recall": 1.0,
+        "f1": 0.2397,
+        "accuracy": 0.1362,
+        "roc_auc": 0.5136
+      },
+      "elapsed_s": 53.2
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.6932,
+      "val_loss": 0.6931,
+      "val_f1": 0.2397,
+      "optimal_threshold": 0.1,
+      "metrics": {
+        "threshold": 0.1,
+        "precision": 0.1362,
+        "recall": 1.0,
+        "f1": 0.2397,
+        "accuracy": 0.1362,
+        "roc_auc": 0.5129
+      },
+      "elapsed_s": 53.4
+    }
+  ]
+}

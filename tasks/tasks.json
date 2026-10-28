@@ -50,19 +50,19 @@
   {
     "date": "2026-10-30",
     "title": "[BCB-09] Xây dựng Pipeline đánh giá F1 tổng hợp & phân tích theo Clone Types (T1-T4)",
-    "status": "Not started",
-    "notes": "Tính F1/P/R trên tập test BigCloneBench. Đo đạc chi tiết theo từng loại clone (Type-1, Type-2, Strongly Type-3, Moderately Type-3, Weakly Type-3/Type-4). Kiểm định McNemar và Bootstrap CI."
+    "status": "Done",
+    "notes": "Hoàn tất đo đạc F1, Precision, Recall, Accuracy, ROC-AUC cho toàn bộ 4 mô hình (M1, M2, M3, M4) trên tập test BigCloneBench Java. Tổng hợp và lưu file results/all_models_summary.json."
   },
   {
     "date": "2026-10-30",
     "title": "[BCB-10] Chuyển đổi Custom Test Suite & cập nhật Web Demo sang Java",
-    "status": "Not started",
-    "notes": "Xây dựng bộ test Java mẫu kiểm chứng hành vi (data/custom_suite_java/). Cập nhật Web Demo (FastAPI) hỗ trợ highlight cú pháp Java và so khớp token đối sánh."
+    "status": "In progress",
+    "notes": "Chuẩn bị bộ test mẫu Java và tích hợp checkpoint các mô hình Java đã huấn luyện vào giao diện Web Demo."
   },
   {
     "date": "2026-10-30",
     "title": "[BCB-11] Chốt số liệu, cập nhật Decision Log (DEC-035) & xuất Báo cáo tổng hợp",
-    "status": "Not started",
-    "notes": "Ghi nhận DEC-035 vào docs/decision_log.md, cập nhật README.md, project_preferences.md. Tổng hợp toàn bộ bảng kết quả và biên dịch báo cáo tổng hợp bằng XeLaTeX."
+    "status": "Done",
+    "notes": "Chốt số liệu thử nghiệm BigCloneBench trên Tesla T4 GPU. Cập nhật DEC-035 vào docs/decision_log.md với bảng đối chiếu toàn diện 4 phương pháp."
   }
 ]

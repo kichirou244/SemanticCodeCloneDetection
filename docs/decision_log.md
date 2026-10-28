@@ -1045,3 +1045,33 @@
   trong `results/` và bảng huấn luyện/test của báo cáo vẫn in cả hai để đối chiếu.
 
 [🔝 Quay lại mục lục](#top)
+
+---
+
+## DEC-035 — Chuyển đổi toàn diện sang BigCloneBench (Java) & Đánh giá độc lập 4 mô hình (M1, M2, M3, M4)
+- **Bối cảnh (2026-10-28):** Chuyển dịch toàn bộ đề tài sang ngôn ngữ Java trên tập benchmark chuẩn `google/code_x_glue_cc_clone_detection_big_clone_bench` (BigCloneBench).
+  Huấn luyện và đánh giá độc lập 4 phương pháp đại diện cho các trường phái biểu diễn mã nguồn:
+  1. **M1 (CodeBERT):** Đại diện trường phái Chuỗi token tuần tự (Sequence-based Transformer).
+  2. **M2 (GraphCodeBERT):** Đại diện trường phái Kết hợp chuỗi & Đồ thị luồng dữ liệu (Sequence + Data Flow Graph - DFG).
+  3. **M3 (ASTNN):** Đại diện trường phái Cấu trúc cú pháp trừu tượng dạng cây (Abstract Syntax Tree - Tree-based RvNN).
+  4. **M4 (CPG-GNN):** Đại diện trường phái Đồ thị thuộc tính mã toàn diện trích xuất từ Joern (Code Property Graph - GAT Backbone).
+  *Loại bỏ:* M5 (Hybrid) và TF-IDF để tập trung tối đa tài nguyên và so sánh trực diện 4 mô hình nền tảng.
+- **Kỹ thuật tối ưu hóa cốt lõi trên Kaggle GPU Tesla T4:**
+  - **FP16 Mixed Precision (`torch.cuda.amp`):** Tận dụng kiến trúc Tensor Cores của Tesla T4, giúp tăng tốc huấn luyện hơn 8 lần (CodeBERT/GraphCodeBERT từ 2.6 giờ/epoch giảm xuống còn 15 phút/epoch).
+  - **Real-time Live Log Streaming:** Khắc phục tình trạng buffer log im lặng của subprocess trên Kaggle bằng cơ chế stream dòng trực tiếp kèm `sys.stdout.flush()`.
+  - **Joern CPG Ingestion Caching:** Trích xuất offline và đóng gói 9,122 Java CPG graphs qua `javasrc2cpg`, nạp song song với fallback an toàn khi gặp hàm khuyết thiếu.
+- **Kết quả đánh giá chính thức trên tập Test BigCloneBench (5,000 cặp):**
+  | Mô hình | Phương pháp biểu diễn | F1-Score | Precision | Recall | Accuracy | ROC-AUC | Ngưỡng tối ưu |
+  | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+  | **M1** | CodeBERT (Sequence) | **90.21%** | 87.12% | **93.53%** | 97.24% | **0.9822** | 0.88 |
+  | **M2** | GraphCodeBERT (Sequence + DFG) | **91.70%** | **92.39%** | 91.03% | **97.76%** | 0.9768 | 0.94 |
+  | **M3** | ASTNN (AST Statement Trees) | 25.54% | 14.88% | 90.00% | 28.62% | 0.5996 | 0.52 |
+  | **M4** | CPG-GNN (Joern CPG + GAT) | 42.98% | 37.45% | 50.44% | 81.80% | 0.7819 | 0.70 |
+- **Nhận xét & Đóng gói:**
+  - GraphCodeBERT (M2) đạt F1 cao nhất (91.70%) nhờ kết hợp hiệu quả giữa ngữ nghĩa token và ràng buộc quan hệ biến (DFG).
+  - CodeBERT (M1) có Recall cao nhất (93.53%) và ROC-AUC vượt trội (0.9822).
+  - CPG-GNN (M4) cải thiện rõ rệt qua các epoch (Val F1 từ 23.9% lên 43.9%, ROC-AUC đạt 0.7819 trên test).
+  - Toàn bộ kết quả được lưu tại `results/all_models_summary.json` và đồng bộ lên Notion.
+
+[🔝 Quay lại mục lục](#top)
+

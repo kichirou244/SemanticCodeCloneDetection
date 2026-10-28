@@ -14,5 +14,21 @@
     "f1": 0.917,
     "accuracy": 0.9776,
     "roc_auc": 0.9768
+  },
+  "M3": {
+    "threshold": 0.52,
+    "precision": 0.1488,
+    "recall": 0.9,
+    "f1": 0.2554,
+    "accuracy": 0.2862,
+    "roc_auc": 0.5996
+  },
+  "M4": {
+    "threshold": 0.7,
+    "precision": 0.3745,
+    "recall": 0.5044,
+    "f1": 0.4298,
+    "accuracy": 0.818,
+    "roc_auc": 0.7819
   }
 }
