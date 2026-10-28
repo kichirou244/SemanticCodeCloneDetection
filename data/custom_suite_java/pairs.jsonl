@@ -1,0 +1,80 @@
+{"pair_id": "P1_t1_rename", "a": "p1_base_bubblesort.java", "b": "p1_v_rename.java", "label": 1, "category": "clone_type1", "note": "P1: doi ten bien/comment/format"}
+{"pair_id": "P1_t2_types", "a": "p1_base_bubblesort.java", "b": "p1_v_types.java", "label": 1, "category": "clone_type2", "note": "P1: doi kieu du lieu/wrapper"}
+{"pair_id": "P1_t3_control", "a": "p1_base_bubblesort.java", "b": "p1_v_while.java", "label": 1, "category": "clone_type3", "note": "P1: vong lap for -> while + flag boolean swapped"}
+{"pair_id": "P1_t4_semantic", "a": "p1_base_bubblesort.java", "b": "p1_v_quicksort.java", "label": 1, "category": "clone_type4", "note": "P1: BubbleSort vs QuickSort phan hoach de quy (cung sap xep tang dan)"}
+{"pair_id": "P1_t1_t2", "a": "p1_v_rename.java", "b": "p1_v_types.java", "label": 1, "category": "clone_type2", "note": "P1: t1 vs t2"}
+{"pair_id": "P1_t1_t3", "a": "p1_v_rename.java", "b": "p1_v_while.java", "label": 1, "category": "clone_type3", "note": "P1: t1 vs t3"}
+{"pair_id": "P1_t3_t4", "a": "p1_v_while.java", "b": "p1_v_quicksort.java", "label": 1, "category": "clone_type4", "note": "P1: t3 vs t4 (semantic)"}
+{"pair_id": "P2_t1_rename", "a": "p2_base_gcd.java", "b": "p2_v_rename.java", "label": 1, "category": "clone_type1", "note": "P2: doi ten bien/comment/format"}
+{"pair_id": "P2_t2_types", "a": "p2_base_gcd.java", "b": "p2_v_types.java", "label": 1, "category": "clone_type2", "note": "P2: doi kieu du lieu/wrapper"}
+{"pair_id": "P2_t3_control", "a": "p2_base_gcd.java", "b": "p2_v_recursion.java", "label": 1, "category": "clone_type3", "note": "P2: vong lap while -> de quy duoi gcd(b, a % b)"}
+{"pair_id": "P2_t4_semantic", "a": "p2_base_gcd.java", "b": "p2_v_binary_gcd.java", "label": 1, "category": "clone_type4", "note": "P2: Euclid GCD vs Stein Binary GCD dich bit (cung tim UCLN)"}
+{"pair_id": "P2_t1_t2", "a": "p2_v_rename.java", "b": "p2_v_types.java", "label": 1, "category": "clone_type2", "note": "P2: t1 vs t2"}
+{"pair_id": "P2_t1_t3", "a": "p2_v_rename.java", "b": "p2_v_recursion.java", "label": 1, "category": "clone_type3", "note": "P2: t1 vs t3"}
+{"pair_id": "P2_t3_t4", "a": "p2_v_recursion.java", "b": "p2_v_binary_gcd.java", "label": 1, "category": "clone_type4", "note": "P2: t3 vs t4 (semantic)"}
+{"pair_id": "P3_t1_rename", "a": "p3_base_bfs.java", "b": "p3_v_rename.java", "label": 1, "category": "clone_type1", "note": "P3: doi ten bien/comment/format"}
+{"pair_id": "P3_t2_types", "a": "p3_base_bfs.java", "b": "p3_v_collections.java", "label": 1, "category": "clone_type2", "note": "P3: doi kieu du lieu/wrapper"}
+{"pair_id": "P3_t3_control", "a": "p3_base_bfs.java", "b": "p3_v_levels.java", "label": 1, "category": "clone_type3", "note": "P3: BFS mo rong theo tang dem khoang cach ngan nhat"}
+{"pair_id": "P3_t4_semantic", "a": "p3_base_bfs.java", "b": "p3_v_dfs.java", "label": 1, "category": "clone_type4", "note": "P3: BFS vs DFS de quy (cung kiem tra tinh lien thong duong di)"}
+{"pair_id": "P3_t1_t2", "a": "p3_v_rename.java", "b": "p3_v_collections.java", "label": 1, "category": "clone_type2", "note": "P3: t1 vs t2"}
+{"pair_id": "P3_t1_t3", "a": "p3_v_rename.java", "b": "p3_v_levels.java", "label": 1, "category": "clone_type3", "note": "P3: t1 vs t3"}
+{"pair_id": "P3_t3_t4", "a": "p3_v_levels.java", "b": "p3_v_dfs.java", "label": 1, "category": "clone_type4", "note": "P3: t3 vs t4 (semantic)"}
+{"pair_id": "P4_t1_rename", "a": "p4_base_palindrome.java", "b": "p4_v_rename.java", "label": 1, "category": "clone_type1", "note": "P4: doi ten bien/comment/format"}
+{"pair_id": "P4_t2_types", "a": "p4_base_palindrome.java", "b": "p4_v_types.java", "label": 1, "category": "clone_type2", "note": "P4: doi kieu du lieu/wrapper"}
+{"pair_id": "P4_t3_control", "a": "p4_base_palindrome.java", "b": "p4_v_clean.java", "label": 1, "category": "clone_type3", "note": "P4: 2 con tro bo qua ky tu trang va khong phan biet hoa thuong"}
+{"pair_id": "P4_t4_semantic", "a": "p4_base_palindrome.java", "b": "p4_v_reverse.java", "label": 1, "category": "clone_type4", "note": "P4: 2 con tro so sanh vs StringBuilder.reverse().equals()"}
+{"pair_id": "P4_t1_t2", "a": "p4_v_rename.java", "b": "p4_v_types.java", "label": 1, "category": "clone_type2", "note": "P4: t1 vs t2"}
+{"pair_id": "P4_t1_t3", "a": "p4_v_rename.java", "b": "p4_v_clean.java", "label": 1, "category": "clone_type3", "note": "P4: t1 vs t3"}
+{"pair_id": "P4_t3_t4", "a": "p4_v_clean.java", "b": "p4_v_reverse.java", "label": 1, "category": "clone_type4", "note": "P4: t3 vs t4 (semantic)"}
+{"pair_id": "P5_t1_rename", "a": "p5_base_list.java", "b": "p5_v_rename.java", "label": 1, "category": "clone_type1", "note": "P5: doi ten bien/comment/format"}
+{"pair_id": "P5_t2_types", "a": "p5_base_list.java", "b": "p5_v_types.java", "label": 1, "category": "clone_type2", "note": "P5: doi kieu du lieu/wrapper"}
+{"pair_id": "P5_t3_control", "a": "p5_base_list.java", "b": "p5_v_while.java", "label": 1, "category": "clone_type3", "note": "P5: dung dummy sentinel node thay vi head don le"}
+{"pair_id": "P5_t4_semantic", "a": "p5_base_list.java", "b": "p5_v_dynamic_array.java", "label": 1, "category": "clone_type4", "note": "P5: SinglyLinkedList vs DynamicArrayList (cung cung cap add/contains/sum)"}
+{"pair_id": "P5_t1_t2", "a": "p5_v_rename.java", "b": "p5_v_types.java", "label": 1, "category": "clone_type2", "note": "P5: t1 vs t2"}
+{"pair_id": "P5_t1_t3", "a": "p5_v_rename.java", "b": "p5_v_while.java", "label": 1, "category": "clone_type3", "note": "P5: t1 vs t3"}
+{"pair_id": "P5_t3_t4", "a": "p5_v_while.java", "b": "p5_v_dynamic_array.java", "label": 1, "category": "clone_type4", "note": "P5: t3 vs t4 (semantic)"}
+{"pair_id": "P1_nonclone_base", "a": "p1_base_bubblesort.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_kho", "note": "P1: cung 2 vong lap duyet mang swap, nhung dao nguoc mang"}
+{"pair_id": "P1_nonclone_t1", "a": "p1_v_rename.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_kho", "note": "P1: t1 vs n_hard"}
+{"pair_id": "P1_nonclone_t2", "a": "p1_v_types.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_kho", "note": "P1: t2 vs n_hard"}
+{"pair_id": "P1_nonclone_t3", "a": "p1_v_while.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_kho", "note": "P1: t3 vs n_hard"}
+{"pair_id": "P1_nonclone_t4", "a": "p1_v_quicksort.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_kho", "note": "P1: t4 vs n_hard"}
+{"pair_id": "P2_nonclone_base", "a": "p2_base_gcd.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_kho", "note": "P2: cung while % va /, UCLN vs tong chu so"}
+{"pair_id": "P2_nonclone_t1", "a": "p2_v_rename.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_kho", "note": "P2: t1 vs n_hard"}
+{"pair_id": "P2_nonclone_t2", "a": "p2_v_types.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_kho", "note": "P2: t2 vs n_hard"}
+{"pair_id": "P2_nonclone_t3", "a": "p2_v_recursion.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_kho", "note": "P2: t3 vs n_hard"}
+{"pair_id": "P2_nonclone_t4", "a": "p2_v_binary_gcd.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_kho", "note": "P2: t4 vs n_hard"}
+{"pair_id": "P3_nonclone_base", "a": "p3_base_bfs.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_kho", "note": "P3: cung BFS tren ma tran ke, nhung to mau 2 mau kiem tra do thi phan doi"}
+{"pair_id": "P3_nonclone_t1", "a": "p3_v_rename.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_kho", "note": "P3: t1 vs n_hard"}
+{"pair_id": "P3_nonclone_t2", "a": "p3_v_collections.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_kho", "note": "P3: t2 vs n_hard"}
+{"pair_id": "P3_nonclone_t3", "a": "p3_v_levels.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_kho", "note": "P3: t3 vs n_hard"}
+{"pair_id": "P3_nonclone_t4", "a": "p3_v_dfs.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_kho", "note": "P3: t4 vs n_hard"}
+{"pair_id": "P4_nonclone_base", "a": "p4_base_palindrome.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_kho", "note": "P4: cung 2 con tro swap ky tu, nhung tao chuoi dao nguoc"}
+{"pair_id": "P4_nonclone_t1", "a": "p4_v_rename.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_kho", "note": "P4: t1 vs n_hard"}
+{"pair_id": "P4_nonclone_t2", "a": "p4_v_types.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_kho", "note": "P4: t2 vs n_hard"}
+{"pair_id": "P4_nonclone_t3", "a": "p4_v_clean.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_kho", "note": "P4: t3 vs n_hard"}
+{"pair_id": "P4_nonclone_t4", "a": "p4_v_reverse.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_kho", "note": "P4: t4 vs n_hard"}
+{"pair_id": "P5_nonclone_base", "a": "p5_base_list.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_kho", "note": "P5: cung struct Node con tro, nhung cai dat LIFO Stack (push/pop/peek)"}
+{"pair_id": "P5_nonclone_t1", "a": "p5_v_rename.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_kho", "note": "P5: t1 vs n_hard"}
+{"pair_id": "P5_nonclone_t2", "a": "p5_v_types.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_kho", "note": "P5: t2 vs n_hard"}
+{"pair_id": "P5_nonclone_t3", "a": "p5_v_while.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_kho", "note": "P5: t3 vs n_hard"}
+{"pair_id": "P5_nonclone_t4", "a": "p5_v_dynamic_array.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_kho", "note": "P5: t4 vs n_hard"}
+{"pair_id": "X_P1P2_base", "a": "p1_base_bubblesort.java", "b": "p2_base_gcd.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P2"}
+{"pair_id": "X_P1P2_t4", "a": "p1_v_quicksort.java", "b": "p2_v_binary_gcd.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P2 (advanced)"}
+{"pair_id": "X_P1P3_base", "a": "p1_base_bubblesort.java", "b": "p3_base_bfs.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P3"}
+{"pair_id": "X_P1P3_t4", "a": "p1_v_quicksort.java", "b": "p3_v_dfs.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P3 (advanced)"}
+{"pair_id": "X_P1P4_base", "a": "p1_base_bubblesort.java", "b": "p4_base_palindrome.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P4"}
+{"pair_id": "X_P1P4_t4", "a": "p1_v_quicksort.java", "b": "p4_v_reverse.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P4 (advanced)"}
+{"pair_id": "X_P1P5_base", "a": "p1_base_bubblesort.java", "b": "p5_base_list.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P5"}
+{"pair_id": "X_P1P5_t4", "a": "p1_v_quicksort.java", "b": "p5_v_dynamic_array.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P5 (advanced)"}
+{"pair_id": "X_P2P3_base", "a": "p2_base_gcd.java", "b": "p3_base_bfs.java", "label": 0, "category": "nonclone_cross", "note": "Cross P2 vs P3"}
+{"pair_id": "X_P2P3_t4", "a": "p2_v_binary_gcd.java", "b": "p3_v_dfs.java", "label": 0, "category": "nonclone_cross", "note": "Cross P2 vs P3 (advanced)"}
+{"pair_id": "X_P2P4_base", "a": "p2_base_gcd.java", "b": "p4_base_palindrome.java", "label": 0, "category": "nonclone_cross", "note": "Cross P2 vs P4"}
+{"pair_id": "X_P2P4_t4", "a": "p2_v_binary_gcd.java", "b": "p4_v_reverse.java", "label": 0, "category": "nonclone_cross", "note": "Cross P2 vs P4 (advanced)"}
+{"pair_id": "X_P2P5_base", "a": "p2_base_gcd.java", "b": "p5_base_list.java", "label": 0, "category": "nonclone_cross", "note": "Cross P2 vs P5"}
+{"pair_id": "X_P2P5_t4", "a": "p2_v_binary_gcd.java", "b": "p5_v_dynamic_array.java", "label": 0, "category": "nonclone_cross", "note": "Cross P2 vs P5 (advanced)"}
+{"pair_id": "X_P3P4_base", "a": "p3_base_bfs.java", "b": "p4_base_palindrome.java", "label": 0, "category": "nonclone_cross", "note": "Cross P3 vs P4"}
+{"pair_id": "X_P3P4_t4", "a": "p3_v_dfs.java", "b": "p4_v_reverse.java", "label": 0, "category": "nonclone_cross", "note": "Cross P3 vs P4 (advanced)"}
+{"pair_id": "X_P3P5_base", "a": "p3_base_bfs.java", "b": "p5_base_list.java", "label": 0, "category": "nonclone_cross", "note": "Cross P3 vs P5"}
+{"pair_id": "X_P3P5_t4", "a": "p3_v_dfs.java", "b": "p5_v_dynamic_array.java", "label": 0, "category": "nonclone_cross", "note": "Cross P3 vs P5 (advanced)"}
+{"pair_id": "X_P4P5_base", "a": "p4_base_palindrome.java", "b": "p5_base_list.java", "label": 0, "category": "nonclone_cross", "note": "Cross P4 vs P5"}
+{"pair_id": "X_P4P5_t4", "a": "p4_v_reverse.java", "b": "p5_v_dynamic_array.java", "label": 0, "category": "nonclone_cross", "note": "Cross P4 vs P5 (advanced)"}

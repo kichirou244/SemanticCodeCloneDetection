@@ -3,6 +3,7 @@
 # test nằm trong repo; `data/*` (không phải `data/`) + `!` mới re-include được.
 data/*
 !data/custom_suite/
+!data/custom_suite_java/
 
 # Kết quả chạy (giữ reports/, bỏ checkpoints nặng)
 results/*/checkpoints/

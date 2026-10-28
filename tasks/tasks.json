@@ -56,8 +56,8 @@
   {
     "date": "2026-10-30",
     "title": "[BCB-10] Chuyển đổi Custom Test Suite & cập nhật Web Demo sang Java",
-    "status": "In progress",
-    "notes": "Chuẩn bị bộ test mẫu Java và tích hợp checkpoint các mô hình Java đã huấn luyện vào giao diện Web Demo."
+    "status": "Done",
+    "notes": "Xây dựng hoàn chỉnh data/custom_suite_java/ (30 file mã nguồn, 80 cặp: T1-T4, skeleton traps, cross-problem). Viết scripts/score_custom_suite_java.py và xuất ma trận nhầm lẫn chi tiết vào workspace/custom_suite_java_scores.json."
   },
   {
     "date": "2026-10-30",

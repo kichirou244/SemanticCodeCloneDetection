@@ -1,0 +1,58 @@
+{
+  "experiment_id": "exp_bcb_003",
+  "model_id": "M2",
+  "best_epoch": 1,
+  "best_f1": 0.9119,
+  "best_threshold": 0.94,
+  "total_training_time_s": 5731.9,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.0991,
+      "val_loss": 0.1279,
+      "val_f1": 0.9119,
+      "optimal_threshold": 0.94,
+      "metrics": {
+        "threshold": 0.94,
+        "precision": 0.9046,
+        "recall": 0.9192,
+        "f1": 0.9119,
+        "accuracy": 0.9758,
+        "roc_auc": 0.9787
+      },
+      "elapsed_s": 1922.2
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.0261,
+      "val_loss": 0.1333,
+      "val_f1": 0.9084,
+      "optimal_threshold": 0.74,
+      "metrics": {
+        "threshold": 0.74,
+        "precision": 0.8924,
+        "recall": 0.9251,
+        "f1": 0.9084,
+        "accuracy": 0.9746,
+        "roc_auc": 0.984
+      },
+      "elapsed_s": 1903.4
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.0158,
+      "val_loss": 0.1417,
+      "val_f1": 0.9118,
+      "optimal_threshold": 0.88,
+      "metrics": {
+        "threshold": 0.88,
+        "precision": 0.9207,
+        "recall": 0.9031,
+        "f1": 0.9118,
+        "accuracy": 0.9762,
+        "roc_auc": 0.9828
+      },
+      "elapsed_s": 1892.9
+    }
+  ]
+}
