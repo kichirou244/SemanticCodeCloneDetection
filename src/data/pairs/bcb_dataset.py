@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Callable, Iterable
+import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 
@@ -125,23 +126,17 @@ def collate_cpg_pairs(
         # Fallback đồ thị an toàn nếu không tìm thấy CPG file
         if g_a is None:
             g_a = CPGraph(
-                sample_id=sid1,
-                node_type=np.zeros(1, dtype=np.int32),
-                node_code=np.array(["missing"]),
-                node_n_args=np.zeros(1, dtype=np.int32),
-                edge_src=np.zeros(0, dtype=np.int32),
-                edge_dst=np.zeros(0, dtype=np.int32),
-                edge_type=np.zeros(0, dtype=np.int32),
+                node_type=np.zeros(1, dtype=np.int64),
+                node_feat=np.zeros((1, 1), dtype=np.float32),
+                edge_index=np.zeros((2, 0), dtype=np.int64),
+                edge_type=np.zeros(0, dtype=np.int64),
             )
         if g_b is None:
             g_b = CPGraph(
-                sample_id=sid2,
-                node_type=np.zeros(1, dtype=np.int32),
-                node_code=np.array(["missing"]),
-                node_n_args=np.zeros(1, dtype=np.int32),
-                edge_src=np.zeros(0, dtype=np.int32),
-                edge_dst=np.zeros(0, dtype=np.int32),
-                edge_type=np.zeros(0, dtype=np.int32),
+                node_type=np.zeros(1, dtype=np.int64),
+                node_feat=np.zeros((1, 1), dtype=np.float32),
+                edge_index=np.zeros((2, 0), dtype=np.int64),
+                edge_type=np.zeros(0, dtype=np.int64),
             )
 
         graphs_a.append(g_a)
