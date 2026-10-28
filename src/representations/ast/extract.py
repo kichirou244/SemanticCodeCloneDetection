@@ -108,13 +108,19 @@ def get_parser(language: str = "cpp") -> Parser:
     if language not in SUPPORTED:
         raise ValueError(f"chưa hỗ trợ ngôn ngữ {language!r}; có {sorted(SUPPORTED)}")
     if language == "cpp":
-        import tree_sitter_cpp
-
-        return Parser(Language(tree_sitter_cpp.language()))
+        try:
+            import tree_sitter_cpp
+            return Parser(Language(tree_sitter_cpp.language()))
+        except Exception:
+            import tree_sitter_language_pack as tslp
+            return tslp.get_parser("cpp")
     if language == "java":
-        import tree_sitter_java
-
-        return Parser(Language(tree_sitter_java.language()))
+        try:
+            import tree_sitter_java
+            return Parser(Language(tree_sitter_java.language()))
+        except Exception:
+            import tree_sitter_language_pack as tslp
+            return tslp.get_parser("java")
     import tree_sitter_python
 
     return Parser(Language(tree_sitter_python.language()))
