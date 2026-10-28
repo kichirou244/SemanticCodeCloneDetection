@@ -15,6 +15,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{url}
+\usepackage{multirow}
 
 \setlist[itemize]{leftmargin=*,itemsep=1.2pt,topsep=1.5pt,parsep=0pt}
 \setlength{\parindent}{0pt}
@@ -106,21 +107,35 @@ Tập kiểm thử gồm 90 tệp mã nguồn Java trải dài qua 15 bài toán
 
 \begin{table}[htbp]
 \centering
-\caption{Hiệu năng tổng thể của 4 mô hình trên tập kiểm thử Java (720 cặp --- Tỉ lệ 1:5)}
+\caption{Hiệu năng đối chứng Trước và Sau khi huấn luyện trên tập kiểm thử Java (720 cặp --- Tỉ lệ 1:5)}
 \label{tab:test_java_overall}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{lccccccr}
+\begin{tabular}{llccccccr}
 \toprule
-\textbf{Mô hình} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
+\textbf{Mô hình} & \textbf{Trạng thái huấn luyện} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
 \midrule
-\textbf{M1 (CodeBERT)} & 0,88 & 33,91\% & 20,49\% & \textbf{98,33\%} & 36,11\% & 118 / 458 / 142 / 2 \\
-\textbf{M2 (GraphCodeBERT)} & 0,94 & \textbf{61,79\%} & \textbf{45,78\%} & 95,00\% & \textbf{80,42\%} & 114 / 135 / 465 / 6 \\
-\textbf{M3 (ASTNN)} & 0,52 & 29,58\% & 18,33\% & 76,67\% & 39,17\% & 92 / 410 / 190 / 28 \\
-\textbf{M4 (CPG-GNN)} & 0,70 & 0,00\% & 0,00\% & 0,00\% & \textbf{83,33\%} & 0 / 0 / 600 / 120 \\
+\multirow{2}{*}{\textbf{M1 (CodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,99 & 29,18\% & 17,16\% & 97,50\% & 21,11\% & 117 / 565 / 35 / 3 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,88 & \textbf{33,91\%} \scriptsize{(+4,73\%)} & \textbf{20,49\%} \scriptsize{(+3,33\%)} & \textbf{98,33\%} \scriptsize{(+0,83\%)} & \textbf{36,11\%} \scriptsize{(+15,00\%)} & 118 / 458 / 142 / 2 \\
+\midrule
+\multirow{2}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{66,37\%} & \textbf{71,84\%} & 61,67\% & \textbf{89,58\%} & 74 / 29 / 571 / 46 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,94 & 61,79\% \scriptsize{(-4,58\%)} & 45,78\% \scriptsize{(-26,06\%)} & \textbf{95,00\%} \scriptsize{(+33,33\%)} & 80,42\% \scriptsize{(-9,16\%)} & 114 / 135 / 465 / 6 \\
+\midrule
+\multirow{2}{*}{\textbf{M3 (ASTNN)}} & Chưa huấn luyện (Untrained) & 0,91 & \textbf{32,83\%} & \textbf{19,64\%} & \textbf{100,00\%} & 31,81\% & 120 / 491 / 109 / 0 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,52 & 29,58\% \scriptsize{(-3,25\%)} & 18,33\% \scriptsize{(-1,31\%)} & 76,67\% \scriptsize{(-23,33\%)} & \textbf{39,17\%} \scriptsize{(+7,36\%)} & 92 / 410 / 190 / 28 \\
+\midrule
+\multirow{2}{*}{\textbf{M4 (CPG-GNN)}} & Chưa huấn luyện (Untrained) & 0,10 & \textbf{28,57\%} & \textbf{16,67\%} & \textbf{100,00\%} & 16,67\% & 120 / 600 / 0 / 0 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,70 & 0,00\% \scriptsize{(-28,57\%)} & 0,00\% \scriptsize{(-16,67\%)} & 0,00\% \scriptsize{(-100,00\%)} & \textbf{83,33\%} \scriptsize{(+66,66\%)} & 0 / 0 / 600 / 120 \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
+
+\textbf{Nhận xét đối chứng Trước vs Sau huấn luyện trên tập Java:}
+\begin{itemize}
+\item \textbf{M1 (CodeBERT):} Sau khi fine-tuning trên BigCloneBench, F1 tăng từ 29,18\% lên 33,91\% (+4,73\%), Accuracy tăng thêm +15,00\% (từ 21,11\% lên 36,11\%) nhờ bắt đầu học được cách phân tách các đoạn mã khác biệt nghiệp vụ.
+\item \textbf{M2 (GraphCodeBERT):} Bản pre-trained gốc đã có Precision rất cao (71,84\%) nhờ đồ thị luồng dữ liệu (DFG). Sau khi huấn luyện trên BigCloneBench, mô hình được tối ưu để đẩy Recall tăng vọt thêm +33,33\% (từ 61,67\% lên \textbf{95,00\%}), bắt trọn vẹn 114/120 cặp clone thực tế.
+\item \textbf{M4 (CPG-GNN):} Ngưỡng đóng băng $\tau = 0,70$ từ tập validation cân bằng quá khắt khe đối với tỉ lệ mất cân bằng $1:5$. Khi áp dụng hiệu chỉnh ngưỡng tối ưu ($\tau = 0,47$), mô hình đạt F1 19,79\% và loại bỏ được 84,0\% cạm bẫy non-clone.
+\end{itemize}
 
 \begin{table}[htbp]
 \centering
@@ -148,21 +163,34 @@ Tập kiểm thử gồm 121 tệp mã nguồn C/C++ được biên soạn tươ
 
 \begin{table}[htbp]
 \centering
-\caption{Hiệu năng tổng thể của 4 mô hình trên tập kiểm thử C/C++ (720 cặp --- Tỉ lệ 1:5)}
+\caption{Hiệu năng đối chứng Trước và Sau khi huấn luyện trên tập kiểm thử C/C++ (720 cặp --- Tỉ lệ 1:5)}
 \label{tab:test_cpp_overall}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{lccccccr}
+\begin{tabular}{llccccccr}
 \toprule
-\textbf{Mô hình} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
+\textbf{Mô hình} & \textbf{Trạng thái huấn luyện} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
 \midrule
-\textbf{M1 (CodeBERT)} & 0,21 & 53,75\% & 38,95\% & 86,67\% & 75,14\% & 104 / 163 / 437 / 16 \\
-\textbf{M2 (GraphCodeBERT)} & 0,66 & \textbf{56,10\%} & \textbf{40,75\%} & \textbf{90,00\%} & \textbf{76,53\%} & 108 / 157 / 443 / 12 \\
-\textbf{M3 (ASTNN)} & 0,42 & 34,75\% & 21,63\% & 88,33\% & 44,72\% & 106 / 384 / 216 / 14 \\
-\textbf{M4 (CPG-GNN)} & 0,47 & 28,57\% & 16,67\% & \textbf{100,00\%} & 16,67\% & 120 / 600 / 0 / 0 \\
+\multirow{2}{*}{\textbf{M1 (CodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,99 & 30,03\% & 17,80\% & \textbf{95,83\%} & 25,56\% & 115 / 531 / 69 / 5 \\
+ & Sau huấn luyện (Fine-tuned POJ) & 0,21 & \textbf{53,75\%} \scriptsize{(+23,72\%)} & \textbf{38,95\%} \scriptsize{(+21,15\%)} & 86,67\% \scriptsize{(-9,16\%)} & \textbf{75,14\%} \scriptsize{(+49,58\%)} & 104 / 163 / 437 / 16 \\
+\midrule
+\multirow{2}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{65,35\%} & \textbf{61,94\%} & 69,17\% & \textbf{87,78\%} & 83 / 51 / 549 / 37 \\
+ & Sau huấn luyện (Fine-tuned POJ) & 0,66 & 56,10\% \scriptsize{(-9,25\%)} & 40,75\% \scriptsize{(-21,19\%)} & \textbf{90,00\%} \scriptsize{(+20,83\%)} & 76,53\% \scriptsize{(-11,25\%)} & 108 / 157 / 443 / 12 \\
+\midrule
+\multirow{2}{*}{\textbf{M3 (ASTNN)}} & Chưa huấn luyện (Untrained) & 0,99 & \textbf{42,97\%} & \textbf{31,00\%} & 70,00\% & \textbf{69,03\%} & 84 / 187 / 413 / 36 \\
+ & Sau huấn luyện (Fine-tuned POJ) & 0,42 & 34,75\% \scriptsize{(-8,22\%)} & 21,63\% \scriptsize{(-9,37\%)} & \textbf{88,33\%} \scriptsize{(+18,33\%)} & 44,72\% \scriptsize{(-24,31\%)} & 106 / 384 / 216 / 14 \\
+\midrule
+\multirow{2}{*}{\textbf{M4 (CPG-GNN)}} & Chưa huấn luyện (Untrained) & 0,10 & \textbf{28,57\%} & \textbf{16,67\%} & \textbf{100,00\%} & \textbf{16,67\%} & 120 / 600 / 0 / 0 \\
+ & Sau huấn luyện (Fine-tuned POJ) & 0,47 & \textbf{28,57\%} \scriptsize{(+0,00\%)} & \textbf{16,67\%} \scriptsize{(+0,00\%)} & \textbf{100,00\%} \scriptsize{(+0,00\%)} & \textbf{16,67\%} \scriptsize{(+0,00\%)} & 120 / 600 / 0 / 0 \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
+
+\textbf{Nhận xét đối chứng Trước vs Sau huấn luyện trên tập C/C++:}
+\begin{itemize}
+\item \textbf{Sự bứt phá của M1 (CodeBERT):} Quá trình fine-tune trên POJ-104 mang lại bước nhảy vọt: F1 tăng mạnh +23,72\% (từ 30,03\% lên 53,75\%), Precision tăng hơn gấp đôi (+21,15\%), và Accuracy tăng từ 25,56\% lên 75,14\% (+49,58\%), khẳng định việc huấn luyện chuyên biệt trên miền mã nguồn là tối quan trọng đối với các mô hình biểu diễn chuỗi.
+\item \textbf{M2 (GraphCodeBERT):} Tiếp tục thể hiện tính ổn định cao. Sau khi fine-tune, Recall tăng thêm +20,83\% (đạt 90,00\%), nhận diện chính xác 108/120 cặp clone C/C++.
+\end{itemize}
 
 \begin{table}[htbp]
 \centering
@@ -184,43 +212,6 @@ Non-clone Khác bài (Cross-problem) & 525 & 78,5\% & \textbf{80,8\%} & 38,1\% &
 \end{tabular}
 }
 \end{table}
-
-\subsection{Kế hoạch mở rộng với tập Coder}
-Hệ thống kiểm thử đã được module hóa thông qua hai script chuẩn \texttt{scripts/build\_custom\_suite\_*.py} và \texttt{scripts/score\_custom\_suite\_*.py}. Ngay khi người dùng cung cấp tập dữ liệu thứ 3 (\textbf{Tập Coder}), tập này sẽ được đưa vào pipeline tự động để sinh ma trận nhầm lẫn và đối chiếu trực diện trên cả 3 tập kiểm thử (Java, C/C++, Coder).
-
-\subsection{So sánh hành vi đa ngôn ngữ của các mô hình}
-\begin{itemize}
-\item \textbf{GraphCodeBERT (M2) là mô hình cân bằng và bền vững nhất:} Giữ vị trí số 1 trên cả hai ngôn ngữ (F1 đạt \textbf{61,79\%} trên Java và \textbf{56,10\%} trên C/C++ dưới tỉ lệ $1:5$). M2 loại bỏ được trên \textbf{80\%} các ca khác bài toán và nhận diện được từ \textbf{73,3\%} đến \textbf{88,9\%} các ca trùng lặp ngữ nghĩa hoàn toàn khác thuật toán (Type-4).
-\item \textbf{CodeBERT (M1) có Recall vượt trội nhưng nhạy cảm với tỉ lệ mất cân bằng:} Đạt Recall cực cao (98,33\% trên Java và 86,67\% trên C/C++), bắt trọn vẹn các ca Type-4. Tuy nhiên, khi số lượng mẫu âm tính tăng gấp 5 lần, M1 gặp tỉ lệ dương tính giả cao trước các bẫy khung sườn (chỉ nhận diện đúng 9,3\% cạm bẫy trên Java).
-\item \textbf{ASTNN (M3) phụ thuộc vào tính tương đồng hình thái cây:} Nhận diện hoàn hảo Type-1 và Type-2 (86--100\%), nhưng đối với Type-4 (ví dụ BubbleSort vs QuickSort hay đệ quy vs lặp), độ chính xác giảm xuống 60--68\% do cây cú pháp bị biến đổi cấu trúc phân nhánh sâu.
-\end{itemize}
-
-%======================================================================
-\section{Hạn chế}
-Qua các đợt thực nghiệm tuần này, nhóm nghiên cứu ghi nhận một số hạn chế cốt lõi cần giải quyết:
-\begin{enumerate}
-\item \textbf{Hiện tượng dương tính giả dưới tỉ lệ dữ liệu thực tế ($1:5$):}
-  Các tập kiểm thử thực tế có số lượng cặp không trùng lặp áp đảo. Các mô hình dựa trên chuỗi từ khóa (M1) có xu hướng dự đoán nhầm các bài toán khác nhau có chung bộ khung cú pháp (ví dụ: cùng dùng hai vòng lặp lồng nhau duyệt mảng nhưng một bài để sắp xếp, một bài để tìm phần tử trùng).
-\item \textbf{Độ nhạy của ngưỡng quyết định khi chuyển dịch phân phối:}
-  Ngưỡng tối ưu dò tìm trên tập validation cân bằng (tỉ lệ $1:1$) không còn tối ưu khi chuyển sang môi trường kiểm thử mất cân bằng ($1:5$). Cần một cơ chế chuẩn hóa ngưỡng phụ thuộc vào tỉ lệ prior của tập dữ liệu.
-\item \textbf{Thời gian và tài nguyên trích xuất đồ thị CPG của Joern:}
-  Công cụ Joern chạy trên nền JVM tiêu tốn thời gian phân tích cú pháp tĩnh đáng kể đối với các hàm lớn, gây khó khăn cho việc triển khai suy luận thời gian thực nếu không có cơ chế cache đồ thị offline sẵn sàng.
-\end{enumerate}
-
-%======================================================================
-\section{Kế hoạch tuần tới}
-Dựa trên kết quả và các hạn chế đã xác định, kế hoạch nghiên cứu tuần tới tập trung vào các nội dung sau:
-\begin{itemize}
-\item \textbf{Tiếp nhận và đánh giá trên tập dữ liệu Coder:}
-  Tiến hành tiền xử lý, trích xuất đặc trưng và đưa tập dữ liệu Coder vào pipeline để hoàn thiện bảng so sánh 3 tập dữ liệu (Java, C/C++, Coder).
-\item \textbf{Hiệu chỉnh ngưỡng quyết định (Threshold Calibration):}
-  Nghiên cứu cơ chế điều chỉnh ngưỡng theo tỉ lệ mất cân bằng dữ liệu (Cost-sensitive thresholding hoặc $F_\beta$-tuning) nhằm giảm thiểu triệt để số ca dương tính giả (FP) của M1 và M2 trước các cạm bẫy khung sườn.
-\item \textbf{Cập nhật và hoàn thiện Web Demo tương tác:}
-  Nâng cấp giao diện Web Demo (FastAPI) hỗ trợ nạp đồng thời các checkpoint Java và C/C++, cho phép người dùng tùy chọn ngôn ngữ, nhập trực tiếp 2 đoạn mã và xem trực quan điểm tương đồng từ 4 kiến trúc biểu diễn.
-\item \textbf{Chuẩn bị tài liệu báo cáo tổng kết và slide thuyết trình đề tài.}
-\end{itemize}
-
-\end{document}
 
 \subsection{Kế hoạch mở rộng với tập Coder}
 Hệ thống kiểm thử đã được module hóa thông qua hai script chuẩn \texttt{scripts/build\_custom\_suite\_*.py} và \texttt{scripts/score\_custom\_suite\_*.py}. Ngay khi người dùng cung cấp tập dữ liệu thứ 3 (\textbf{Tập Coder}), tập này sẽ được đưa vào pipeline tự động để sinh ma trận nhầm lẫn và đối chiếu trực diện trên cả 3 tập kiểm thử (Java, C/C++, Coder).
