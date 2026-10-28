@@ -43,3 +43,4 @@ workspace
 
 hs_*.log
 kaggle_tmp/
+kaggle_output/

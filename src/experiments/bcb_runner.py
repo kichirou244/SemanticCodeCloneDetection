@@ -528,10 +528,13 @@ def evaluate_model(
     collate = get_collate_fn(cfg, model_id, tokenizer, device, ast_store=ast_store, cpg_dir=cpg_dir)
     test_loader = DataLoader(BCBPairDataset(test_pairs), batch_size=32, shuffle=False, collate_fn=collate)
 
+    tr_cfg = cfg.get("training", {})
+    use_amp = bool(tr_cfg.get("mixed_precision", False)) and (device.type == "cuda")
+
     preds, trues = [], []
     with torch.no_grad():
         for batch in test_loader:
-            with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=(device.type == "cuda")):
+            with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=use_amp):
                 logits, labels = forward_batch(model, batch, model_id)
             probs = torch.sigmoid(logits).cpu().numpy().tolist()
             preds.extend(probs)
