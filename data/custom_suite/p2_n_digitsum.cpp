@@ -1,14 +1,10 @@
-#include <bits/stdc++.h>
-using namespace std;
-int main() {
-    int n;
-    cin >> n;
-    int s = 0;
+#include <cmath>
+int sumDigits(int n) {
+    int sum = 0;
+    n = std::abs(n);
     while (n != 0) {
-        int d = n % 10;
-        s = s + d;
-        n = n / 10;
+        sum += n % 10;
+        n /= 10;
     }
-    cout << s << endl;
-    return 0;
+    return sum;
 }

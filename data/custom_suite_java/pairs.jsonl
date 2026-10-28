@@ -1,80 +1,720 @@
-{"pair_id": "P1_t1_rename", "a": "p1_base_bubblesort.java", "b": "p1_v_rename.java", "label": 1, "category": "clone_type1", "note": "P1: doi ten bien/comment/format"}
-{"pair_id": "P1_t2_types", "a": "p1_base_bubblesort.java", "b": "p1_v_types.java", "label": 1, "category": "clone_type2", "note": "P1: doi kieu du lieu/wrapper"}
-{"pair_id": "P1_t3_control", "a": "p1_base_bubblesort.java", "b": "p1_v_while.java", "label": 1, "category": "clone_type3", "note": "P1: vong lap for -> while + flag boolean swapped"}
-{"pair_id": "P1_t4_semantic", "a": "p1_base_bubblesort.java", "b": "p1_v_quicksort.java", "label": 1, "category": "clone_type4", "note": "P1: BubbleSort vs QuickSort phan hoach de quy (cung sap xep tang dan)"}
-{"pair_id": "P1_t1_t2", "a": "p1_v_rename.java", "b": "p1_v_types.java", "label": 1, "category": "clone_type2", "note": "P1: t1 vs t2"}
-{"pair_id": "P1_t1_t3", "a": "p1_v_rename.java", "b": "p1_v_while.java", "label": 1, "category": "clone_type3", "note": "P1: t1 vs t3"}
-{"pair_id": "P1_t3_t4", "a": "p1_v_while.java", "b": "p1_v_quicksort.java", "label": 1, "category": "clone_type4", "note": "P1: t3 vs t4 (semantic)"}
-{"pair_id": "P2_t1_rename", "a": "p2_base_gcd.java", "b": "p2_v_rename.java", "label": 1, "category": "clone_type1", "note": "P2: doi ten bien/comment/format"}
-{"pair_id": "P2_t2_types", "a": "p2_base_gcd.java", "b": "p2_v_types.java", "label": 1, "category": "clone_type2", "note": "P2: doi kieu du lieu/wrapper"}
-{"pair_id": "P2_t3_control", "a": "p2_base_gcd.java", "b": "p2_v_recursion.java", "label": 1, "category": "clone_type3", "note": "P2: vong lap while -> de quy duoi gcd(b, a % b)"}
-{"pair_id": "P2_t4_semantic", "a": "p2_base_gcd.java", "b": "p2_v_binary_gcd.java", "label": 1, "category": "clone_type4", "note": "P2: Euclid GCD vs Stein Binary GCD dich bit (cung tim UCLN)"}
-{"pair_id": "P2_t1_t2", "a": "p2_v_rename.java", "b": "p2_v_types.java", "label": 1, "category": "clone_type2", "note": "P2: t1 vs t2"}
-{"pair_id": "P2_t1_t3", "a": "p2_v_rename.java", "b": "p2_v_recursion.java", "label": 1, "category": "clone_type3", "note": "P2: t1 vs t3"}
-{"pair_id": "P2_t3_t4", "a": "p2_v_recursion.java", "b": "p2_v_binary_gcd.java", "label": 1, "category": "clone_type4", "note": "P2: t3 vs t4 (semantic)"}
-{"pair_id": "P3_t1_rename", "a": "p3_base_bfs.java", "b": "p3_v_rename.java", "label": 1, "category": "clone_type1", "note": "P3: doi ten bien/comment/format"}
-{"pair_id": "P3_t2_types", "a": "p3_base_bfs.java", "b": "p3_v_collections.java", "label": 1, "category": "clone_type2", "note": "P3: doi kieu du lieu/wrapper"}
-{"pair_id": "P3_t3_control", "a": "p3_base_bfs.java", "b": "p3_v_levels.java", "label": 1, "category": "clone_type3", "note": "P3: BFS mo rong theo tang dem khoang cach ngan nhat"}
-{"pair_id": "P3_t4_semantic", "a": "p3_base_bfs.java", "b": "p3_v_dfs.java", "label": 1, "category": "clone_type4", "note": "P3: BFS vs DFS de quy (cung kiem tra tinh lien thong duong di)"}
-{"pair_id": "P3_t1_t2", "a": "p3_v_rename.java", "b": "p3_v_collections.java", "label": 1, "category": "clone_type2", "note": "P3: t1 vs t2"}
-{"pair_id": "P3_t1_t3", "a": "p3_v_rename.java", "b": "p3_v_levels.java", "label": 1, "category": "clone_type3", "note": "P3: t1 vs t3"}
-{"pair_id": "P3_t3_t4", "a": "p3_v_levels.java", "b": "p3_v_dfs.java", "label": 1, "category": "clone_type4", "note": "P3: t3 vs t4 (semantic)"}
-{"pair_id": "P4_t1_rename", "a": "p4_base_palindrome.java", "b": "p4_v_rename.java", "label": 1, "category": "clone_type1", "note": "P4: doi ten bien/comment/format"}
-{"pair_id": "P4_t2_types", "a": "p4_base_palindrome.java", "b": "p4_v_types.java", "label": 1, "category": "clone_type2", "note": "P4: doi kieu du lieu/wrapper"}
-{"pair_id": "P4_t3_control", "a": "p4_base_palindrome.java", "b": "p4_v_clean.java", "label": 1, "category": "clone_type3", "note": "P4: 2 con tro bo qua ky tu trang va khong phan biet hoa thuong"}
-{"pair_id": "P4_t4_semantic", "a": "p4_base_palindrome.java", "b": "p4_v_reverse.java", "label": 1, "category": "clone_type4", "note": "P4: 2 con tro so sanh vs StringBuilder.reverse().equals()"}
-{"pair_id": "P4_t1_t2", "a": "p4_v_rename.java", "b": "p4_v_types.java", "label": 1, "category": "clone_type2", "note": "P4: t1 vs t2"}
-{"pair_id": "P4_t1_t3", "a": "p4_v_rename.java", "b": "p4_v_clean.java", "label": 1, "category": "clone_type3", "note": "P4: t1 vs t3"}
-{"pair_id": "P4_t3_t4", "a": "p4_v_clean.java", "b": "p4_v_reverse.java", "label": 1, "category": "clone_type4", "note": "P4: t3 vs t4 (semantic)"}
-{"pair_id": "P5_t1_rename", "a": "p5_base_list.java", "b": "p5_v_rename.java", "label": 1, "category": "clone_type1", "note": "P5: doi ten bien/comment/format"}
-{"pair_id": "P5_t2_types", "a": "p5_base_list.java", "b": "p5_v_types.java", "label": 1, "category": "clone_type2", "note": "P5: doi kieu du lieu/wrapper"}
-{"pair_id": "P5_t3_control", "a": "p5_base_list.java", "b": "p5_v_while.java", "label": 1, "category": "clone_type3", "note": "P5: dung dummy sentinel node thay vi head don le"}
-{"pair_id": "P5_t4_semantic", "a": "p5_base_list.java", "b": "p5_v_dynamic_array.java", "label": 1, "category": "clone_type4", "note": "P5: SinglyLinkedList vs DynamicArrayList (cung cung cap add/contains/sum)"}
-{"pair_id": "P5_t1_t2", "a": "p5_v_rename.java", "b": "p5_v_types.java", "label": 1, "category": "clone_type2", "note": "P5: t1 vs t2"}
-{"pair_id": "P5_t1_t3", "a": "p5_v_rename.java", "b": "p5_v_while.java", "label": 1, "category": "clone_type3", "note": "P5: t1 vs t3"}
-{"pair_id": "P5_t3_t4", "a": "p5_v_while.java", "b": "p5_v_dynamic_array.java", "label": 1, "category": "clone_type4", "note": "P5: t3 vs t4 (semantic)"}
-{"pair_id": "P1_nonclone_base", "a": "p1_base_bubblesort.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_kho", "note": "P1: cung 2 vong lap duyet mang swap, nhung dao nguoc mang"}
-{"pair_id": "P1_nonclone_t1", "a": "p1_v_rename.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_kho", "note": "P1: t1 vs n_hard"}
-{"pair_id": "P1_nonclone_t2", "a": "p1_v_types.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_kho", "note": "P1: t2 vs n_hard"}
-{"pair_id": "P1_nonclone_t3", "a": "p1_v_while.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_kho", "note": "P1: t3 vs n_hard"}
-{"pair_id": "P1_nonclone_t4", "a": "p1_v_quicksort.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_kho", "note": "P1: t4 vs n_hard"}
-{"pair_id": "P2_nonclone_base", "a": "p2_base_gcd.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_kho", "note": "P2: cung while % va /, UCLN vs tong chu so"}
-{"pair_id": "P2_nonclone_t1", "a": "p2_v_rename.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_kho", "note": "P2: t1 vs n_hard"}
-{"pair_id": "P2_nonclone_t2", "a": "p2_v_types.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_kho", "note": "P2: t2 vs n_hard"}
-{"pair_id": "P2_nonclone_t3", "a": "p2_v_recursion.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_kho", "note": "P2: t3 vs n_hard"}
-{"pair_id": "P2_nonclone_t4", "a": "p2_v_binary_gcd.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_kho", "note": "P2: t4 vs n_hard"}
-{"pair_id": "P3_nonclone_base", "a": "p3_base_bfs.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_kho", "note": "P3: cung BFS tren ma tran ke, nhung to mau 2 mau kiem tra do thi phan doi"}
-{"pair_id": "P3_nonclone_t1", "a": "p3_v_rename.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_kho", "note": "P3: t1 vs n_hard"}
-{"pair_id": "P3_nonclone_t2", "a": "p3_v_collections.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_kho", "note": "P3: t2 vs n_hard"}
-{"pair_id": "P3_nonclone_t3", "a": "p3_v_levels.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_kho", "note": "P3: t3 vs n_hard"}
-{"pair_id": "P3_nonclone_t4", "a": "p3_v_dfs.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_kho", "note": "P3: t4 vs n_hard"}
-{"pair_id": "P4_nonclone_base", "a": "p4_base_palindrome.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_kho", "note": "P4: cung 2 con tro swap ky tu, nhung tao chuoi dao nguoc"}
-{"pair_id": "P4_nonclone_t1", "a": "p4_v_rename.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_kho", "note": "P4: t1 vs n_hard"}
-{"pair_id": "P4_nonclone_t2", "a": "p4_v_types.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_kho", "note": "P4: t2 vs n_hard"}
-{"pair_id": "P4_nonclone_t3", "a": "p4_v_clean.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_kho", "note": "P4: t3 vs n_hard"}
-{"pair_id": "P4_nonclone_t4", "a": "p4_v_reverse.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_kho", "note": "P4: t4 vs n_hard"}
-{"pair_id": "P5_nonclone_base", "a": "p5_base_list.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_kho", "note": "P5: cung struct Node con tro, nhung cai dat LIFO Stack (push/pop/peek)"}
-{"pair_id": "P5_nonclone_t1", "a": "p5_v_rename.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_kho", "note": "P5: t1 vs n_hard"}
-{"pair_id": "P5_nonclone_t2", "a": "p5_v_types.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_kho", "note": "P5: t2 vs n_hard"}
-{"pair_id": "P5_nonclone_t3", "a": "p5_v_while.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_kho", "note": "P5: t3 vs n_hard"}
-{"pair_id": "P5_nonclone_t4", "a": "p5_v_dynamic_array.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_kho", "note": "P5: t4 vs n_hard"}
-{"pair_id": "X_P1P2_base", "a": "p1_base_bubblesort.java", "b": "p2_base_gcd.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P2"}
-{"pair_id": "X_P1P2_t4", "a": "p1_v_quicksort.java", "b": "p2_v_binary_gcd.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P2 (advanced)"}
-{"pair_id": "X_P1P3_base", "a": "p1_base_bubblesort.java", "b": "p3_base_bfs.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P3"}
-{"pair_id": "X_P1P3_t4", "a": "p1_v_quicksort.java", "b": "p3_v_dfs.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P3 (advanced)"}
-{"pair_id": "X_P1P4_base", "a": "p1_base_bubblesort.java", "b": "p4_base_palindrome.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P4"}
-{"pair_id": "X_P1P4_t4", "a": "p1_v_quicksort.java", "b": "p4_v_reverse.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P4 (advanced)"}
-{"pair_id": "X_P1P5_base", "a": "p1_base_bubblesort.java", "b": "p5_base_list.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P5"}
-{"pair_id": "X_P1P5_t4", "a": "p1_v_quicksort.java", "b": "p5_v_dynamic_array.java", "label": 0, "category": "nonclone_cross", "note": "Cross P1 vs P5 (advanced)"}
-{"pair_id": "X_P2P3_base", "a": "p2_base_gcd.java", "b": "p3_base_bfs.java", "label": 0, "category": "nonclone_cross", "note": "Cross P2 vs P3"}
-{"pair_id": "X_P2P3_t4", "a": "p2_v_binary_gcd.java", "b": "p3_v_dfs.java", "label": 0, "category": "nonclone_cross", "note": "Cross P2 vs P3 (advanced)"}
-{"pair_id": "X_P2P4_base", "a": "p2_base_gcd.java", "b": "p4_base_palindrome.java", "label": 0, "category": "nonclone_cross", "note": "Cross P2 vs P4"}
-{"pair_id": "X_P2P4_t4", "a": "p2_v_binary_gcd.java", "b": "p4_v_reverse.java", "label": 0, "category": "nonclone_cross", "note": "Cross P2 vs P4 (advanced)"}
-{"pair_id": "X_P2P5_base", "a": "p2_base_gcd.java", "b": "p5_base_list.java", "label": 0, "category": "nonclone_cross", "note": "Cross P2 vs P5"}
-{"pair_id": "X_P2P5_t4", "a": "p2_v_binary_gcd.java", "b": "p5_v_dynamic_array.java", "label": 0, "category": "nonclone_cross", "note": "Cross P2 vs P5 (advanced)"}
-{"pair_id": "X_P3P4_base", "a": "p3_base_bfs.java", "b": "p4_base_palindrome.java", "label": 0, "category": "nonclone_cross", "note": "Cross P3 vs P4"}
-{"pair_id": "X_P3P4_t4", "a": "p3_v_dfs.java", "b": "p4_v_reverse.java", "label": 0, "category": "nonclone_cross", "note": "Cross P3 vs P4 (advanced)"}
-{"pair_id": "X_P3P5_base", "a": "p3_base_bfs.java", "b": "p5_base_list.java", "label": 0, "category": "nonclone_cross", "note": "Cross P3 vs P5"}
-{"pair_id": "X_P3P5_t4", "a": "p3_v_dfs.java", "b": "p5_v_dynamic_array.java", "label": 0, "category": "nonclone_cross", "note": "Cross P3 vs P5 (advanced)"}
-{"pair_id": "X_P4P5_base", "a": "p4_base_palindrome.java", "b": "p5_base_list.java", "label": 0, "category": "nonclone_cross", "note": "Cross P4 vs P5"}
-{"pair_id": "X_P4P5_t4", "a": "p4_v_reverse.java", "b": "p5_v_dynamic_array.java", "label": 0, "category": "nonclone_cross", "note": "Cross P4 vs P5 (advanced)"}
+{"pair_id": "X_p1p15_t2", "a": "p1_v_types.java", "b": "p15_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p15"}
+{"pair_id": "X_p10p12_bb", "a": "p10_base_anagram.java", "b": "p12_base_merge.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p12"}
+{"pair_id": "X_p3p14_nh", "a": "p3_n_bipartite.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p14"}
+{"pair_id": "X_p3p11_bb", "a": "p3_base_bfs.java", "b": "p11_base_kadane.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p11"}
+{"pair_id": "X_p13p14_t4", "a": "p13_v_linked_queue.java", "b": "p14_v_binary_exp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p13 vs p14"}
+{"pair_id": "X_p11p14_t4", "a": "p11_v_divide_conquer.java", "b": "p14_v_binary_exp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p14"}
+{"pair_id": "X_p2p8_t3", "a": "p2_v_recursion.java", "b": "p8_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p8"}
+{"pair_id": "X_p2p7_t1", "a": "p2_v_rename.java", "b": "p7_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p7"}
+{"pair_id": "X_p5p11_t2", "a": "p5_v_types.java", "b": "p11_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p11"}
+{"pair_id": "X_p7p14_nh", "a": "p7_n_factorial.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p14"}
+{"pair_id": "X_p12p13_t2", "a": "p12_v_types.java", "b": "p13_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p13"}
+{"pair_id": "X_p8p12_nh", "a": "p8_n_square.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p12"}
+{"pair_id": "X_p10p15_t2", "a": "p10_v_types.java", "b": "p15_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p15"}
+{"pair_id": "p2_t1_t2", "a": "p2_v_rename.java", "b": "p2_v_types.java", "label": 1, "category": "clone_type2", "note": "p2 t1 vs t2"}
+{"pair_id": "X_p8p11_t3", "a": "p8_v_while.java", "b": "p11_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p11"}
+{"pair_id": "X_p8p14_t1", "a": "p8_v_rename.java", "b": "p14_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p14"}
+{"pair_id": "X_p8p14_t3", "a": "p8_v_while.java", "b": "p14_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p14"}
+{"pair_id": "X_p6p7_t3", "a": "p6_v_recursion.java", "b": "p7_v_recursion.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p7"}
+{"pair_id": "X_p8p10_bb", "a": "p8_base_prime.java", "b": "p10_base_anagram.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p10"}
+{"pair_id": "p10_trap_v_t4", "a": "p10_v_frequency.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_trap", "note": "p10 v_t4 vs skeleton trap"}
+{"pair_id": "X_p4p6_bb", "a": "p4_base_palindrome.java", "b": "p6_base_bsearch.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p6"}
+{"pair_id": "X_p8p11_bb", "a": "p8_base_prime.java", "b": "p11_base_kadane.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p11"}
+{"pair_id": "X_p1p5_t4", "a": "p1_v_quicksort.java", "b": "p5_v_dynamic_array.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p5"}
+{"pair_id": "p6_trap_v_t4", "a": "p6_v_exponential.java", "b": "p6_n_linear_count.java", "label": 0, "category": "nonclone_trap", "note": "p6 v_t4 vs skeleton trap"}
+{"pair_id": "X_p4p9_t3", "a": "p4_v_clean.java", "b": "p9_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p9"}
+{"pair_id": "X_p5p12_t1", "a": "p5_v_rename.java", "b": "p12_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p12"}
+{"pair_id": "X_p1p2_nh", "a": "p1_n_reverse.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p2"}
+{"pair_id": "X_p1p15_t1", "a": "p1_v_rename.java", "b": "p15_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p15"}
+{"pair_id": "X_p5p11_t4", "a": "p5_v_dynamic_array.java", "b": "p11_v_divide_conquer.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p11"}
+{"pair_id": "X_p10p14_nh", "a": "p10_n_substring.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p14"}
+{"pair_id": "p9_t2", "a": "p9_base_matmul.java", "b": "p9_v_types.java", "label": 1, "category": "clone_type2", "note": "p9 types"}
+{"pair_id": "X_p7p12_nh", "a": "p7_n_factorial.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p12"}
+{"pair_id": "p4_t3", "a": "p4_base_palindrome.java", "b": "p4_v_clean.java", "label": 1, "category": "clone_type3", "note": "p4 control"}
+{"pair_id": "X_p11p12_t4", "a": "p11_v_divide_conquer.java", "b": "p12_v_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p12"}
+{"pair_id": "X_p6p12_bb", "a": "p6_base_bsearch.java", "b": "p12_base_merge.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p12"}
+{"pair_id": "p3_t4", "a": "p3_base_bfs.java", "b": "p3_v_dfs.java", "label": 1, "category": "clone_type4", "note": "p3 semantic different algorithm"}
+{"pair_id": "X_p3p12_nh", "a": "p3_n_bipartite.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p12"}
+{"pair_id": "X_p6p10_nh", "a": "p6_n_linear_count.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p10"}
+{"pair_id": "X_p3p10_t1", "a": "p3_v_rename.java", "b": "p10_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p10"}
+{"pair_id": "p9_t3", "a": "p9_base_matmul.java", "b": "p9_v_while.java", "label": 1, "category": "clone_type3", "note": "p9 control"}
+{"pair_id": "p12_trap_v_t1", "a": "p12_v_rename.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_trap", "note": "p12 v_t1 vs skeleton trap"}
+{"pair_id": "X_p5p9_bb", "a": "p5_base_list.java", "b": "p9_base_matmul.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p9"}
+{"pair_id": "p14_t2", "a": "p14_base_power.java", "b": "p14_v_types.java", "label": 1, "category": "clone_type2", "note": "p14 types"}
+{"pair_id": "X_p2p15_t1", "a": "p2_v_rename.java", "b": "p15_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p15"}
+{"pair_id": "p11_t2_t4", "a": "p11_v_types.java", "b": "p11_v_divide_conquer.java", "label": 1, "category": "clone_type4", "note": "p11 t2 vs t4"}
+{"pair_id": "X_p2p11_t1", "a": "p2_v_rename.java", "b": "p11_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p11"}
+{"pair_id": "X_p8p12_t1", "a": "p8_v_rename.java", "b": "p12_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p12"}
+{"pair_id": "X_p11p15_t3", "a": "p11_v_while.java", "b": "p15_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p15"}
+{"pair_id": "X_p6p12_t2", "a": "p6_v_types.java", "b": "p12_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p12"}
+{"pair_id": "X_p11p13_t4", "a": "p11_v_divide_conquer.java", "b": "p13_v_linked_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p13"}
+{"pair_id": "X_p7p11_nh", "a": "p7_n_factorial.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p11"}
+{"pair_id": "p10_t1_t3", "a": "p10_v_rename.java", "b": "p10_v_clean.java", "label": 1, "category": "clone_type3", "note": "p10 t1 vs t3"}
+{"pair_id": "X_p10p12_nh", "a": "p10_n_substring.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p12"}
+{"pair_id": "p1_t1_t3", "a": "p1_v_rename.java", "b": "p1_v_while.java", "label": 1, "category": "clone_type3", "note": "p1 t1 vs t3"}
+{"pair_id": "X_p8p9_t4", "a": "p8_v_sieve.java", "b": "p9_v_flat.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p9"}
+{"pair_id": "X_p7p9_t3", "a": "p7_v_recursion.java", "b": "p9_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p9"}
+{"pair_id": "X_p4p5_t4", "a": "p4_v_reverse.java", "b": "p5_v_dynamic_array.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p5"}
+{"pair_id": "X_p7p8_nh", "a": "p7_n_factorial.java", "b": "p8_n_square.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p8"}
+{"pair_id": "p8_t1_t2", "a": "p8_v_rename.java", "b": "p8_v_types.java", "label": 1, "category": "clone_type2", "note": "p8 t1 vs t2"}
+{"pair_id": "X_p9p15_t4", "a": "p9_v_flat.java", "b": "p15_v_vertical.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p15"}
+{"pair_id": "p8_trap_v_t3", "a": "p8_v_while.java", "b": "p8_n_square.java", "label": 0, "category": "nonclone_trap", "note": "p8 v_t3 vs skeleton trap"}
+{"pair_id": "X_p5p8_nh", "a": "p5_n_stack.java", "b": "p8_n_square.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p8"}
+{"pair_id": "X_p1p9_t2", "a": "p1_v_types.java", "b": "p9_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p9"}
+{"pair_id": "p9_t1", "a": "p9_base_matmul.java", "b": "p9_v_rename.java", "label": 1, "category": "clone_type1", "note": "p9 rename"}
+{"pair_id": "X_p4p9_bb", "a": "p4_base_palindrome.java", "b": "p9_base_matmul.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p9"}
+{"pair_id": "X_p6p7_bb", "a": "p6_base_bsearch.java", "b": "p7_base_fib.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p7"}
+{"pair_id": "X_p1p12_t4", "a": "p1_v_quicksort.java", "b": "p12_v_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p12"}
+{"pair_id": "X_p2p14_t4", "a": "p2_v_binary_gcd.java", "b": "p14_v_binary_exp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p14"}
+{"pair_id": "X_p1p3_t4", "a": "p1_v_quicksort.java", "b": "p3_v_dfs.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p3"}
+{"pair_id": "p13_trap_v_t4", "a": "p13_v_linked_queue.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_trap", "note": "p13 v_t4 vs skeleton trap"}
+{"pair_id": "p9_t1_t3", "a": "p9_v_rename.java", "b": "p9_v_while.java", "label": 1, "category": "clone_type3", "note": "p9 t1 vs t3"}
+{"pair_id": "X_p9p15_t2", "a": "p9_v_types.java", "b": "p15_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p15"}
+{"pair_id": "p4_trap_base", "a": "p4_base_palindrome.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_trap", "note": "p4 base vs skeleton trap"}
+{"pair_id": "X_p10p11_t3", "a": "p10_v_clean.java", "b": "p11_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p11"}
+{"pair_id": "X_p3p15_bb", "a": "p3_base_bfs.java", "b": "p15_base_lcp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p15"}
+{"pair_id": "X_p2p6_t1", "a": "p2_v_rename.java", "b": "p6_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p6"}
+{"pair_id": "X_p7p15_t4", "a": "p7_v_matrix.java", "b": "p15_v_vertical.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p15"}
+{"pair_id": "X_p2p10_t4", "a": "p2_v_binary_gcd.java", "b": "p10_v_frequency.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p10"}
+{"pair_id": "X_p8p13_t1", "a": "p8_v_rename.java", "b": "p13_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p13"}
+{"pair_id": "p9_t3_t4", "a": "p9_v_while.java", "b": "p9_v_flat.java", "label": 1, "category": "clone_type4", "note": "p9 t3 vs t4"}
+{"pair_id": "p3_t2_t4", "a": "p3_v_collections.java", "b": "p3_v_dfs.java", "label": 1, "category": "clone_type4", "note": "p3 t2 vs t4"}
+{"pair_id": "X_p4p10_t2", "a": "p4_v_types.java", "b": "p10_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p10"}
+{"pair_id": "X_p5p10_nh", "a": "p5_n_stack.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p10"}
+{"pair_id": "p6_t1_t2", "a": "p6_v_rename.java", "b": "p6_v_types.java", "label": 1, "category": "clone_type2", "note": "p6 t1 vs t2"}
+{"pair_id": "X_p2p11_bb", "a": "p2_base_gcd.java", "b": "p11_base_kadane.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p11"}
+{"pair_id": "p10_trap_base", "a": "p10_base_anagram.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_trap", "note": "p10 base vs skeleton trap"}
+{"pair_id": "X_p2p8_bb", "a": "p2_base_gcd.java", "b": "p8_base_prime.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p8"}
+{"pair_id": "p15_t2", "a": "p15_base_lcp.java", "b": "p15_v_types.java", "label": 1, "category": "clone_type2", "note": "p15 types"}
+{"pair_id": "X_p9p10_bb", "a": "p9_base_matmul.java", "b": "p10_base_anagram.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p10"}
+{"pair_id": "X_p8p13_nh", "a": "p8_n_square.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p13"}
+{"pair_id": "X_p1p14_t2", "a": "p1_v_types.java", "b": "p14_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p14"}
+{"pair_id": "X_p14p15_t3", "a": "p14_v_while.java", "b": "p15_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p14 vs p15"}
+{"pair_id": "X_p7p12_t1", "a": "p7_v_rename.java", "b": "p12_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p12"}
+{"pair_id": "p2_t4", "a": "p2_base_gcd.java", "b": "p2_v_binary_gcd.java", "label": 1, "category": "clone_type4", "note": "p2 semantic different algorithm"}
+{"pair_id": "X_p5p7_t3", "a": "p5_v_while.java", "b": "p7_v_recursion.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p7"}
+{"pair_id": "X_p8p9_nh", "a": "p8_n_square.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p9"}
+{"pair_id": "X_p3p13_t1", "a": "p3_v_rename.java", "b": "p13_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p13"}
+{"pair_id": "X_p7p9_nh", "a": "p7_n_factorial.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p9"}
+{"pair_id": "X_p14p15_nh", "a": "p14_n_sqrt.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p14 vs p15"}
+{"pair_id": "X_p7p15_nh", "a": "p7_n_factorial.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p15"}
+{"pair_id": "p15_t1_t3", "a": "p15_v_rename.java", "b": "p15_v_while.java", "label": 1, "category": "clone_type3", "note": "p15 t1 vs t3"}
+{"pair_id": "p6_trap_v_t1", "a": "p6_v_rename.java", "b": "p6_n_linear_count.java", "label": 0, "category": "nonclone_trap", "note": "p6 v_t1 vs skeleton trap"}
+{"pair_id": "p7_trap_v_t2", "a": "p7_v_types.java", "b": "p7_n_factorial.java", "label": 0, "category": "nonclone_trap", "note": "p7 v_t2 vs skeleton trap"}
+{"pair_id": "X_p11p12_nh", "a": "p11_n_min_subarray.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p12"}
+{"pair_id": "p6_t3", "a": "p6_base_bsearch.java", "b": "p6_v_recursion.java", "label": 1, "category": "clone_type3", "note": "p6 control"}
+{"pair_id": "X_p10p12_t2", "a": "p10_v_types.java", "b": "p12_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p12"}
+{"pair_id": "X_p2p10_t2", "a": "p2_v_types.java", "b": "p10_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p10"}
+{"pair_id": "X_p1p8_nh", "a": "p1_n_reverse.java", "b": "p8_n_square.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p8"}
+{"pair_id": "X_p4p6_t4", "a": "p4_v_reverse.java", "b": "p6_v_exponential.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p6"}
+{"pair_id": "X_p2p3_bb", "a": "p2_base_gcd.java", "b": "p3_base_bfs.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p3"}
+{"pair_id": "X_p6p11_nh", "a": "p6_n_linear_count.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p11"}
+{"pair_id": "X_p7p8_t1", "a": "p7_v_rename.java", "b": "p8_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p8"}
+{"pair_id": "p6_t3_t4", "a": "p6_v_recursion.java", "b": "p6_v_exponential.java", "label": 1, "category": "clone_type4", "note": "p6 t3 vs t4"}
+{"pair_id": "X_p3p6_bb", "a": "p3_base_bfs.java", "b": "p6_base_bsearch.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p6"}
+{"pair_id": "X_p7p11_t3", "a": "p7_v_recursion.java", "b": "p11_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p11"}
+{"pair_id": "X_p4p14_bb", "a": "p4_base_palindrome.java", "b": "p14_base_power.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p14"}
+{"pair_id": "X_p3p6_t3", "a": "p3_v_levels.java", "b": "p6_v_recursion.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p6"}
+{"pair_id": "X_p4p11_t2", "a": "p4_v_types.java", "b": "p11_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p11"}
+{"pair_id": "X_p13p14_t1", "a": "p13_v_rename.java", "b": "p14_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p13 vs p14"}
+{"pair_id": "X_p3p8_t4", "a": "p3_v_dfs.java", "b": "p8_v_sieve.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p8"}
+{"pair_id": "X_p5p14_nh", "a": "p5_n_stack.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p14"}
+{"pair_id": "p14_t3_t4", "a": "p14_v_while.java", "b": "p14_v_binary_exp.java", "label": 1, "category": "clone_type4", "note": "p14 t3 vs t4"}
+{"pair_id": "X_p4p13_t4", "a": "p4_v_reverse.java", "b": "p13_v_linked_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p13"}
+{"pair_id": "X_p3p4_bb", "a": "p3_base_bfs.java", "b": "p4_base_palindrome.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p4"}
+{"pair_id": "X_p6p14_t4", "a": "p6_v_exponential.java", "b": "p14_v_binary_exp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p14"}
+{"pair_id": "X_p5p7_bb", "a": "p5_base_list.java", "b": "p7_base_fib.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p7"}
+{"pair_id": "X_p9p13_t2", "a": "p9_v_types.java", "b": "p13_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p13"}
+{"pair_id": "X_p5p8_t4", "a": "p5_v_dynamic_array.java", "b": "p8_v_sieve.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p8"}
+{"pair_id": "X_p4p15_t1", "a": "p4_v_rename.java", "b": "p15_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p15"}
+{"pair_id": "X_p5p14_t1", "a": "p5_v_rename.java", "b": "p14_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p14"}
+{"pair_id": "X_p1p4_nh", "a": "p1_n_reverse.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p4"}
+{"pair_id": "X_p6p14_t2", "a": "p6_v_types.java", "b": "p14_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p14"}
+{"pair_id": "X_p7p8_bb", "a": "p7_base_fib.java", "b": "p8_base_prime.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p8"}
+{"pair_id": "p9_t2_t4", "a": "p9_v_types.java", "b": "p9_v_flat.java", "label": 1, "category": "clone_type4", "note": "p9 t2 vs t4"}
+{"pair_id": "X_p1p7_t1", "a": "p1_v_rename.java", "b": "p7_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p7"}
+{"pair_id": "X_p1p12_t3", "a": "p1_v_while.java", "b": "p12_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p12"}
+{"pair_id": "p4_t3_t4", "a": "p4_v_clean.java", "b": "p4_v_reverse.java", "label": 1, "category": "clone_type4", "note": "p4 t3 vs t4"}
+{"pair_id": "X_p8p12_t2", "a": "p8_v_types.java", "b": "p12_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p12"}
+{"pair_id": "X_p8p10_t1", "a": "p8_v_rename.java", "b": "p10_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p10"}
+{"pair_id": "X_p2p6_t4", "a": "p2_v_binary_gcd.java", "b": "p6_v_exponential.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p6"}
+{"pair_id": "X_p4p11_nh", "a": "p4_n_reverse_string.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p11"}
+{"pair_id": "X_p6p8_t2", "a": "p6_v_types.java", "b": "p8_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p8"}
+{"pair_id": "X_p7p9_t4", "a": "p7_v_matrix.java", "b": "p9_v_flat.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p9"}
+{"pair_id": "p5_t1", "a": "p5_base_list.java", "b": "p5_v_rename.java", "label": 1, "category": "clone_type1", "note": "p5 rename"}
+{"pair_id": "X_p9p14_t3", "a": "p9_v_while.java", "b": "p14_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p14"}
+{"pair_id": "X_p4p15_t3", "a": "p4_v_clean.java", "b": "p15_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p15"}
+{"pair_id": "X_p5p8_bb", "a": "p5_base_list.java", "b": "p8_base_prime.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p8"}
+{"pair_id": "X_p6p9_t4", "a": "p6_v_exponential.java", "b": "p9_v_flat.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p9"}
+{"pair_id": "X_p8p14_t2", "a": "p8_v_types.java", "b": "p14_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p14"}
+{"pair_id": "X_p1p2_t4", "a": "p1_v_quicksort.java", "b": "p2_v_binary_gcd.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p2"}
+{"pair_id": "p15_t1_t2", "a": "p15_v_rename.java", "b": "p15_v_types.java", "label": 1, "category": "clone_type2", "note": "p15 t1 vs t2"}
+{"pair_id": "X_p8p15_t4", "a": "p8_v_sieve.java", "b": "p15_v_vertical.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p15"}
+{"pair_id": "X_p1p6_nh", "a": "p1_n_reverse.java", "b": "p6_n_linear_count.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p6"}
+{"pair_id": "X_p5p6_t1", "a": "p5_v_rename.java", "b": "p6_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p6"}
+{"pair_id": "p8_t3_t4", "a": "p8_v_while.java", "b": "p8_v_sieve.java", "label": 1, "category": "clone_type4", "note": "p8 t3 vs t4"}
+{"pair_id": "X_p8p12_t3", "a": "p8_v_while.java", "b": "p12_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p12"}
+{"pair_id": "X_p7p15_t1", "a": "p7_v_rename.java", "b": "p15_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p15"}
+{"pair_id": "X_p8p12_bb", "a": "p8_base_prime.java", "b": "p12_base_merge.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p12"}
+{"pair_id": "X_p1p14_t1", "a": "p1_v_rename.java", "b": "p14_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p14"}
+{"pair_id": "X_p2p7_t2", "a": "p2_v_types.java", "b": "p7_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p7"}
+{"pair_id": "p2_t2", "a": "p2_base_gcd.java", "b": "p2_v_types.java", "label": 1, "category": "clone_type2", "note": "p2 types"}
+{"pair_id": "X_p6p7_t1", "a": "p6_v_rename.java", "b": "p7_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p7"}
+{"pair_id": "X_p1p15_t3", "a": "p1_v_while.java", "b": "p15_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p15"}
+{"pair_id": "X_p7p13_t2", "a": "p7_v_types.java", "b": "p13_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p13"}
+{"pair_id": "X_p3p14_t1", "a": "p3_v_rename.java", "b": "p14_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p14"}
+{"pair_id": "X_p6p11_t1", "a": "p6_v_rename.java", "b": "p11_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p11"}
+{"pair_id": "X_p6p14_t1", "a": "p6_v_rename.java", "b": "p14_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p14"}
+{"pair_id": "p12_t1_t2", "a": "p12_v_rename.java", "b": "p12_v_types.java", "label": 1, "category": "clone_type2", "note": "p12 t1 vs t2"}
+{"pair_id": "X_p2p15_bb", "a": "p2_base_gcd.java", "b": "p15_base_lcp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p15"}
+{"pair_id": "X_p5p15_bb", "a": "p5_base_list.java", "b": "p15_base_lcp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p15"}
+{"pair_id": "X_p2p5_t1", "a": "p2_v_rename.java", "b": "p5_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p5"}
+{"pair_id": "X_p11p12_t3", "a": "p11_v_while.java", "b": "p12_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p12"}
+{"pair_id": "p6_t2", "a": "p6_base_bsearch.java", "b": "p6_v_types.java", "label": 1, "category": "clone_type2", "note": "p6 types"}
+{"pair_id": "p5_t1_t3", "a": "p5_v_rename.java", "b": "p5_v_while.java", "label": 1, "category": "clone_type3", "note": "p5 t1 vs t3"}
+{"pair_id": "X_p6p12_t1", "a": "p6_v_rename.java", "b": "p12_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p12"}
+{"pair_id": "X_p4p11_bb", "a": "p4_base_palindrome.java", "b": "p11_base_kadane.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p11"}
+{"pair_id": "p4_t2_t4", "a": "p4_v_types.java", "b": "p4_v_reverse.java", "label": 1, "category": "clone_type4", "note": "p4 t2 vs t4"}
+{"pair_id": "X_p7p13_t1", "a": "p7_v_rename.java", "b": "p13_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p13"}
+{"pair_id": "p3_trap_base", "a": "p3_base_bfs.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_trap", "note": "p3 base vs skeleton trap"}
+{"pair_id": "X_p2p9_bb", "a": "p2_base_gcd.java", "b": "p9_base_matmul.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p9"}
+{"pair_id": "X_p5p14_bb", "a": "p5_base_list.java", "b": "p14_base_power.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p14"}
+{"pair_id": "X_p2p9_t4", "a": "p2_v_binary_gcd.java", "b": "p9_v_flat.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p9"}
+{"pair_id": "X_p2p11_nh", "a": "p2_n_digitsum.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p11"}
+{"pair_id": "X_p4p7_t3", "a": "p4_v_clean.java", "b": "p7_v_recursion.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p7"}
+{"pair_id": "p7_t1_t3", "a": "p7_v_rename.java", "b": "p7_v_recursion.java", "label": 1, "category": "clone_type3", "note": "p7 t1 vs t3"}
+{"pair_id": "p13_t3", "a": "p13_base_queue.java", "b": "p13_v_while.java", "label": 1, "category": "clone_type3", "note": "p13 control"}
+{"pair_id": "X_p9p10_t2", "a": "p9_v_types.java", "b": "p10_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p10"}
+{"pair_id": "X_p1p6_t4", "a": "p1_v_quicksort.java", "b": "p6_v_exponential.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p6"}
+{"pair_id": "p8_t2_t4", "a": "p8_v_types.java", "b": "p8_v_sieve.java", "label": 1, "category": "clone_type4", "note": "p8 t2 vs t4"}
+{"pair_id": "p12_t2", "a": "p12_base_merge.java", "b": "p12_v_types.java", "label": 1, "category": "clone_type2", "note": "p12 types"}
+{"pair_id": "X_p4p11_t4", "a": "p4_v_reverse.java", "b": "p11_v_divide_conquer.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p11"}
+{"pair_id": "X_p1p7_t4", "a": "p1_v_quicksort.java", "b": "p7_v_matrix.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p7"}
+{"pair_id": "X_p4p6_nh", "a": "p4_n_reverse_string.java", "b": "p6_n_linear_count.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p6"}
+{"pair_id": "p9_trap_v_t3", "a": "p9_v_while.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_trap", "note": "p9 v_t3 vs skeleton trap"}
+{"pair_id": "X_p10p12_t4", "a": "p10_v_frequency.java", "b": "p12_v_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p12"}
+{"pair_id": "X_p3p11_nh", "a": "p3_n_bipartite.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p11"}
+{"pair_id": "X_p5p15_t1", "a": "p5_v_rename.java", "b": "p15_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p15"}
+{"pair_id": "X_p9p10_t3", "a": "p9_v_while.java", "b": "p10_v_clean.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p10"}
+{"pair_id": "p4_t1_t3", "a": "p4_v_rename.java", "b": "p4_v_clean.java", "label": 1, "category": "clone_type3", "note": "p4 t1 vs t3"}
+{"pair_id": "X_p2p3_nh", "a": "p2_n_digitsum.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p3"}
+{"pair_id": "X_p4p8_nh", "a": "p4_n_reverse_string.java", "b": "p8_n_square.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p8"}
+{"pair_id": "X_p6p8_bb", "a": "p6_base_bsearch.java", "b": "p8_base_prime.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p8"}
+{"pair_id": "p13_t1", "a": "p13_base_queue.java", "b": "p13_v_rename.java", "label": 1, "category": "clone_type1", "note": "p13 rename"}
+{"pair_id": "p6_t1_t3", "a": "p6_v_rename.java", "b": "p6_v_recursion.java", "label": 1, "category": "clone_type3", "note": "p6 t1 vs t3"}
+{"pair_id": "X_p10p14_bb", "a": "p10_base_anagram.java", "b": "p14_base_power.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p14"}
+{"pair_id": "p8_trap_v_t4", "a": "p8_v_sieve.java", "b": "p8_n_square.java", "label": 0, "category": "nonclone_trap", "note": "p8 v_t4 vs skeleton trap"}
+{"pair_id": "X_p10p15_nh", "a": "p10_n_substring.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p15"}
+{"pair_id": "X_p12p14_t3", "a": "p12_v_while.java", "b": "p14_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p14"}
+{"pair_id": "X_p6p9_bb", "a": "p6_base_bsearch.java", "b": "p9_base_matmul.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p9"}
+{"pair_id": "p2_t3", "a": "p2_base_gcd.java", "b": "p2_v_recursion.java", "label": 1, "category": "clone_type3", "note": "p2 control"}
+{"pair_id": "p5_t2_t4", "a": "p5_v_types.java", "b": "p5_v_dynamic_array.java", "label": 1, "category": "clone_type4", "note": "p5 t2 vs t4"}
+{"pair_id": "X_p5p12_nh", "a": "p5_n_stack.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p12"}
+{"pair_id": "X_p4p15_nh", "a": "p4_n_reverse_string.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p15"}
+{"pair_id": "X_p1p11_t2", "a": "p1_v_types.java", "b": "p11_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p11"}
+{"pair_id": "X_p1p8_t1", "a": "p1_v_rename.java", "b": "p8_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p8"}
+{"pair_id": "p11_trap_v_t1", "a": "p11_v_rename.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_trap", "note": "p11 v_t1 vs skeleton trap"}
+{"pair_id": "p8_trap_base", "a": "p8_base_prime.java", "b": "p8_n_square.java", "label": 0, "category": "nonclone_trap", "note": "p8 base vs skeleton trap"}
+{"pair_id": "X_p2p5_nh", "a": "p2_n_digitsum.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p5"}
+{"pair_id": "p7_trap_v_t4", "a": "p7_v_matrix.java", "b": "p7_n_factorial.java", "label": 0, "category": "nonclone_trap", "note": "p7 v_t4 vs skeleton trap"}
+{"pair_id": "p4_t2", "a": "p4_base_palindrome.java", "b": "p4_v_types.java", "label": 1, "category": "clone_type2", "note": "p4 types"}
+{"pair_id": "X_p1p15_nh", "a": "p1_n_reverse.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p15"}
+{"pair_id": "p4_t4", "a": "p4_base_palindrome.java", "b": "p4_v_reverse.java", "label": 1, "category": "clone_type4", "note": "p4 semantic different algorithm"}
+{"pair_id": "p9_t1_t2", "a": "p9_v_rename.java", "b": "p9_v_types.java", "label": 1, "category": "clone_type2", "note": "p9 t1 vs t2"}
+{"pair_id": "p14_trap_v_t1", "a": "p14_v_rename.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_trap", "note": "p14 v_t1 vs skeleton trap"}
+{"pair_id": "X_p12p14_t1", "a": "p12_v_rename.java", "b": "p14_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p14"}
+{"pair_id": "p1_t3_t4", "a": "p1_v_while.java", "b": "p1_v_quicksort.java", "label": 1, "category": "clone_type4", "note": "p1 t3 vs t4"}
+{"pair_id": "X_p4p15_t4", "a": "p4_v_reverse.java", "b": "p15_v_vertical.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p15"}
+{"pair_id": "p3_trap_v_t3", "a": "p3_v_levels.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_trap", "note": "p3 v_t3 vs skeleton trap"}
+{"pair_id": "X_p7p15_bb", "a": "p7_base_fib.java", "b": "p15_base_lcp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p15"}
+{"pair_id": "p14_t4", "a": "p14_base_power.java", "b": "p14_v_binary_exp.java", "label": 1, "category": "clone_type4", "note": "p14 semantic different algorithm"}
+{"pair_id": "X_p4p14_t2", "a": "p4_v_types.java", "b": "p14_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p14"}
+{"pair_id": "X_p4p9_nh", "a": "p4_n_reverse_string.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p9"}
+{"pair_id": "X_p6p14_bb", "a": "p6_base_bsearch.java", "b": "p14_base_power.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p14"}
+{"pair_id": "p7_t2_t4", "a": "p7_v_types.java", "b": "p7_v_matrix.java", "label": 1, "category": "clone_type4", "note": "p7 t2 vs t4"}
+{"pair_id": "X_p7p14_t2", "a": "p7_v_types.java", "b": "p14_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p14"}
+{"pair_id": "X_p11p13_bb", "a": "p11_base_kadane.java", "b": "p13_base_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p13"}
+{"pair_id": "X_p13p14_bb", "a": "p13_base_queue.java", "b": "p14_base_power.java", "label": 0, "category": "nonclone_cross", "note": "Cross p13 vs p14"}
+{"pair_id": "X_p2p4_bb", "a": "p2_base_gcd.java", "b": "p4_base_palindrome.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p4"}
+{"pair_id": "X_p5p15_t3", "a": "p5_v_while.java", "b": "p15_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p15"}
+{"pair_id": "X_p8p10_t3", "a": "p8_v_while.java", "b": "p10_v_clean.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p10"}
+{"pair_id": "X_p1p9_nh", "a": "p1_n_reverse.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p9"}
+{"pair_id": "p11_t1_t2", "a": "p11_v_rename.java", "b": "p11_v_types.java", "label": 1, "category": "clone_type2", "note": "p11 t1 vs t2"}
+{"pair_id": "p4_trap_v_t3", "a": "p4_v_clean.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_trap", "note": "p4 v_t3 vs skeleton trap"}
+{"pair_id": "p15_t2_t4", "a": "p15_v_types.java", "b": "p15_v_vertical.java", "label": 1, "category": "clone_type4", "note": "p15 t2 vs t4"}
+{"pair_id": "p15_trap_base", "a": "p15_base_lcp.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_trap", "note": "p15 base vs skeleton trap"}
+{"pair_id": "X_p4p12_t2", "a": "p4_v_types.java", "b": "p12_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p12"}
+{"pair_id": "X_p6p10_t1", "a": "p6_v_rename.java", "b": "p10_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p10"}
+{"pair_id": "p11_trap_v_t2", "a": "p11_v_types.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_trap", "note": "p11 v_t2 vs skeleton trap"}
+{"pair_id": "X_p3p4_t2", "a": "p3_v_collections.java", "b": "p4_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p4"}
+{"pair_id": "X_p1p13_nh", "a": "p1_n_reverse.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p13"}
+{"pair_id": "X_p5p11_bb", "a": "p5_base_list.java", "b": "p11_base_kadane.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p11"}
+{"pair_id": "p12_t4", "a": "p12_base_merge.java", "b": "p12_v_queue.java", "label": 1, "category": "clone_type4", "note": "p12 semantic different algorithm"}
+{"pair_id": "X_p4p6_t1", "a": "p4_v_rename.java", "b": "p6_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p6"}
+{"pair_id": "p13_t3_t4", "a": "p13_v_while.java", "b": "p13_v_linked_queue.java", "label": 1, "category": "clone_type4", "note": "p13 t3 vs t4"}
+{"pair_id": "p12_trap_v_t2", "a": "p12_v_types.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_trap", "note": "p12 v_t2 vs skeleton trap"}
+{"pair_id": "X_p5p7_t4", "a": "p5_v_dynamic_array.java", "b": "p7_v_matrix.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p7"}
+{"pair_id": "p2_trap_v_t1", "a": "p2_v_rename.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_trap", "note": "p2 v_t1 vs skeleton trap"}
+{"pair_id": "X_p9p10_t4", "a": "p9_v_flat.java", "b": "p10_v_frequency.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p10"}
+{"pair_id": "X_p5p11_nh", "a": "p5_n_stack.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p11"}
+{"pair_id": "X_p1p10_nh", "a": "p1_n_reverse.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p10"}
+{"pair_id": "X_p3p6_t4", "a": "p3_v_dfs.java", "b": "p6_v_exponential.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p6"}
+{"pair_id": "p6_t2_t4", "a": "p6_v_types.java", "b": "p6_v_exponential.java", "label": 1, "category": "clone_type4", "note": "p6 t2 vs t4"}
+{"pair_id": "X_p11p12_t1", "a": "p11_v_rename.java", "b": "p12_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p12"}
+{"pair_id": "X_p4p10_bb", "a": "p4_base_palindrome.java", "b": "p10_base_anagram.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p10"}
+{"pair_id": "X_p7p14_bb", "a": "p7_base_fib.java", "b": "p14_base_power.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p14"}
+{"pair_id": "X_p7p8_t4", "a": "p7_v_matrix.java", "b": "p8_v_sieve.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p8"}
+{"pair_id": "X_p5p15_t4", "a": "p5_v_dynamic_array.java", "b": "p15_v_vertical.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p15"}
+{"pair_id": "X_p6p13_nh", "a": "p6_n_linear_count.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p13"}
+{"pair_id": "X_p8p13_t3", "a": "p8_v_while.java", "b": "p13_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p13"}
+{"pair_id": "X_p13p14_nh", "a": "p13_n_stack.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_cross", "note": "Cross p13 vs p14"}
+{"pair_id": "X_p3p4_nh", "a": "p3_n_bipartite.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p4"}
+{"pair_id": "X_p13p14_t3", "a": "p13_v_while.java", "b": "p14_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p13 vs p14"}
+{"pair_id": "X_p3p12_bb", "a": "p3_base_bfs.java", "b": "p12_base_merge.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p12"}
+{"pair_id": "X_p2p3_t1", "a": "p2_v_rename.java", "b": "p3_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p3"}
+{"pair_id": "X_p2p10_nh", "a": "p2_n_digitsum.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p10"}
+{"pair_id": "X_p2p14_bb", "a": "p2_base_gcd.java", "b": "p14_base_power.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p14"}
+{"pair_id": "p13_trap_base", "a": "p13_base_queue.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_trap", "note": "p13 base vs skeleton trap"}
+{"pair_id": "p1_t1", "a": "p1_base_bubblesort.java", "b": "p1_v_rename.java", "label": 1, "category": "clone_type1", "note": "p1 rename"}
+{"pair_id": "X_p2p14_nh", "a": "p2_n_digitsum.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p14"}
+{"pair_id": "X_p5p15_nh", "a": "p5_n_stack.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p15"}
+{"pair_id": "X_p6p8_t1", "a": "p6_v_rename.java", "b": "p8_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p8"}
+{"pair_id": "p5_trap_base", "a": "p5_base_list.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_trap", "note": "p5 base vs skeleton trap"}
+{"pair_id": "X_p5p7_t2", "a": "p5_v_types.java", "b": "p7_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p7"}
+{"pair_id": "X_p5p13_t2", "a": "p5_v_types.java", "b": "p13_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p13"}
+{"pair_id": "X_p9p10_nh", "a": "p9_n_transpose.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p10"}
+{"pair_id": "X_p6p12_nh", "a": "p6_n_linear_count.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p12"}
+{"pair_id": "X_p1p5_nh", "a": "p1_n_reverse.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p5"}
+{"pair_id": "p5_trap_v_t1", "a": "p5_v_rename.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_trap", "note": "p5 v_t1 vs skeleton trap"}
+{"pair_id": "X_p3p12_t1", "a": "p3_v_rename.java", "b": "p12_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p12"}
+{"pair_id": "X_p2p13_nh", "a": "p2_n_digitsum.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p13"}
+{"pair_id": "p2_t3_t4", "a": "p2_v_recursion.java", "b": "p2_v_binary_gcd.java", "label": 1, "category": "clone_type4", "note": "p2 t3 vs t4"}
+{"pair_id": "p11_trap_v_t4", "a": "p11_v_divide_conquer.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_trap", "note": "p11 v_t4 vs skeleton trap"}
+{"pair_id": "p13_t2", "a": "p13_base_queue.java", "b": "p13_v_types.java", "label": 1, "category": "clone_type2", "note": "p13 types"}
+{"pair_id": "X_p5p6_nh", "a": "p5_n_stack.java", "b": "p6_n_linear_count.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p6"}
+{"pair_id": "p15_trap_v_t1", "a": "p15_v_rename.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_trap", "note": "p15 v_t1 vs skeleton trap"}
+{"pair_id": "p2_t1", "a": "p2_base_gcd.java", "b": "p2_v_rename.java", "label": 1, "category": "clone_type1", "note": "p2 rename"}
+{"pair_id": "p15_t1", "a": "p15_base_lcp.java", "b": "p15_v_rename.java", "label": 1, "category": "clone_type1", "note": "p15 rename"}
+{"pair_id": "p5_t2", "a": "p5_base_list.java", "b": "p5_v_types.java", "label": 1, "category": "clone_type2", "note": "p5 types"}
+{"pair_id": "X_p2p13_t3", "a": "p2_v_recursion.java", "b": "p13_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p13"}
+{"pair_id": "X_p10p13_t4", "a": "p10_v_frequency.java", "b": "p13_v_linked_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p13"}
+{"pair_id": "p3_t2", "a": "p3_base_bfs.java", "b": "p3_v_collections.java", "label": 1, "category": "clone_type2", "note": "p3 types"}
+{"pair_id": "p7_trap_v_t3", "a": "p7_v_recursion.java", "b": "p7_n_factorial.java", "label": 0, "category": "nonclone_trap", "note": "p7 v_t3 vs skeleton trap"}
+{"pair_id": "X_p1p8_t4", "a": "p1_v_quicksort.java", "b": "p8_v_sieve.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p8"}
+{"pair_id": "p9_trap_base", "a": "p9_base_matmul.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_trap", "note": "p9 base vs skeleton trap"}
+{"pair_id": "X_p5p8_t3", "a": "p5_v_while.java", "b": "p8_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p8"}
+{"pair_id": "p1_t2", "a": "p1_base_bubblesort.java", "b": "p1_v_types.java", "label": 1, "category": "clone_type2", "note": "p1 types"}
+{"pair_id": "X_p1p5_t2", "a": "p1_v_types.java", "b": "p5_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p5"}
+{"pair_id": "X_p3p15_t1", "a": "p3_v_rename.java", "b": "p15_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p15"}
+{"pair_id": "p1_trap_v_t3", "a": "p1_v_while.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_trap", "note": "p1 v_t3 vs skeleton trap"}
+{"pair_id": "X_p3p8_bb", "a": "p3_base_bfs.java", "b": "p8_base_prime.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p8"}
+{"pair_id": "p10_t3_t4", "a": "p10_v_clean.java", "b": "p10_v_frequency.java", "label": 1, "category": "clone_type4", "note": "p10 t3 vs t4"}
+{"pair_id": "X_p5p12_t3", "a": "p5_v_while.java", "b": "p12_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p12"}
+{"pair_id": "p5_trap_v_t3", "a": "p5_v_while.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_trap", "note": "p5 v_t3 vs skeleton trap"}
+{"pair_id": "X_p1p2_bb", "a": "p1_base_bubblesort.java", "b": "p2_base_gcd.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p2"}
+{"pair_id": "X_p4p14_t1", "a": "p4_v_rename.java", "b": "p14_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p14"}
+{"pair_id": "X_p6p9_t3", "a": "p6_v_recursion.java", "b": "p9_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p9"}
+{"pair_id": "X_p5p9_t4", "a": "p5_v_dynamic_array.java", "b": "p9_v_flat.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p9"}
+{"pair_id": "X_p5p10_bb", "a": "p5_base_list.java", "b": "p10_base_anagram.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p10"}
+{"pair_id": "X_p2p13_bb", "a": "p2_base_gcd.java", "b": "p13_base_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p13"}
+{"pair_id": "X_p4p14_t3", "a": "p4_v_clean.java", "b": "p14_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p14"}
+{"pair_id": "X_p12p13_bb", "a": "p12_base_merge.java", "b": "p13_base_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p13"}
+{"pair_id": "X_p1p13_bb", "a": "p1_base_bubblesort.java", "b": "p13_base_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p13"}
+{"pair_id": "p8_trap_v_t2", "a": "p8_v_types.java", "b": "p8_n_square.java", "label": 0, "category": "nonclone_trap", "note": "p8 v_t2 vs skeleton trap"}
+{"pair_id": "X_p1p4_t2", "a": "p1_v_types.java", "b": "p4_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p4"}
+{"pair_id": "p15_trap_v_t3", "a": "p15_v_while.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_trap", "note": "p15 v_t3 vs skeleton trap"}
+{"pair_id": "X_p1p8_bb", "a": "p1_base_bubblesort.java", "b": "p8_base_prime.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p8"}
+{"pair_id": "X_p1p4_t4", "a": "p1_v_quicksort.java", "b": "p4_v_reverse.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p4"}
+{"pair_id": "X_p4p12_bb", "a": "p4_base_palindrome.java", "b": "p12_base_merge.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p12"}
+{"pair_id": "X_p2p9_t1", "a": "p2_v_rename.java", "b": "p9_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p9"}
+{"pair_id": "X_p1p13_t4", "a": "p1_v_quicksort.java", "b": "p13_v_linked_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p13"}
+{"pair_id": "X_p7p15_t2", "a": "p7_v_types.java", "b": "p15_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p15"}
+{"pair_id": "p11_t4", "a": "p11_base_kadane.java", "b": "p11_v_divide_conquer.java", "label": 1, "category": "clone_type4", "note": "p11 semantic different algorithm"}
+{"pair_id": "X_p1p10_t2", "a": "p1_v_types.java", "b": "p10_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p10"}
+{"pair_id": "X_p9p10_t1", "a": "p9_v_rename.java", "b": "p10_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p10"}
+{"pair_id": "X_p9p13_nh", "a": "p9_n_transpose.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p13"}
+{"pair_id": "p12_t1_t3", "a": "p12_v_rename.java", "b": "p12_v_while.java", "label": 1, "category": "clone_type3", "note": "p12 t1 vs t3"}
+{"pair_id": "X_p12p13_t1", "a": "p12_v_rename.java", "b": "p13_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p13"}
+{"pair_id": "X_p2p4_t3", "a": "p2_v_recursion.java", "b": "p4_v_clean.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p4"}
+{"pair_id": "p5_trap_v_t2", "a": "p5_v_types.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_trap", "note": "p5 v_t2 vs skeleton trap"}
+{"pair_id": "X_p3p10_t3", "a": "p3_v_levels.java", "b": "p10_v_clean.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p10"}
+{"pair_id": "X_p2p14_t1", "a": "p2_v_rename.java", "b": "p14_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p14"}
+{"pair_id": "X_p1p6_t2", "a": "p1_v_types.java", "b": "p6_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p6"}
+{"pair_id": "X_p1p12_t1", "a": "p1_v_rename.java", "b": "p12_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p12"}
+{"pair_id": "X_p1p5_bb", "a": "p1_base_bubblesort.java", "b": "p5_base_list.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p5"}
+{"pair_id": "X_p5p14_t3", "a": "p5_v_while.java", "b": "p14_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p14"}
+{"pair_id": "X_p9p14_bb", "a": "p9_base_matmul.java", "b": "p14_base_power.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p14"}
+{"pair_id": "X_p11p14_bb", "a": "p11_base_kadane.java", "b": "p14_base_power.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p14"}
+{"pair_id": "X_p4p13_t1", "a": "p4_v_rename.java", "b": "p13_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p13"}
+{"pair_id": "X_p1p2_t1", "a": "p1_v_rename.java", "b": "p2_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p2"}
+{"pair_id": "X_p6p13_t1", "a": "p6_v_rename.java", "b": "p13_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p13"}
+{"pair_id": "p7_t4", "a": "p7_base_fib.java", "b": "p7_v_matrix.java", "label": 1, "category": "clone_type4", "note": "p7 semantic different algorithm"}
+{"pair_id": "X_p2p6_t2", "a": "p2_v_types.java", "b": "p6_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p6"}
+{"pair_id": "p11_t3", "a": "p11_base_kadane.java", "b": "p11_v_while.java", "label": 1, "category": "clone_type3", "note": "p11 control"}
+{"pair_id": "X_p6p10_bb", "a": "p6_base_bsearch.java", "b": "p10_base_anagram.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p10"}
+{"pair_id": "X_p2p12_t3", "a": "p2_v_recursion.java", "b": "p12_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p12"}
+{"pair_id": "X_p6p7_nh", "a": "p6_n_linear_count.java", "b": "p7_n_factorial.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p7"}
+{"pair_id": "X_p3p5_nh", "a": "p3_n_bipartite.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p5"}
+{"pair_id": "p9_trap_v_t2", "a": "p9_v_types.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_trap", "note": "p9 v_t2 vs skeleton trap"}
+{"pair_id": "X_p2p5_t2", "a": "p2_v_types.java", "b": "p5_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p5"}
+{"pair_id": "X_p3p13_nh", "a": "p3_n_bipartite.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p13"}
+{"pair_id": "p3_trap_v_t1", "a": "p3_v_rename.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_trap", "note": "p3 v_t1 vs skeleton trap"}
+{"pair_id": "X_p1p7_nh", "a": "p1_n_reverse.java", "b": "p7_n_factorial.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p7"}
+{"pair_id": "p5_trap_v_t4", "a": "p5_v_dynamic_array.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_trap", "note": "p5 v_t4 vs skeleton trap"}
+{"pair_id": "p4_t1_t2", "a": "p4_v_rename.java", "b": "p4_v_types.java", "label": 1, "category": "clone_type2", "note": "p4 t1 vs t2"}
+{"pair_id": "p11_trap_v_t3", "a": "p11_v_while.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_trap", "note": "p11 v_t3 vs skeleton trap"}
+{"pair_id": "p14_t1_t3", "a": "p14_v_rename.java", "b": "p14_v_while.java", "label": 1, "category": "clone_type3", "note": "p14 t1 vs t3"}
+{"pair_id": "X_p6p9_nh", "a": "p6_n_linear_count.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p9"}
+{"pair_id": "p3_trap_v_t2", "a": "p3_v_collections.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_trap", "note": "p3 v_t2 vs skeleton trap"}
+{"pair_id": "X_p3p5_t4", "a": "p3_v_dfs.java", "b": "p5_v_dynamic_array.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p5"}
+{"pair_id": "p15_t3", "a": "p15_base_lcp.java", "b": "p15_v_while.java", "label": 1, "category": "clone_type3", "note": "p15 control"}
+{"pair_id": "X_p13p15_t2", "a": "p13_v_types.java", "b": "p15_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p13 vs p15"}
+{"pair_id": "X_p1p4_bb", "a": "p1_base_bubblesort.java", "b": "p4_base_palindrome.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p4"}
+{"pair_id": "X_p3p10_t4", "a": "p3_v_dfs.java", "b": "p10_v_frequency.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p10"}
+{"pair_id": "X_p7p8_t3", "a": "p7_v_recursion.java", "b": "p8_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p8"}
+{"pair_id": "p4_t1", "a": "p4_base_palindrome.java", "b": "p4_v_rename.java", "label": 1, "category": "clone_type1", "note": "p4 rename"}
+{"pair_id": "X_p4p7_bb", "a": "p4_base_palindrome.java", "b": "p7_base_fib.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p7"}
+{"pair_id": "X_p3p14_t2", "a": "p3_v_collections.java", "b": "p14_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p14"}
+{"pair_id": "X_p5p8_t1", "a": "p5_v_rename.java", "b": "p8_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p8"}
+{"pair_id": "p7_trap_base", "a": "p7_base_fib.java", "b": "p7_n_factorial.java", "label": 0, "category": "nonclone_trap", "note": "p7 base vs skeleton trap"}
+{"pair_id": "X_p12p14_t4", "a": "p12_v_queue.java", "b": "p14_v_binary_exp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p14"}
+{"pair_id": "X_p6p11_bb", "a": "p6_base_bsearch.java", "b": "p11_base_kadane.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p11"}
+{"pair_id": "p10_trap_v_t2", "a": "p10_v_types.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_trap", "note": "p10 v_t2 vs skeleton trap"}
+{"pair_id": "X_p8p10_t4", "a": "p8_v_sieve.java", "b": "p10_v_frequency.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p10"}
+{"pair_id": "X_p4p11_t3", "a": "p4_v_clean.java", "b": "p11_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p11"}
+{"pair_id": "X_p8p15_t3", "a": "p8_v_while.java", "b": "p15_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p15"}
+{"pair_id": "X_p5p13_t1", "a": "p5_v_rename.java", "b": "p13_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p13"}
+{"pair_id": "X_p6p15_nh", "a": "p6_n_linear_count.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p15"}
+{"pair_id": "X_p10p11_t2", "a": "p10_v_types.java", "b": "p11_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p11"}
+{"pair_id": "X_p4p7_t1", "a": "p4_v_rename.java", "b": "p7_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p7"}
+{"pair_id": "X_p3p7_t4", "a": "p3_v_dfs.java", "b": "p7_v_matrix.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p7"}
+{"pair_id": "p4_trap_v_t2", "a": "p4_v_types.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_trap", "note": "p4 v_t2 vs skeleton trap"}
+{"pair_id": "X_p7p10_nh", "a": "p7_n_factorial.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p10"}
+{"pair_id": "X_p11p15_nh", "a": "p11_n_min_subarray.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p15"}
+{"pair_id": "p9_trap_v_t1", "a": "p9_v_rename.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_trap", "note": "p9 v_t1 vs skeleton trap"}
+{"pair_id": "X_p9p12_t3", "a": "p9_v_while.java", "b": "p12_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p12"}
+{"pair_id": "X_p3p15_t3", "a": "p3_v_levels.java", "b": "p15_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p15"}
+{"pair_id": "X_p1p15_bb", "a": "p1_base_bubblesort.java", "b": "p15_base_lcp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p15"}
+{"pair_id": "X_p6p12_t3", "a": "p6_v_recursion.java", "b": "p12_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p12"}
+{"pair_id": "X_p1p3_t2", "a": "p1_v_types.java", "b": "p3_v_collections.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p3"}
+{"pair_id": "p2_trap_v_t2", "a": "p2_v_types.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_trap", "note": "p2 v_t2 vs skeleton trap"}
+{"pair_id": "p6_trap_v_t3", "a": "p6_v_recursion.java", "b": "p6_n_linear_count.java", "label": 0, "category": "nonclone_trap", "note": "p6 v_t3 vs skeleton trap"}
+{"pair_id": "X_p9p13_bb", "a": "p9_base_matmul.java", "b": "p13_base_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p13"}
+{"pair_id": "X_p12p13_t3", "a": "p12_v_while.java", "b": "p13_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p13"}
+{"pair_id": "p8_t1_t3", "a": "p8_v_rename.java", "b": "p8_v_while.java", "label": 1, "category": "clone_type3", "note": "p8 t1 vs t3"}
+{"pair_id": "p3_t3", "a": "p3_base_bfs.java", "b": "p3_v_levels.java", "label": 1, "category": "clone_type3", "note": "p3 control"}
+{"pair_id": "X_p6p11_t3", "a": "p6_v_recursion.java", "b": "p11_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p11"}
+{"pair_id": "X_p6p8_t4", "a": "p6_v_exponential.java", "b": "p8_v_sieve.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p8"}
+{"pair_id": "X_p3p7_t1", "a": "p3_v_rename.java", "b": "p7_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p7"}
+{"pair_id": "X_p4p8_bb", "a": "p4_base_palindrome.java", "b": "p8_base_prime.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p8"}
+{"pair_id": "p11_t3_t4", "a": "p11_v_while.java", "b": "p11_v_divide_conquer.java", "label": 1, "category": "clone_type4", "note": "p11 t3 vs t4"}
+{"pair_id": "X_p2p7_t4", "a": "p2_v_binary_gcd.java", "b": "p7_v_matrix.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p7"}
+{"pair_id": "X_p9p11_t1", "a": "p9_v_rename.java", "b": "p11_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p11"}
+{"pair_id": "X_p12p14_nh", "a": "p12_n_intersection.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p14"}
+{"pair_id": "X_p3p10_t2", "a": "p3_v_collections.java", "b": "p10_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p10"}
+{"pair_id": "p1_t2_t4", "a": "p1_v_types.java", "b": "p1_v_quicksort.java", "label": 1, "category": "clone_type4", "note": "p1 t2 vs t4"}
+{"pair_id": "X_p10p14_t1", "a": "p10_v_rename.java", "b": "p14_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p14"}
+{"pair_id": "X_p5p14_t2", "a": "p5_v_types.java", "b": "p14_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p14"}
+{"pair_id": "X_p2p14_t3", "a": "p2_v_recursion.java", "b": "p14_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p14"}
+{"pair_id": "p5_t4", "a": "p5_base_list.java", "b": "p5_v_dynamic_array.java", "label": 1, "category": "clone_type4", "note": "p5 semantic different algorithm"}
+{"pair_id": "p7_t3", "a": "p7_base_fib.java", "b": "p7_v_recursion.java", "label": 1, "category": "clone_type3", "note": "p7 control"}
+{"pair_id": "X_p10p13_t2", "a": "p10_v_types.java", "b": "p13_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p13"}
+{"pair_id": "p15_t3_t4", "a": "p15_v_while.java", "b": "p15_v_vertical.java", "label": 1, "category": "clone_type4", "note": "p15 t3 vs t4"}
+{"pair_id": "X_p4p7_nh", "a": "p4_n_reverse_string.java", "b": "p7_n_factorial.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p7"}
+{"pair_id": "X_p3p13_t4", "a": "p3_v_dfs.java", "b": "p13_v_linked_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p13"}
+{"pair_id": "X_p5p8_t2", "a": "p5_v_types.java", "b": "p8_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p8"}
+{"pair_id": "X_p1p9_t4", "a": "p1_v_quicksort.java", "b": "p9_v_flat.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p9"}
+{"pair_id": "X_p8p11_t1", "a": "p8_v_rename.java", "b": "p11_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p11"}
+{"pair_id": "X_p2p4_t4", "a": "p2_v_binary_gcd.java", "b": "p4_v_reverse.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p4"}
+{"pair_id": "X_p8p9_t1", "a": "p8_v_rename.java", "b": "p9_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p9"}
+{"pair_id": "X_p5p10_t1", "a": "p5_v_rename.java", "b": "p10_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p10"}
+{"pair_id": "X_p2p3_t4", "a": "p2_v_binary_gcd.java", "b": "p3_v_dfs.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p3"}
+{"pair_id": "X_p3p8_nh", "a": "p3_n_bipartite.java", "b": "p8_n_square.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p8"}
+{"pair_id": "X_p5p15_t2", "a": "p5_v_types.java", "b": "p15_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p15"}
+{"pair_id": "p13_t1_t2", "a": "p13_v_rename.java", "b": "p13_v_types.java", "label": 1, "category": "clone_type2", "note": "p13 t1 vs t2"}
+{"pair_id": "X_p12p15_t4", "a": "p12_v_queue.java", "b": "p15_v_vertical.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p15"}
+{"pair_id": "X_p2p12_bb", "a": "p2_base_gcd.java", "b": "p12_base_merge.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p12"}
+{"pair_id": "p11_t2", "a": "p11_base_kadane.java", "b": "p11_v_types.java", "label": 1, "category": "clone_type2", "note": "p11 types"}
+{"pair_id": "X_p5p11_t3", "a": "p5_v_while.java", "b": "p11_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p11"}
+{"pair_id": "X_p4p12_t1", "a": "p4_v_rename.java", "b": "p12_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p12"}
+{"pair_id": "X_p8p11_nh", "a": "p8_n_square.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p11"}
+{"pair_id": "X_p3p4_t4", "a": "p3_v_dfs.java", "b": "p4_v_reverse.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p4"}
+{"pair_id": "p13_t2_t4", "a": "p13_v_types.java", "b": "p13_v_linked_queue.java", "label": 1, "category": "clone_type4", "note": "p13 t2 vs t4"}
+{"pair_id": "X_p4p9_t2", "a": "p4_v_types.java", "b": "p9_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p9"}
+{"pair_id": "X_p7p9_t2", "a": "p7_v_types.java", "b": "p9_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p9"}
+{"pair_id": "p14_trap_base", "a": "p14_base_power.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_trap", "note": "p14 base vs skeleton trap"}
+{"pair_id": "X_p2p4_t1", "a": "p2_v_rename.java", "b": "p4_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p4"}
+{"pair_id": "X_p1p8_t3", "a": "p1_v_while.java", "b": "p8_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p8"}
+{"pair_id": "X_p5p6_t2", "a": "p5_v_types.java", "b": "p6_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p6"}
+{"pair_id": "p15_trap_v_t2", "a": "p15_v_types.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_trap", "note": "p15 v_t2 vs skeleton trap"}
+{"pair_id": "p1_trap_base", "a": "p1_base_bubblesort.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_trap", "note": "p1 base vs skeleton trap"}
+{"pair_id": "X_p9p14_t2", "a": "p9_v_types.java", "b": "p14_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p14"}
+{"pair_id": "X_p2p7_nh", "a": "p2_n_digitsum.java", "b": "p7_n_factorial.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p7"}
+{"pair_id": "X_p1p6_bb", "a": "p1_base_bubblesort.java", "b": "p6_base_bsearch.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p6"}
+{"pair_id": "X_p4p13_nh", "a": "p4_n_reverse_string.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p13"}
+{"pair_id": "X_p2p8_t4", "a": "p2_v_binary_gcd.java", "b": "p8_v_sieve.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p8"}
+{"pair_id": "X_p1p9_t3", "a": "p1_v_while.java", "b": "p9_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p9"}
+{"pair_id": "X_p3p8_t3", "a": "p3_v_levels.java", "b": "p8_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p8"}
+{"pair_id": "X_p5p11_t1", "a": "p5_v_rename.java", "b": "p11_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p11"}
+{"pair_id": "X_p1p6_t3", "a": "p1_v_while.java", "b": "p6_v_recursion.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p6"}
+{"pair_id": "X_p4p10_nh", "a": "p4_n_reverse_string.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p10"}
+{"pair_id": "X_p2p10_t1", "a": "p2_v_rename.java", "b": "p10_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p10"}
+{"pair_id": "X_p9p11_bb", "a": "p9_base_matmul.java", "b": "p11_base_kadane.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p11"}
+{"pair_id": "p12_trap_v_t3", "a": "p12_v_while.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_trap", "note": "p12 v_t3 vs skeleton trap"}
+{"pair_id": "X_p3p6_t2", "a": "p3_v_collections.java", "b": "p6_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p6"}
+{"pair_id": "X_p10p12_t1", "a": "p10_v_rename.java", "b": "p12_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p12"}
+{"pair_id": "p1_trap_v_t1", "a": "p1_v_rename.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_trap", "note": "p1 v_t1 vs skeleton trap"}
+{"pair_id": "X_p13p15_t3", "a": "p13_v_while.java", "b": "p15_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p13 vs p15"}
+{"pair_id": "X_p3p7_t2", "a": "p3_v_collections.java", "b": "p7_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p7"}
+{"pair_id": "p10_trap_v_t1", "a": "p10_v_rename.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_trap", "note": "p10 v_t1 vs skeleton trap"}
+{"pair_id": "X_p2p13_t2", "a": "p2_v_types.java", "b": "p13_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p13"}
+{"pair_id": "X_p3p9_t1", "a": "p3_v_rename.java", "b": "p9_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p9"}
+{"pair_id": "X_p6p13_bb", "a": "p6_base_bsearch.java", "b": "p13_base_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p13"}
+{"pair_id": "X_p14p15_t2", "a": "p14_v_types.java", "b": "p15_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p14 vs p15"}
+{"pair_id": "p6_trap_base", "a": "p6_base_bsearch.java", "b": "p6_n_linear_count.java", "label": 0, "category": "nonclone_trap", "note": "p6 base vs skeleton trap"}
+{"pair_id": "p5_t3_t4", "a": "p5_v_while.java", "b": "p5_v_dynamic_array.java", "label": 1, "category": "clone_type4", "note": "p5 t3 vs t4"}
+{"pair_id": "X_p7p11_t4", "a": "p7_v_matrix.java", "b": "p11_v_divide_conquer.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p11"}
+{"pair_id": "p1_t4", "a": "p1_base_bubblesort.java", "b": "p1_v_quicksort.java", "label": 1, "category": "clone_type4", "note": "p1 semantic different algorithm"}
+{"pair_id": "X_p14p15_bb", "a": "p14_base_power.java", "b": "p15_base_lcp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p14 vs p15"}
+{"pair_id": "X_p2p8_nh", "a": "p2_n_digitsum.java", "b": "p8_n_square.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p8"}
+{"pair_id": "X_p4p12_t4", "a": "p4_v_reverse.java", "b": "p12_v_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p12"}
+{"pair_id": "X_p1p7_bb", "a": "p1_base_bubblesort.java", "b": "p7_base_fib.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p7"}
+{"pair_id": "X_p6p14_nh", "a": "p6_n_linear_count.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p14"}
+{"pair_id": "p10_t4", "a": "p10_base_anagram.java", "b": "p10_v_frequency.java", "label": 1, "category": "clone_type4", "note": "p10 semantic different algorithm"}
+{"pair_id": "X_p8p15_nh", "a": "p8_n_square.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p15"}
+{"pair_id": "p7_t1", "a": "p7_base_fib.java", "b": "p7_v_rename.java", "label": 1, "category": "clone_type1", "note": "p7 rename"}
+{"pair_id": "X_p5p6_bb", "a": "p5_base_list.java", "b": "p6_base_bsearch.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p6"}
+{"pair_id": "X_p2p3_t3", "a": "p2_v_recursion.java", "b": "p3_v_levels.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p3"}
+{"pair_id": "X_p10p14_t3", "a": "p10_v_clean.java", "b": "p14_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p14"}
+{"pair_id": "X_p4p15_t2", "a": "p4_v_types.java", "b": "p15_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p15"}
+{"pair_id": "X_p1p3_nh", "a": "p1_n_reverse.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p3"}
+{"pair_id": "X_p3p15_t4", "a": "p3_v_dfs.java", "b": "p15_v_vertical.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p15"}
+{"pair_id": "X_p5p10_t2", "a": "p5_v_types.java", "b": "p10_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p10"}
+{"pair_id": "p13_trap_v_t2", "a": "p13_v_types.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_trap", "note": "p13 v_t2 vs skeleton trap"}
+{"pair_id": "X_p3p12_t4", "a": "p3_v_dfs.java", "b": "p12_v_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p12"}
+{"pair_id": "X_p7p13_t3", "a": "p7_v_recursion.java", "b": "p13_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p13"}
+{"pair_id": "p2_trap_base", "a": "p2_base_gcd.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_trap", "note": "p2 base vs skeleton trap"}
+{"pair_id": "X_p6p13_t4", "a": "p6_v_exponential.java", "b": "p13_v_linked_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p13"}
+{"pair_id": "X_p3p5_t3", "a": "p3_v_levels.java", "b": "p5_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p5"}
+{"pair_id": "X_p6p13_t2", "a": "p6_v_types.java", "b": "p13_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p13"}
+{"pair_id": "p13_t1_t3", "a": "p13_v_rename.java", "b": "p13_v_while.java", "label": 1, "category": "clone_type3", "note": "p13 t1 vs t3"}
+{"pair_id": "X_p11p12_bb", "a": "p11_base_kadane.java", "b": "p12_base_merge.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p12"}
+{"pair_id": "X_p6p8_nh", "a": "p6_n_linear_count.java", "b": "p8_n_square.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p8"}
+{"pair_id": "p10_t1", "a": "p10_base_anagram.java", "b": "p10_v_rename.java", "label": 1, "category": "clone_type1", "note": "p10 rename"}
+{"pair_id": "X_p7p10_t3", "a": "p7_v_recursion.java", "b": "p10_v_clean.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p10"}
+{"pair_id": "X_p12p15_bb", "a": "p12_base_merge.java", "b": "p15_base_lcp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p15"}
+{"pair_id": "p1_t1_t2", "a": "p1_v_rename.java", "b": "p1_v_types.java", "label": 1, "category": "clone_type2", "note": "p1 t1 vs t2"}
+{"pair_id": "X_p12p14_bb", "a": "p12_base_merge.java", "b": "p14_base_power.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p14"}
+{"pair_id": "X_p2p10_t3", "a": "p2_v_recursion.java", "b": "p10_v_clean.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p10"}
+{"pair_id": "X_p9p15_nh", "a": "p9_n_transpose.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p15"}
+{"pair_id": "p5_t3", "a": "p5_base_list.java", "b": "p5_v_while.java", "label": 1, "category": "clone_type3", "note": "p5 control"}
+{"pair_id": "p6_t1", "a": "p6_base_bsearch.java", "b": "p6_v_rename.java", "label": 1, "category": "clone_type1", "note": "p6 rename"}
+{"pair_id": "X_p3p9_bb", "a": "p3_base_bfs.java", "b": "p9_base_matmul.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p9"}
+{"pair_id": "X_p2p9_nh", "a": "p2_n_digitsum.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p9"}
+{"pair_id": "X_p3p12_t3", "a": "p3_v_levels.java", "b": "p12_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p12"}
+{"pair_id": "p13_trap_v_t1", "a": "p13_v_rename.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_trap", "note": "p13 v_t1 vs skeleton trap"}
+{"pair_id": "X_p4p13_bb", "a": "p4_base_palindrome.java", "b": "p13_base_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p13"}
+{"pair_id": "p11_t1", "a": "p11_base_kadane.java", "b": "p11_v_rename.java", "label": 1, "category": "clone_type1", "note": "p11 rename"}
+{"pair_id": "p14_trap_v_t2", "a": "p14_v_types.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_trap", "note": "p14 v_t2 vs skeleton trap"}
+{"pair_id": "X_p10p15_t1", "a": "p10_v_rename.java", "b": "p15_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p15"}
+{"pair_id": "X_p5p13_bb", "a": "p5_base_list.java", "b": "p13_base_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p13"}
+{"pair_id": "X_p2p13_t4", "a": "p2_v_binary_gcd.java", "b": "p13_v_linked_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p13"}
+{"pair_id": "p14_trap_v_t4", "a": "p14_v_binary_exp.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_trap", "note": "p14 v_t4 vs skeleton trap"}
+{"pair_id": "X_p4p5_nh", "a": "p4_n_reverse_string.java", "b": "p5_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p5"}
+{"pair_id": "X_p11p13_t1", "a": "p11_v_rename.java", "b": "p13_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p13"}
+{"pair_id": "X_p7p13_nh", "a": "p7_n_factorial.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p13"}
+{"pair_id": "X_p2p8_t2", "a": "p2_v_types.java", "b": "p8_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p8"}
+{"pair_id": "X_p8p9_t2", "a": "p8_v_types.java", "b": "p9_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p9"}
+{"pair_id": "X_p7p10_t4", "a": "p7_v_matrix.java", "b": "p10_v_frequency.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p10"}
+{"pair_id": "p13_trap_v_t3", "a": "p13_v_while.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_trap", "note": "p13 v_t3 vs skeleton trap"}
+{"pair_id": "X_p7p10_bb", "a": "p7_base_fib.java", "b": "p10_base_anagram.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p10"}
+{"pair_id": "X_p9p12_t1", "a": "p9_v_rename.java", "b": "p12_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p12"}
+{"pair_id": "X_p2p8_t1", "a": "p2_v_rename.java", "b": "p8_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p8"}
+{"pair_id": "p11_t1_t3", "a": "p11_v_rename.java", "b": "p11_v_while.java", "label": 1, "category": "clone_type3", "note": "p11 t1 vs t3"}
+{"pair_id": "X_p3p9_nh", "a": "p3_n_bipartite.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p9"}
+{"pair_id": "X_p9p13_t1", "a": "p9_v_rename.java", "b": "p13_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p13"}
+{"pair_id": "p2_t2_t4", "a": "p2_v_types.java", "b": "p2_v_binary_gcd.java", "label": 1, "category": "clone_type4", "note": "p2 t2 vs t4"}
+{"pair_id": "X_p2p15_t3", "a": "p2_v_recursion.java", "b": "p15_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p15"}
+{"pair_id": "X_p1p13_t2", "a": "p1_v_types.java", "b": "p13_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p13"}
+{"pair_id": "X_p9p15_t3", "a": "p9_v_while.java", "b": "p15_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p15"}
+{"pair_id": "p14_t3", "a": "p14_base_power.java", "b": "p14_v_while.java", "label": 1, "category": "clone_type3", "note": "p14 control"}
+{"pair_id": "X_p3p15_nh", "a": "p3_n_bipartite.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p15"}
+{"pair_id": "p5_t1_t2", "a": "p5_v_rename.java", "b": "p5_v_types.java", "label": 1, "category": "clone_type2", "note": "p5 t1 vs t2"}
+{"pair_id": "X_p1p11_bb", "a": "p1_base_bubblesort.java", "b": "p11_base_kadane.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p11"}
+{"pair_id": "X_p10p14_t4", "a": "p10_v_frequency.java", "b": "p14_v_binary_exp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p14"}
+{"pair_id": "X_p9p11_t2", "a": "p9_v_types.java", "b": "p11_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p11"}
+{"pair_id": "X_p4p15_bb", "a": "p4_base_palindrome.java", "b": "p15_base_lcp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p15"}
+{"pair_id": "X_p8p11_t2", "a": "p8_v_types.java", "b": "p11_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p11"}
+{"pair_id": "p6_trap_v_t2", "a": "p6_v_types.java", "b": "p6_n_linear_count.java", "label": 0, "category": "nonclone_trap", "note": "p6 v_t2 vs skeleton trap"}
+{"pair_id": "p9_t4", "a": "p9_base_matmul.java", "b": "p9_v_flat.java", "label": 1, "category": "clone_type4", "note": "p9 semantic different algorithm"}
+{"pair_id": "X_p14p15_t1", "a": "p14_v_rename.java", "b": "p15_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p14 vs p15"}
+{"pair_id": "X_p7p12_t2", "a": "p7_v_types.java", "b": "p12_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p12"}
+{"pair_id": "X_p4p7_t4", "a": "p4_v_reverse.java", "b": "p7_v_matrix.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p7"}
+{"pair_id": "X_p12p15_t3", "a": "p12_v_while.java", "b": "p15_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p15"}
+{"pair_id": "X_p3p6_nh", "a": "p3_n_bipartite.java", "b": "p6_n_linear_count.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p6"}
+{"pair_id": "X_p3p9_t3", "a": "p3_v_levels.java", "b": "p9_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p9"}
+{"pair_id": "X_p6p10_t2", "a": "p6_v_types.java", "b": "p10_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p10"}
+{"pair_id": "X_p6p7_t4", "a": "p6_v_exponential.java", "b": "p7_v_matrix.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p7"}
+{"pair_id": "p2_trap_v_t3", "a": "p2_v_recursion.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_trap", "note": "p2 v_t3 vs skeleton trap"}
+{"pair_id": "X_p4p13_t2", "a": "p4_v_types.java", "b": "p13_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p13"}
+{"pair_id": "X_p4p5_t3", "a": "p4_v_clean.java", "b": "p5_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p5"}
+{"pair_id": "X_p2p15_t4", "a": "p2_v_binary_gcd.java", "b": "p15_v_vertical.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p15"}
+{"pair_id": "X_p4p12_t3", "a": "p4_v_clean.java", "b": "p12_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p12"}
+{"pair_id": "p4_trap_v_t1", "a": "p4_v_rename.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_trap", "note": "p4 v_t1 vs skeleton trap"}
+{"pair_id": "p7_t3_t4", "a": "p7_v_recursion.java", "b": "p7_v_matrix.java", "label": 1, "category": "clone_type4", "note": "p7 t3 vs t4"}
+{"pair_id": "X_p11p13_nh", "a": "p11_n_min_subarray.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p13"}
+{"pair_id": "p8_t4", "a": "p8_base_prime.java", "b": "p8_v_sieve.java", "label": 1, "category": "clone_type4", "note": "p8 semantic different algorithm"}
+{"pair_id": "X_p3p10_nh", "a": "p3_n_bipartite.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p10"}
+{"pair_id": "p12_t3", "a": "p12_base_merge.java", "b": "p12_v_while.java", "label": 1, "category": "clone_type3", "note": "p12 control"}
+{"pair_id": "p10_t2_t4", "a": "p10_v_types.java", "b": "p10_v_frequency.java", "label": 1, "category": "clone_type4", "note": "p10 t2 vs t4"}
+{"pair_id": "X_p2p6_t3", "a": "p2_v_recursion.java", "b": "p6_v_recursion.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p6"}
+{"pair_id": "X_p10p15_t4", "a": "p10_v_frequency.java", "b": "p15_v_vertical.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p15"}
+{"pair_id": "X_p6p10_t3", "a": "p6_v_recursion.java", "b": "p10_v_clean.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p10"}
+{"pair_id": "p8_t3", "a": "p8_base_prime.java", "b": "p8_v_while.java", "label": 1, "category": "clone_type3", "note": "p8 control"}
+{"pair_id": "p14_t1", "a": "p14_base_power.java", "b": "p14_v_rename.java", "label": 1, "category": "clone_type1", "note": "p14 rename"}
+{"pair_id": "X_p5p14_t4", "a": "p5_v_dynamic_array.java", "b": "p14_v_binary_exp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p14"}
+{"pair_id": "X_p3p11_t2", "a": "p3_v_collections.java", "b": "p11_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p11"}
+{"pair_id": "X_p2p12_t4", "a": "p2_v_binary_gcd.java", "b": "p12_v_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p12"}
+{"pair_id": "X_p5p12_bb", "a": "p5_base_list.java", "b": "p12_base_merge.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p12"}
+{"pair_id": "X_p3p8_t2", "a": "p3_v_collections.java", "b": "p8_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p8"}
+{"pair_id": "X_p9p11_t3", "a": "p9_v_while.java", "b": "p11_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p11"}
+{"pair_id": "X_p3p6_t1", "a": "p3_v_rename.java", "b": "p6_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p6"}
+{"pair_id": "X_p8p15_t1", "a": "p8_v_rename.java", "b": "p15_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p15"}
+{"pair_id": "p1_trap_v_t2", "a": "p1_v_types.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_trap", "note": "p1 v_t2 vs skeleton trap"}
+{"pair_id": "X_p8p14_t4", "a": "p8_v_sieve.java", "b": "p14_v_binary_exp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p14"}
+{"pair_id": "X_p10p11_bb", "a": "p10_base_anagram.java", "b": "p11_base_kadane.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p11"}
+{"pair_id": "X_p10p13_t3", "a": "p10_v_clean.java", "b": "p13_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p13"}
+{"pair_id": "X_p11p14_nh", "a": "p11_n_min_subarray.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p14"}
+{"pair_id": "p15_trap_v_t4", "a": "p15_v_vertical.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_trap", "note": "p15 v_t4 vs skeleton trap"}
+{"pair_id": "X_p6p12_t4", "a": "p6_v_exponential.java", "b": "p12_v_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p12"}
+{"pair_id": "p2_t1_t3", "a": "p2_v_rename.java", "b": "p2_v_recursion.java", "label": 1, "category": "clone_type3", "note": "p2 t1 vs t3"}
+{"pair_id": "p11_trap_base", "a": "p11_base_kadane.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_trap", "note": "p11 base vs skeleton trap"}
+{"pair_id": "X_p7p11_t2", "a": "p7_v_types.java", "b": "p11_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p11"}
+{"pair_id": "X_p2p12_t1", "a": "p2_v_rename.java", "b": "p12_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p12"}
+{"pair_id": "X_p4p14_nh", "a": "p4_n_reverse_string.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p14"}
+{"pair_id": "X_p8p15_t2", "a": "p8_v_types.java", "b": "p15_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p15"}
+{"pair_id": "p1_t3", "a": "p1_base_bubblesort.java", "b": "p1_v_while.java", "label": 1, "category": "clone_type3", "note": "p1 control"}
+{"pair_id": "X_p9p14_nh", "a": "p9_n_transpose.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p14"}
+{"pair_id": "X_p5p10_t3", "a": "p5_v_while.java", "b": "p10_v_clean.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p10"}
+{"pair_id": "X_p9p13_t3", "a": "p9_v_while.java", "b": "p13_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p13"}
+{"pair_id": "X_p3p4_t3", "a": "p3_v_levels.java", "b": "p4_v_clean.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p4"}
+{"pair_id": "p6_t4", "a": "p6_base_bsearch.java", "b": "p6_v_exponential.java", "label": 1, "category": "clone_type4", "note": "p6 semantic different algorithm"}
+{"pair_id": "X_p1p13_t1", "a": "p1_v_rename.java", "b": "p13_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p13"}
+{"pair_id": "X_p4p9_t1", "a": "p4_v_rename.java", "b": "p9_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p9"}
+{"pair_id": "X_p4p12_nh", "a": "p4_n_reverse_string.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p12"}
+{"pair_id": "X_p10p11_t4", "a": "p10_v_frequency.java", "b": "p11_v_divide_conquer.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p11"}
+{"pair_id": "p7_t1_t2", "a": "p7_v_rename.java", "b": "p7_v_types.java", "label": 1, "category": "clone_type2", "note": "p7 t1 vs t2"}
+{"pair_id": "X_p10p15_bb", "a": "p10_base_anagram.java", "b": "p15_base_lcp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p15"}
+{"pair_id": "X_p2p3_t2", "a": "p2_v_types.java", "b": "p3_v_collections.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p3"}
+{"pair_id": "X_p1p14_t4", "a": "p1_v_quicksort.java", "b": "p14_v_binary_exp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p14"}
+{"pair_id": "X_p7p13_bb", "a": "p7_base_fib.java", "b": "p13_base_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p13"}
+{"pair_id": "X_p7p10_t1", "a": "p7_v_rename.java", "b": "p10_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p10"}
+{"pair_id": "p12_t3_t4", "a": "p12_v_while.java", "b": "p12_v_queue.java", "label": 1, "category": "clone_type4", "note": "p12 t3 vs t4"}
+{"pair_id": "X_p3p14_t4", "a": "p3_v_dfs.java", "b": "p14_v_binary_exp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p14"}
+{"pair_id": "p14_t2_t4", "a": "p14_v_types.java", "b": "p14_v_binary_exp.java", "label": 1, "category": "clone_type4", "note": "p14 t2 vs t4"}
+{"pair_id": "X_p9p12_nh", "a": "p9_n_transpose.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p12"}
+{"pair_id": "p12_trap_base", "a": "p12_base_merge.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_trap", "note": "p12 base vs skeleton trap"}
+{"pair_id": "X_p1p7_t3", "a": "p1_v_while.java", "b": "p7_v_recursion.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p7"}
+{"pair_id": "p12_trap_v_t4", "a": "p12_v_queue.java", "b": "p12_n_intersection.java", "label": 0, "category": "nonclone_trap", "note": "p12 v_t4 vs skeleton trap"}
+{"pair_id": "p3_t1_t3", "a": "p3_v_rename.java", "b": "p3_v_levels.java", "label": 1, "category": "clone_type3", "note": "p3 t1 vs t3"}
+{"pair_id": "X_p3p7_nh", "a": "p3_n_bipartite.java", "b": "p7_n_factorial.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p7"}
+{"pair_id": "X_p5p6_t4", "a": "p5_v_dynamic_array.java", "b": "p6_v_exponential.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p6"}
+{"pair_id": "X_p6p15_t1", "a": "p6_v_rename.java", "b": "p15_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p15"}
+{"pair_id": "p14_t1_t2", "a": "p14_v_rename.java", "b": "p14_v_types.java", "label": 1, "category": "clone_type2", "note": "p14 t1 vs t2"}
+{"pair_id": "p10_t2", "a": "p10_base_anagram.java", "b": "p10_v_types.java", "label": 1, "category": "clone_type2", "note": "p10 types"}
+{"pair_id": "X_p9p12_bb", "a": "p9_base_matmul.java", "b": "p12_base_merge.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p12"}
+{"pair_id": "X_p9p12_t2", "a": "p9_v_types.java", "b": "p12_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p12"}
+{"pair_id": "X_p2p14_t2", "a": "p2_v_types.java", "b": "p14_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p14"}
+{"pair_id": "X_p1p14_t3", "a": "p1_v_while.java", "b": "p14_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p14"}
+{"pair_id": "X_p8p10_t2", "a": "p8_v_types.java", "b": "p10_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p10"}
+{"pair_id": "X_p6p11_t2", "a": "p6_v_types.java", "b": "p11_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p11"}
+{"pair_id": "X_p13p15_t1", "a": "p13_v_rename.java", "b": "p15_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p13 vs p15"}
+{"pair_id": "X_p3p7_bb", "a": "p3_base_bfs.java", "b": "p7_base_fib.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p7"}
+{"pair_id": "X_p6p9_t1", "a": "p6_v_rename.java", "b": "p9_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p9"}
+{"pair_id": "X_p2p10_bb", "a": "p2_base_gcd.java", "b": "p10_base_anagram.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p10"}
+{"pair_id": "X_p10p11_t1", "a": "p10_v_rename.java", "b": "p11_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p11"}
+{"pair_id": "X_p1p8_t2", "a": "p1_v_types.java", "b": "p8_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p8"}
+{"pair_id": "X_p2p11_t2", "a": "p2_v_types.java", "b": "p11_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p11"}
+{"pair_id": "X_p2p12_t2", "a": "p2_v_types.java", "b": "p12_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p12"}
+{"pair_id": "X_p2p11_t4", "a": "p2_v_binary_gcd.java", "b": "p11_v_divide_conquer.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p11"}
+{"pair_id": "p7_trap_v_t1", "a": "p7_v_rename.java", "b": "p7_n_factorial.java", "label": 0, "category": "nonclone_trap", "note": "p7 v_t1 vs skeleton trap"}
+{"pair_id": "X_p4p5_t2", "a": "p4_v_types.java", "b": "p5_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p5"}
+{"pair_id": "p8_t2", "a": "p8_base_prime.java", "b": "p8_v_types.java", "label": 1, "category": "clone_type2", "note": "p8 types"}
+{"pair_id": "X_p4p8_t4", "a": "p4_v_reverse.java", "b": "p8_v_sieve.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p8"}
+{"pair_id": "X_p9p11_nh", "a": "p9_n_transpose.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p11"}
+{"pair_id": "p2_trap_v_t4", "a": "p2_v_binary_gcd.java", "b": "p2_n_digitsum.java", "label": 0, "category": "nonclone_trap", "note": "p2 v_t4 vs skeleton trap"}
+{"pair_id": "p14_trap_v_t3", "a": "p14_v_while.java", "b": "p14_n_sqrt.java", "label": 0, "category": "nonclone_trap", "note": "p14 v_t3 vs skeleton trap"}
+{"pair_id": "p3_t1_t2", "a": "p3_v_rename.java", "b": "p3_v_collections.java", "label": 1, "category": "clone_type2", "note": "p3 t1 vs t2"}
+{"pair_id": "X_p2p6_nh", "a": "p2_n_digitsum.java", "b": "p6_n_linear_count.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p6"}
+{"pair_id": "X_p1p10_t4", "a": "p1_v_quicksort.java", "b": "p10_v_frequency.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p10"}
+{"pair_id": "p13_t4", "a": "p13_base_queue.java", "b": "p13_v_linked_queue.java", "label": 1, "category": "clone_type4", "note": "p13 semantic different algorithm"}
+{"pair_id": "X_p7p14_t4", "a": "p7_v_matrix.java", "b": "p14_v_binary_exp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p14"}
+{"pair_id": "X_p5p13_t3", "a": "p5_v_while.java", "b": "p13_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p13"}
+{"pair_id": "p10_t1_t2", "a": "p10_v_rename.java", "b": "p10_v_types.java", "label": 1, "category": "clone_type2", "note": "p10 t1 vs t2"}
+{"pair_id": "p12_t2_t4", "a": "p12_v_types.java", "b": "p12_v_queue.java", "label": 1, "category": "clone_type4", "note": "p12 t2 vs t4"}
+{"pair_id": "X_p5p9_t2", "a": "p5_v_types.java", "b": "p9_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p9"}
+{"pair_id": "X_p9p15_bb", "a": "p9_base_matmul.java", "b": "p15_base_lcp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p15"}
+{"pair_id": "p8_t1", "a": "p8_base_prime.java", "b": "p8_v_rename.java", "label": 1, "category": "clone_type1", "note": "p8 rename"}
+{"pair_id": "p4_trap_v_t4", "a": "p4_v_reverse.java", "b": "p4_n_reverse_string.java", "label": 0, "category": "nonclone_trap", "note": "p4 v_t4 vs skeleton trap"}
+{"pair_id": "X_p1p3_bb", "a": "p1_base_bubblesort.java", "b": "p3_base_bfs.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p3"}
+{"pair_id": "X_p1p6_t1", "a": "p1_v_rename.java", "b": "p6_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p6"}
+{"pair_id": "X_p10p11_nh", "a": "p10_n_substring.java", "b": "p11_n_min_subarray.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p11"}
+{"pair_id": "X_p1p9_t1", "a": "p1_v_rename.java", "b": "p9_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p9"}
+{"pair_id": "X_p10p13_nh", "a": "p10_n_substring.java", "b": "p13_n_stack.java", "label": 0, "category": "nonclone_cross", "note": "Cross p10 vs p13"}
+{"pair_id": "X_p3p11_t4", "a": "p3_v_dfs.java", "b": "p11_v_divide_conquer.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p11"}
+{"pair_id": "p12_t1", "a": "p12_base_merge.java", "b": "p12_v_rename.java", "label": 1, "category": "clone_type1", "note": "p12 rename"}
+{"pair_id": "p10_t3", "a": "p10_base_anagram.java", "b": "p10_v_clean.java", "label": 1, "category": "clone_type3", "note": "p10 control"}
+{"pair_id": "X_p6p14_t3", "a": "p6_v_recursion.java", "b": "p14_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p14"}
+{"pair_id": "X_p9p15_t1", "a": "p9_v_rename.java", "b": "p15_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p9 vs p15"}
+{"pair_id": "X_p2p13_t1", "a": "p2_v_rename.java", "b": "p13_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p13"}
+{"pair_id": "X_p3p10_bb", "a": "p3_base_bfs.java", "b": "p10_base_anagram.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p10"}
+{"pair_id": "X_p5p9_nh", "a": "p5_n_stack.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p9"}
+{"pair_id": "p7_t2", "a": "p7_base_fib.java", "b": "p7_v_types.java", "label": 1, "category": "clone_type2", "note": "p7 types"}
+{"pair_id": "p3_t3_t4", "a": "p3_v_levels.java", "b": "p3_v_dfs.java", "label": 1, "category": "clone_type4", "note": "p3 t3 vs t4"}
+{"pair_id": "X_p1p10_bb", "a": "p1_base_bubblesort.java", "b": "p10_base_anagram.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p10"}
+{"pair_id": "p9_trap_v_t4", "a": "p9_v_flat.java", "b": "p9_n_transpose.java", "label": 0, "category": "nonclone_trap", "note": "p9 v_t4 vs skeleton trap"}
+{"pair_id": "X_p6p9_t2", "a": "p6_v_types.java", "b": "p9_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p9"}
+{"pair_id": "p3_t1", "a": "p3_base_bfs.java", "b": "p3_v_rename.java", "label": 1, "category": "clone_type1", "note": "p3 rename"}
+{"pair_id": "X_p4p9_t4", "a": "p4_v_reverse.java", "b": "p9_v_flat.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p9"}
+{"pair_id": "p10_trap_v_t3", "a": "p10_v_clean.java", "b": "p10_n_substring.java", "label": 0, "category": "nonclone_trap", "note": "p10 v_t3 vs skeleton trap"}
+{"pair_id": "X_p11p14_t3", "a": "p11_v_while.java", "b": "p14_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p11 vs p14"}
+{"pair_id": "X_p1p10_t1", "a": "p1_v_rename.java", "b": "p10_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p10"}
+{"pair_id": "X_p4p10_t1", "a": "p4_v_rename.java", "b": "p10_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p10"}
+{"pair_id": "X_p13p15_nh", "a": "p13_n_stack.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p13 vs p15"}
+{"pair_id": "p15_t4", "a": "p15_base_lcp.java", "b": "p15_v_vertical.java", "label": 1, "category": "clone_type4", "note": "p15 semantic different algorithm"}
+{"pair_id": "X_p8p13_bb", "a": "p8_base_prime.java", "b": "p13_base_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p13"}
+{"pair_id": "X_p1p11_t3", "a": "p1_v_while.java", "b": "p11_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p11"}
+{"pair_id": "X_p7p12_t4", "a": "p7_v_matrix.java", "b": "p12_v_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p12"}
+{"pair_id": "X_p7p9_t1", "a": "p7_v_rename.java", "b": "p9_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p9"}
+{"pair_id": "X_p2p4_t2", "a": "p2_v_types.java", "b": "p4_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p4"}
+{"pair_id": "X_p3p11_t3", "a": "p3_v_levels.java", "b": "p11_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p11"}
+{"pair_id": "X_p5p12_t4", "a": "p5_v_dynamic_array.java", "b": "p12_v_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p12"}
+{"pair_id": "X_p13p15_bb", "a": "p13_base_queue.java", "b": "p15_base_lcp.java", "label": 0, "category": "nonclone_cross", "note": "Cross p13 vs p15"}
+{"pair_id": "p3_trap_v_t4", "a": "p3_v_dfs.java", "b": "p3_n_bipartite.java", "label": 0, "category": "nonclone_trap", "note": "p3 v_t4 vs skeleton trap"}
+{"pair_id": "X_p5p10_t4", "a": "p5_v_dynamic_array.java", "b": "p10_v_frequency.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p10"}
+{"pair_id": "p1_trap_v_t4", "a": "p1_v_quicksort.java", "b": "p1_n_reverse.java", "label": 0, "category": "nonclone_trap", "note": "p1 v_t4 vs skeleton trap"}
+{"pair_id": "X_p1p4_t1", "a": "p1_v_rename.java", "b": "p4_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p4"}
+{"pair_id": "X_p6p15_t3", "a": "p6_v_recursion.java", "b": "p15_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p15"}
+{"pair_id": "p8_trap_v_t1", "a": "p8_v_rename.java", "b": "p8_n_square.java", "label": 0, "category": "nonclone_trap", "note": "p8 v_t1 vs skeleton trap"}
+{"pair_id": "X_p2p7_bb", "a": "p2_base_gcd.java", "b": "p7_base_fib.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p7"}
+{"pair_id": "X_p7p10_t2", "a": "p7_v_types.java", "b": "p10_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p10"}
+{"pair_id": "X_p2p9_t2", "a": "p2_v_types.java", "b": "p9_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p9"}
+{"pair_id": "X_p1p3_t3", "a": "p1_v_while.java", "b": "p3_v_levels.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p3"}
+{"pair_id": "X_p3p12_t2", "a": "p3_v_collections.java", "b": "p12_v_types.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p12"}
+{"pair_id": "X_p5p7_nh", "a": "p5_n_stack.java", "b": "p7_n_factorial.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p7"}
+{"pair_id": "X_p13p15_t4", "a": "p13_v_linked_queue.java", "b": "p15_v_vertical.java", "label": 0, "category": "nonclone_cross", "note": "Cross p13 vs p15"}
+{"pair_id": "X_p2p6_bb", "a": "p2_base_gcd.java", "b": "p6_base_bsearch.java", "label": 0, "category": "nonclone_cross", "note": "Cross p2 vs p6"}
+{"pair_id": "X_p6p8_t3", "a": "p6_v_recursion.java", "b": "p8_v_while.java", "label": 0, "category": "nonclone_cross", "note": "Cross p6 vs p8"}
+{"pair_id": "X_p1p9_bb", "a": "p1_base_bubblesort.java", "b": "p9_base_matmul.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p9"}
+{"pair_id": "X_p3p5_t1", "a": "p3_v_rename.java", "b": "p5_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p5"}
+{"pair_id": "X_p1p5_t1", "a": "p1_v_rename.java", "b": "p5_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p5"}
+{"pair_id": "X_p8p13_t4", "a": "p8_v_sieve.java", "b": "p13_v_linked_queue.java", "label": 0, "category": "nonclone_cross", "note": "Cross p8 vs p13"}
+{"pair_id": "X_p4p10_t4", "a": "p4_v_reverse.java", "b": "p10_v_frequency.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p10"}
+{"pair_id": "X_p3p7_t3", "a": "p3_v_levels.java", "b": "p7_v_recursion.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p7"}
+{"pair_id": "X_p7p14_t1", "a": "p7_v_rename.java", "b": "p14_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p14"}
+{"pair_id": "X_p1p2_t3", "a": "p1_v_while.java", "b": "p2_v_recursion.java", "label": 0, "category": "nonclone_cross", "note": "Cross p1 vs p2"}
+{"pair_id": "X_p7p12_bb", "a": "p7_base_fib.java", "b": "p12_base_merge.java", "label": 0, "category": "nonclone_cross", "note": "Cross p7 vs p12"}
+{"pair_id": "X_p4p10_t3", "a": "p4_v_clean.java", "b": "p10_v_clean.java", "label": 0, "category": "nonclone_cross", "note": "Cross p4 vs p10"}
+{"pair_id": "X_p3p4_t1", "a": "p3_v_rename.java", "b": "p4_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p3 vs p4"}
+{"pair_id": "X_p5p7_t1", "a": "p5_v_rename.java", "b": "p7_v_rename.java", "label": 0, "category": "nonclone_cross", "note": "Cross p5 vs p7"}
+{"pair_id": "X_p12p15_nh", "a": "p12_n_intersection.java", "b": "p15_n_longest_string.java", "label": 0, "category": "nonclone_cross", "note": "Cross p12 vs p15"}

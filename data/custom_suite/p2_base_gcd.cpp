@@ -1,13 +1,9 @@
-#include <bits/stdc++.h>
-using namespace std;
-int main() {
-    int a, b;
-    cin >> a >> b;
+#include <cmath>
+int gcd(int a, int b) {
     while (b != 0) {
-        int t = b;
-        b = a % b;
-        a = t;
+        int rem = a % b;
+        a = b;
+        b = rem;
     }
-    cout << a << endl;
-    return 0;
+    return std::abs(a);
 }

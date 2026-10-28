@@ -1,12 +1,12 @@
-"""Chấm điểm và phân tích định tính toàn diện bộ kiểm thử Java Custom Suite.
+"""Chấm điểm và phân tích định tính toàn diện bộ kiểm thử Java Custom Suite (720 cặp, tỉ lệ 1:5).
 
-Thực hiện đánh giá trên 80 cặp mã nguồn Java (35 clone, 45 non-clone) qua 4 mô hình:
+Thực hiện đánh giá trên 720 cặp mã nguồn Java (120 clone, 600 non-clone) qua 4 mô hình:
 - M1 (CodeBERT - Sequence Transformer) [Ngưỡng: 0.88]
 - M2 (GraphCodeBERT - Sequence + DFG) [Ngưỡng: 0.94]
 - M3 (ASTNN - Tree RvNN) [Ngưỡng: 0.52]
 - M4 (CPG-GNN - Joern CPG / GAT) [Ngưỡng: 0.70]
 
-Xuất kết quả chi tiết ra `workspace/custom_suite_java_scores.json` và bảng phân tích ma trận nhầm lẫn.
+Xuất kết quả ra `workspace/custom_suite_java_scores.json`.
 """
 
 from __future__ import annotations
@@ -63,32 +63,33 @@ def score_m3_astnn(pairs: list[dict], device: torch.device) -> dict[str, float]:
         return {}
 
     print(">>> Nạp trọng số M3 (ASTNN) Java...")
-    ckpt = torch.load(ckpt_path, map_location=device)
+    ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
     model = ASTNNPairClassifier(hidden=200, dropout=0.2, n_stmt=45)
     model.load_state_dict(ckpt["model_state"])
     model.to(device)
     model.eval()
 
     compiled_cache: dict[str, Any] = {}
+    for p in DATA_DIR.glob("*.java"):
+        compiled_cache[p.name] = compile_tree(extract_tree(p.read_text(encoding="utf-8"), language="java"))
+
     scores = {}
-
+    batch_size = 32
     with torch.no_grad():
-        for p in pairs:
-            fa, fb = p["a"], p["b"]
-            if fa not in compiled_cache:
-                compiled_cache[fa] = compile_tree(extract_tree(p["code_a"], language="java"))
-            if fb not in compiled_cache:
-                compiled_cache[fb] = compile_tree(extract_tree(p["code_b"], language="java"))
+        for start in range(0, len(pairs), batch_size):
+            chunk = pairs[start : start + batch_size]
+            batch_a_compiled = [compiled_cache[p["a"]] for p in chunk]
+            batch_b_compiled = [compiled_cache[p["b"]] for p in chunk]
 
-            ca = compiled_cache[fa]
-            cb = compiled_cache[fb]
-
-            batch_a = astnn_to_device(collate_trees([ca]), device)
-            batch_b = astnn_to_device(collate_trees([cb]), device)
+            batch_a = astnn_to_device(collate_trees(batch_a_compiled), device)
+            batch_b = astnn_to_device(collate_trees(batch_b_compiled), device)
 
             logits = model(batch_a, batch_b)
-            prob = torch.sigmoid(logits).item()
-            scores[p["pair_id"]] = prob
+            probs = torch.sigmoid(logits).tolist()
+            if isinstance(probs, float):
+                probs = [probs]
+            for p, prob in zip(chunk, probs):
+                scores[p["pair_id"]] = float(prob)
 
     return scores
 
@@ -97,6 +98,7 @@ def score_m4_cpg(pairs: list[dict], device: torch.device) -> dict[str, float]:
     """Chấm điểm bằng mô hình đồ thị M4 (CPG-GNN)."""
     from src.models.cpg_gnn.model import CPGGNNPairClassifier
     from torch_geometric.data import Batch, Data
+    from src.representations.ast.extract import extract_tree
 
     ckpt_path = ROOT / "results" / "exp_bcb_005" / "best_checkpoint.pt"
     if not ckpt_path.exists():
@@ -104,13 +106,11 @@ def score_m4_cpg(pairs: list[dict], device: torch.device) -> dict[str, float]:
         return {}
 
     print(">>> Nạp trọng số M4 (CPG-GNN) Java...")
-    ckpt = torch.load(ckpt_path, map_location=device)
+    ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
     model = CPGGNNPairClassifier(hidden=128, num_layers=3, heads=4, dropout=0.2)
     model.load_state_dict(ckpt["model_state"])
     model.to(device)
     model.eval()
-
-    from src.representations.ast.extract import extract_tree
 
     def code_to_graph_data(code: str) -> Data:
         tree = extract_tree(code, language="java")
@@ -135,22 +135,26 @@ def score_m4_cpg(pairs: list[dict], device: torch.device) -> dict[str, float]:
         return Data(node_type=node_type, x=x, edge_index=edge_index, edge_type=edge_type)
 
     graph_cache: dict[str, Data] = {}
+    for p in DATA_DIR.glob("*.java"):
+        graph_cache[p.name] = code_to_graph_data(p.read_text(encoding="utf-8"))
+
     scores = {}
-
+    batch_size = 32
     with torch.no_grad():
-        for p in pairs:
-            fa, fb = p["a"], p["b"]
-            if fa not in graph_cache:
-                graph_cache[fa] = code_to_graph_data(p["code_a"])
-            if fb not in graph_cache:
-                graph_cache[fb] = code_to_graph_data(p["code_b"])
+        for start in range(0, len(pairs), batch_size):
+            chunk = pairs[start : start + batch_size]
+            g_a_list = [graph_cache[p["a"]] for p in chunk]
+            g_b_list = [graph_cache[p["b"]] for p in chunk]
 
-            ga = Batch.from_data_list([graph_cache[fa]]).to(device)
-            gb = Batch.from_data_list([graph_cache[fb]]).to(device)
+            ga = Batch.from_data_list(g_a_list).to(device)
+            gb = Batch.from_data_list(g_b_list).to(device)
 
             logits = model(ga, gb)
-            prob = torch.sigmoid(logits).item()
-            scores[p["pair_id"]] = prob
+            probs = torch.sigmoid(logits).tolist()
+            if isinstance(probs, float):
+                probs = [probs]
+            for p, prob in zip(chunk, probs):
+                scores[p["pair_id"]] = float(prob)
 
     return scores
 
@@ -168,7 +172,7 @@ def score_transformer(pairs: list[dict], hf_id: str, model_id: str, device: torc
 
     if ckpt_path.exists():
         print(f"    Nạp trọng số tinh chỉnh từ {ckpt_path}...")
-        ckpt = torch.load(ckpt_path, map_location=device)
+        ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
         model.load_state_dict(ckpt["model_state"])
     else:
         print(f"    Cảnh báo: Không tìm thấy checkpoint tại {ckpt_path}, dùng pretrained gốc.")
@@ -177,17 +181,22 @@ def score_transformer(pairs: list[dict], hf_id: str, model_id: str, device: torc
     model.eval()
 
     scores = {}
+    batch_size = 32
     with torch.no_grad():
-        for p in pairs:
+        for start in range(0, len(pairs), batch_size):
+            chunk = pairs[start : start + batch_size]
+            codes_a = [p["code_a"] for p in chunk]
+            codes_b = [p["code_b"] for p in chunk]
+
             enc_a = tokenizer(
-                p["code_a"],
+                codes_a,
                 truncation=True,
                 max_length=256,
                 padding="max_length",
                 return_tensors="pt",
             ).to(device)
             enc_b = tokenizer(
-                p["code_b"],
+                codes_b,
                 truncation=True,
                 max_length=256,
                 padding="max_length",
@@ -195,8 +204,11 @@ def score_transformer(pairs: list[dict], hf_id: str, model_id: str, device: torc
             ).to(device)
 
             logit = model(enc_a, enc_b)
-            prob = torch.sigmoid(logit).item()
-            scores[p["pair_id"]] = prob
+            probs = torch.sigmoid(logit).tolist()
+            if isinstance(probs, float):
+                probs = [probs]
+            for p, prob in zip(chunk, probs):
+                scores[p["pair_id"]] = float(prob)
 
     return scores
 
@@ -259,7 +271,9 @@ def evaluate_metrics(pairs: list[dict], scores: dict[str, float], threshold: flo
 
 def main():
     pairs = load_pairs()
-    print(f"Tổng số cặp kiểm thử: {len(pairs)} (35 Clones, 45 Non-clones)")
+    n_clones = sum(1 for p in pairs if p["label"] == 1)
+    n_nonclones = sum(1 for p in pairs if p["label"] == 0)
+    print(f"Tổng số cặp kiểm thử: {len(pairs)} ({n_clones} Clones, {n_nonclones} Non-clones, tỉ lệ 1:{n_nonclones//n_clones})")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Thiết bị tính toán: {device}")
@@ -301,7 +315,7 @@ def main():
         "clone_type2",
         "clone_type3",
         "clone_type4",
-        "nonclone_kho",
+        "nonclone_trap",
         "nonclone_cross",
     ]
 
@@ -310,12 +324,13 @@ def main():
         "clone_type2": "Type-2 (Types/Wrap)",
         "clone_type3": "Type-3 (Control Flow)",
         "clone_type4": "Type-4 (Semantic)",
+        "nonclone_trap": "Non-clone Khó (Traps)",
         "nonclone_kho": "Non-clone Khó (Traps)",
         "nonclone_cross": "Non-clone Cross",
     }
 
     print("\n" + "=" * 90)
-    print("BẢNG TỔNG HỢP HIỆU NĂNG ĐỊNH TÍNH TRÊN CUSTOM SUITE JAVA (80 CẶP)")
+    print(f"BẢNG TỔNG HỢP HIỆU NĂNG ĐỊNH TÍNH TRÊN CUSTOM SUITE JAVA ({len(pairs)} CẶP - TỈ LỆ 1:5)")
     print("=" * 90)
     print(f"{'Model':<6} | {'Threshold':<10} | {'F1-Score':<10} | {'Precision':<10} | {'Recall':<10} | {'Accuracy':<10} | {'TP/FP/TN/FN'}")
     print("-" * 90)
@@ -349,7 +364,6 @@ def main():
         print(" | ".join(row))
     print("=" * 90)
 
-    # Đóng gói kết quả chi tiết
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     export_data = {
         "summary": model_metrics,
