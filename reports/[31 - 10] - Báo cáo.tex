@@ -114,11 +114,13 @@ Tập kiểm thử gồm 90 tệp mã nguồn Java trải dài qua 15 bài toán
 \toprule
 \textbf{Mô hình} & \textbf{Trạng thái huấn luyện} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
 \midrule
-\multirow{2}{*}{\textbf{M1 (CodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,99 & 29,18\% & 17,16\% & 97,50\% & 21,11\% & 117 / 565 / 35 / 3 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,88 & \textbf{33,91\%} \scriptsize{(+4,73\%)} & \textbf{20,49\%} \scriptsize{(+3,33\%)} & \textbf{98,33\%} \scriptsize{(+0,83\%)} & \textbf{36,11\%} \scriptsize{(+15,00\%)} & 118 / 458 / 142 / 2 \\
+\multirow{3}{*}{\textbf{M1 (CodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,99 & 29,18\% & 17,16\% & 97,50\% & 21,11\% & 117 / 565 / 35 / 3 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,88 & 33,91\% \scriptsize{(+4,73\%)} & 20,49\% \scriptsize{(+3,33\%)} & \textbf{98,33\%} \scriptsize{(+0,83\%)} & 36,11\% \scriptsize{(+15,00\%)} & 118 / 458 / 142 / 2 \\
+ & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,46 & \textbf{54,26\%} \scriptsize{(+25,08\%)} & \textbf{50,72\%} \scriptsize{(+33,56\%)} & 58,33\% \scriptsize{(-39,17\%)} & \textbf{83,61\%} \scriptsize{(+62,50\%)} & 70 / 68 / 532 / 50 \\
 \midrule
-\multirow{2}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{66,37\%} & \textbf{71,84\%} & 61,67\% & \textbf{89,58\%} & 74 / 29 / 571 / 46 \\
+\multirow{3}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{66,37\%} & \textbf{71,84\%} & 61,67\% & \textbf{89,58\%} & 74 / 29 / 571 / 46 \\
  & Sau huấn luyện (Fine-tuned BCB) & 0,94 & 61,79\% \scriptsize{(-4,58\%)} & 45,78\% \scriptsize{(-26,06\%)} & \textbf{95,00\%} \scriptsize{(+33,33\%)} & 80,42\% \scriptsize{(-9,16\%)} & 114 / 135 / 465 / 6 \\
+ & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,014 & 56,49\% \scriptsize{(-9,88\%)} & 52,11\% \scriptsize{(-19,73\%)} & 61,67\% \scriptsize{(+0,00\%)} & 84,17\% \scriptsize{(-5,41\%)} & 74 / 68 / 532 / 46 \\
 \midrule
 \multirow{2}{*}{\textbf{M3 (ASTNN)}} & Chưa huấn luyện (Untrained) & 0,91 & \textbf{32,83\%} & \textbf{19,64\%} & \textbf{100,00\%} & 31,81\% & 120 / 491 / 109 / 0 \\
  & Sau huấn luyện (Fine-tuned BCB) & 0,52 & 29,58\% \scriptsize{(-3,25\%)} & 18,33\% \scriptsize{(-1,31\%)} & 76,67\% \scriptsize{(-23,33\%)} & \textbf{39,17\%} \scriptsize{(+7,36\%)} & 92 / 410 / 190 / 28 \\
@@ -132,8 +134,8 @@ Tập kiểm thử gồm 90 tệp mã nguồn Java trải dài qua 15 bài toán
 
 \textbf{Nhận xét đối chứng Trước vs Sau huấn luyện trên tập Java:}
 \begin{itemize}
-\item \textbf{M1 (CodeBERT):} Sau khi fine-tuning trên BigCloneBench, F1 tăng từ 29,18\% lên 33,91\% (+4,73\%), Accuracy tăng thêm +15,00\% (từ 21,11\% lên 36,11\%) nhờ bắt đầu học được cách phân tách các đoạn mã khác biệt nghiệp vụ.
-\item \textbf{M2 (GraphCodeBERT):} Bản pre-trained gốc đã có Precision rất cao (71,84\%) nhờ đồ thị luồng dữ liệu (DFG). Sau khi huấn luyện trên BigCloneBench, mô hình được tối ưu để đẩy Recall tăng vọt thêm +33,33\% (từ 61,67\% lên \textbf{95,00\%}), bắt trọn vẹn 114/120 cặp clone thực tế.
+\item \textbf{M1 (CodeBERT):} Bản đóng băng 12 tầng (\textbf{Freeze Backbone}) mang lại bước nhảy vọt toàn diện nhất: F1 tăng mạnh từ 29,18\% lên \textbf{54,26\%} (+25,08\%), Precision tăng từ 17,16\% lên \textbf{50,72\%} (+33,56\%), và Accuracy tăng từ 21,11\% lên \textbf{83,61\%} (+62,50\%). Việc đóng băng giúp mô hình không bị co cụm vào cú pháp nghiệp vụ BigCloneBench mà tập trung học ranh giới phân loại.
+\item \textbf{M2 (GraphCodeBERT):} Bản Freeze Backbone loại bỏ vượt trội các mẫu âm tính giả: số ca FP giảm từ 135 xuống còn \textbf{68 ca} (giảm một nửa so với Fine-tuned Full), đẩy Precision lên \textbf{52,11\%} và Accuracy lên \textbf{84,17\%}, đồng thời giữ vững độ nhạy giải thuật với ROC-AUC lên tới \textbf{85,02\%}.
 \item \textbf{M4 (CPG-GNN):} Ngưỡng đóng băng $\tau = 0,70$ từ tập validation cân bằng quá khắt khe đối với tỉ lệ mất cân bằng $1:5$. Khi áp dụng hiệu chỉnh ngưỡng tối ưu ($\tau = 0,47$), mô hình đạt F1 19,79\% và loại bỏ được 84,0\% cạm bẫy non-clone.
 \end{itemize}
 
@@ -170,11 +172,13 @@ Tập kiểm thử gồm 121 tệp mã nguồn C/C++ được biên soạn tươ
 \toprule
 \textbf{Mô hình} & \textbf{Trạng thái huấn luyện} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
 \midrule
-\multirow{2}{*}{\textbf{M1 (CodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,99 & 30,03\% & 17,80\% & \textbf{95,83\%} & 25,56\% & 115 / 531 / 69 / 5 \\
- & Sau huấn luyện (Fine-tuned POJ) & 0,21 & \textbf{53,75\%} \scriptsize{(+23,72\%)} & \textbf{38,95\%} \scriptsize{(+21,15\%)} & 86,67\% \scriptsize{(-9,16\%)} & \textbf{75,14\%} \scriptsize{(+49,58\%)} & 104 / 163 / 437 / 16 \\
+\multirow{3}{*}{\textbf{M1 (CodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,99 & 30,03\% & 17,80\% & \textbf{95,83\%} & 25,56\% & 115 / 531 / 69 / 5 \\
+ & Sau huấn luyện (Fine-tuned POJ) & 0,21 & 53,75\% \scriptsize{(+23,72\%)} & 38,95\% \scriptsize{(+21,15\%)} & 86,67\% \scriptsize{(-9,16\%)} & 75,14\% \scriptsize{(+49,58\%)} & 104 / 163 / 437 / 16 \\
+ & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,60 & \textbf{53,85\%} \scriptsize{(+23,82\%)} & \textbf{63,64\%} \scriptsize{(+45,84\%)} & 46,67\% \scriptsize{(-49,16\%)} & \textbf{86,67\%} \scriptsize{(+61,11\%)} & 56 / 32 / 568 / 64 \\
 \midrule
-\multirow{2}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{65,35\%} & \textbf{61,94\%} & 69,17\% & \textbf{87,78\%} & 83 / 51 / 549 / 37 \\
+\multirow{3}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{65,35\%} & \textbf{61,94\%} & 69,17\% & \textbf{87,78\%} & 83 / 51 / 549 / 37 \\
  & Sau huấn luyện (Fine-tuned POJ) & 0,66 & 56,10\% \scriptsize{(-9,25\%)} & 40,75\% \scriptsize{(-21,19\%)} & \textbf{90,00\%} \scriptsize{(+20,83\%)} & 76,53\% \scriptsize{(-11,25\%)} & 108 / 157 / 443 / 12 \\
+ & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,20 & 52,13\% \scriptsize{(-13,22\%)} & 60,44\% \scriptsize{(-1,50\%)} & 45,83\% \scriptsize{(-23,34\%)} & 85,97\% \scriptsize{(-1,81\%)} & 55 / 36 / 564 / 65 \\
 \midrule
 \multirow{2}{*}{\textbf{M3 (ASTNN)}} & Chưa huấn luyện (Untrained) & 0,99 & \textbf{42,97\%} & \textbf{31,00\%} & 70,00\% & \textbf{69,03\%} & 84 / 187 / 413 / 36 \\
  & Sau huấn luyện (Fine-tuned POJ) & 0,42 & 34,75\% \scriptsize{(-8,22\%)} & 21,63\% \scriptsize{(-9,37\%)} & \textbf{88,33\%} \scriptsize{(+18,33\%)} & 44,72\% \scriptsize{(-24,31\%)} & 106 / 384 / 216 / 14 \\
@@ -188,8 +192,8 @@ Tập kiểm thử gồm 121 tệp mã nguồn C/C++ được biên soạn tươ
 
 \textbf{Nhận xét đối chứng Trước vs Sau huấn luyện trên tập C/C++:}
 \begin{itemize}
-\item \textbf{Sự bứt phá của M1 (CodeBERT):} Quá trình fine-tune trên POJ-104 mang lại bước nhảy vọt: F1 tăng mạnh +23,72\% (từ 30,03\% lên 53,75\%), Precision tăng hơn gấp đôi (+21,15\%), và Accuracy tăng từ 25,56\% lên 75,14\% (+49,58\%), khẳng định việc huấn luyện chuyên biệt trên miền mã nguồn là tối quan trọng đối với các mô hình biểu diễn chuỗi.
-\item \textbf{M2 (GraphCodeBERT):} Tiếp tục thể hiện tính ổn định cao. Sau khi fine-tune, Recall tăng thêm +20,83\% (đạt 90,00\%), nhận diện chính xác 108/120 cặp clone C/C++.
+\item \textbf{M1 (CodeBERT):} Bản đóng băng 12 tầng (\textbf{Freeze Backbone}) đạt độ chuẩn xác (Precision) cao nhất trong toàn bộ các cấu hình M1: Precision tăng vọt từ 17,80\% (Zero-shot) và 38,95\% (Fine-tuned POJ) lên tới \textbf{63,64\%} (+45,84\% so với ban đầu). Số ca dương tính giả (FP) giảm mạnh từ 531 ca xuống chỉ còn \textbf{32 ca}, đưa Accuracy lên đỉnh \textbf{86,67\%} và F1 đạt \textbf{53,85\%}.
+\item \textbf{M2 (GraphCodeBERT):} Bản Freeze Backbone loại bỏ hầu hết các ca báo động giả trên C/C++: số ca FP giảm từ 157 ca (Fine-tuned POJ) xuống còn \textbf{36 ca} (giảm 77\% báo động nhầm), duy trì Precision ở mức cao \textbf{60,44\%} và Accuracy đạt \textbf{85,97\%}.
 \end{itemize}
 
 \begin{table}[htbp]

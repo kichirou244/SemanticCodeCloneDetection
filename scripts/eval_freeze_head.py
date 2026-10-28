@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModel
-from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score, roc_auc_score
+from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score, roc_auc_score, confusion_matrix
 
 from src.models.transformer_pair import TransformerPairClassifier
 
@@ -79,15 +79,32 @@ def eval_model_suite(ckpt_path, hf_id, suite_dir, ext, suite_name):
         if f1 > best_f1:
             best_f1 = f1
             best_th = th
+            tn, fp, fn, tp = confusion_matrix(labels, preds).ravel()
             best_res = {
                 'th': th,
                 'f1': f1,
                 'prec': precision_score(labels, preds, zero_division=0),
                 'rec': recall_score(labels, preds, zero_division=0),
-                'acc': accuracy_score(labels, preds)
+                'acc': accuracy_score(labels, preds),
+                'tp': int(tp), 'fp': int(fp), 'tn': int(tn), 'fn': int(fn)
             }
             
-    print(f"Best: th={best_res['th']:.4f} | F1={best_res['f1']*100:.2f}% | Prec={best_res['prec']*100:.2f}% | Rec={best_res['rec']*100:.2f}% | Acc={best_res['acc']*100:.2f}%")
+    print(f"Best: th={best_res['th']:.4f} | F1={best_res['f1']*100:.2f}% | Prec={best_res['prec']*100:.2f}% | Rec={best_res['rec']*100:.2f}% | Acc={best_res['acc']*100:.2f}% | {best_res['tp']} / {best_res['fp']} / {best_res['tn']} / {best_res['fn']}")
+    
+    # Chi tiet theo tung category
+    preds_best = (probs >= best_res['th']).astype(int)
+    cat_counts = {}
+    for p, pred in zip(pairs, preds_best):
+        cat = p.get('category', 'unknown')
+        lbl = p.get('label')
+        if cat not in cat_counts:
+            cat_counts[cat] = {'tot': 0, 'cor': 0}
+        cat_counts[cat]['tot'] += 1
+        if pred == lbl:
+            cat_counts[cat]['cor'] += 1
+    for cat in sorted(cat_counts.keys()):
+        cinfo = cat_counts[cat]
+        print(f"  * {cat}: {cinfo['cor']}/{cinfo['tot']} ({cinfo['cor']/cinfo['tot']*100:.1f}%)")
     
     # Check rieng category nonclone_trap
     trap_probs = [probs[i] for i, p in enumerate(pairs) if p.get('category') == 'nonclone_trap']
