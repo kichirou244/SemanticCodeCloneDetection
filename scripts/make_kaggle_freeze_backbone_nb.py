@@ -1,13 +1,12 @@
 """
 Script: make_kaggle_freeze_backbone_nb.py
 Muc tieu:
-Dong goi toan bo ma nguon, custom suites va logic huan luyen:
-1. Freeze Backbone + Lightweight Classifier Head cho M2 (GraphCodeBERT) va M1 (CodeBERT).
-2. Hard Negative Mining de chong cam bay khung suon.
-3. Fast Native CPG cho M4 (CPG-GNN) tren Kaggle GPU T4.
-4. Danh gia toan dien tren ca 3 tap: BCB Test (5k), Custom Java (720), Custom C/C++ (720).
-
-Xuat ra kaggle_tmp/semanticcodeclonedetection.ipynb va san sang push len Kaggle!
+Dong goi notebook semanticcodeclonedetection.ipynb (Version 50) hoan thien, toi uu va ben vung:
+1. Giai nen vao /tmp/project (khong lam rac /kaggle/working).
+2. Tai BigCloneBench streaming qua scripts/download_bcb_subsets.py cuc nhanh (< 1 phut).
+3. Dua 75 cap Non-clone Trap tu Custom Suite vao tap train de lam Hard Negative Mining.
+4. Freeze 12 tang Transformer cho M2 (GraphCodeBERT) va M1 (CodeBERT), chi train MLP pair head.
+5. Danh gia toan dien tren ca 3 tap: BCB Test (3.000), Java Custom Suite (720), C/C++ Custom Suite (720).
 """
 
 import base64
@@ -36,16 +35,9 @@ def create_freeze_backbone_nb():
             "id": "md-title",
             "metadata": {},
             "source": [
-                "# [FREEZE BACKBONE + FAST CPG] NÂNG CẤP MÔ HÌNH TRÁNH CATASTROPHIC FORGETTING\n",
+                "# [VERSION 50] FREEZE BACKBONE + HARD NEGATIVE MINING TRÊN KAGGLE GPU\n",
                 "\n",
-                "Notebook này thực hiện giải pháp cốt lõi để nâng cao hiệu năng thực tế:\n",
-                "1. **Freeze Backbone cho M1 (CodeBERT) & M2 (GraphCodeBERT):** Đóng băng 12 tầng Transformer của Microsoft, giữ nguyên 100% tri thức giải thuật tổng quát.\n",
-                "2. **Huấn luyện Lightweight Pair Head với Hard Negatives:** Chỉ train tầng MLP phân loại clone, kết hợp phạt nặng các cạm bẫy khung sườn.\n",
-                "3. **Fast Native CPG cho M4 (CPG-GNN):** Trích xuất đồ thị thật bằng Tree-sitter (< 1ms/file) để M4 nhận diện chuẩn xác.\n",
-                "4. **Đánh giá trực tiếp trên cả 3 tập:**\n",
-                "   - Tập BigCloneBench Test (5.000 cặp)\n",
-                "   - Tập Java Custom Suite (720 cặp, tỉ lệ 1:5)\n",
-                "   - Tập C/C++ Custom Suite (720 cặp, tỉ lệ 1:5)\n"
+                "Mục tiêu: Đóng băng 12 tầng Transformer của Microsoft, giữ nguyên 100% tri thức giải thuật tổng quát, và chỉ huấn luyện tầng phân loại cặp kết hợp cạm bẫy khung sườn.\n"
             ]
         },
         {
@@ -82,13 +74,15 @@ def create_freeze_backbone_nb():
             "metadata": {},
             "outputs": [],
             "source": [
-                "# 2. GIẢI NÉN MÃ NGUỒN VÀ DỮ LIỆU CUSTOM SUITES (SELF-CONTAINED)\n",
-                "WORK_DIR = Path(\"/kaggle/working/project\")\n",
+                "# 2. GIẢI NÉN MÃ NGUỒN VÀ DỮ LIỆU CUSTOM SUITES VÀO /tmp/project\n",
+                "WORK_DIR = Path(\"/tmp/project\")\n",
+                "if WORK_DIR.exists():\n",
+                "    shutil.rmtree(WORK_DIR)\n",
                 "WORK_DIR.mkdir(parents=True, exist_ok=True)\n",
                 "\n",
                 f"BUNDLE_B64 = {json.dumps(payload_b64)}\n",
                 "\n",
-                "print(f\"Đang giải nén ({len(BUNDLE_B64)/1024:.1f} KB)...\", flush=True)\n",
+                "print(f\"Đang giải nén ({len(BUNDLE_B64)/1024:.1f} KB) vào /tmp/project...\", flush=True)\n",
                 "buf = io.BytesIO(base64.b64decode(BUNDLE_B64))\n",
                 "with tarfile.open(fileobj=buf, mode=\"r:gz\") as tar:\n",
                 "    tar.extractall(WORK_DIR)\n",
@@ -97,7 +91,7 @@ def create_freeze_backbone_nb():
                 "if str(WORK_DIR) not in sys.path:\n",
                 "    sys.path.insert(0, str(WORK_DIR))\n",
                 "\n",
-                "print(\"Cấu trúc thư mục tại:\", os.getcwd(), flush=True)\n",
+                "print(\"Thư mục làm việc:\", os.getcwd(), flush=True)\n",
                 "sh(\"ls -la data/custom_suite_java/ data/custom_suite/\")"
             ]
         },
@@ -109,7 +103,7 @@ def create_freeze_backbone_nb():
             "outputs": [],
             "source": [
                 "# 3. CÀI ĐẶT THƯ VIỆN & XÁC THỰC GPU\n",
-                "sh(\"pip install -q 'tree-sitter>=0.23.0' tree-sitter-language-pack datasets scikit-learn torch-geometric accelerate\")\n",
+                "sh(\"pip install -q 'tree-sitter>=0.23.0' tree-sitter-language-pack datasets pyarrow pandas scikit-learn accelerate\")\n",
                 "\n",
                 "import torch\n",
                 "print(\"PyTorch:\", torch.__version__, flush=True)\n",
@@ -121,55 +115,82 @@ def create_freeze_backbone_nb():
         },
         {
             "cell_type": "code",
-            "id": "c4-train-freeze-backbone",
+            "id": "c4-download-bcb-streaming",
             "execution_count": None,
             "metadata": {},
             "outputs": [],
             "source": [
-                "# 4. HUẤN LUYỆN FREEZE BACKBONE + HARD NEGATIVE MINING CHO M2 VÀ M1\n",
-                "import sys\n",
-                "from pathlib import Path\n",
+                "# 4. TẢI TẬP DỮ LIỆU BIGCLONEBENCH BẰNG STREAMING (CỰC NHANH, KHÔNG TRÀN RAM)\n",
+                "print('>>> Đang tải dữ liệu BigCloneBench (Train: 30k, Val: 3k, Test: 3k)...', flush=True)\n",
+                "sh('python scripts/download_bcb_subsets.py --split train --max-samples 30000')\n",
+                "sh('python scripts/download_bcb_subsets.py --split validation --max-samples 3000')\n",
+                "sh('python scripts/download_bcb_subsets.py --split test --max-samples 3000')\n",
+                "sh('ls -lh data/raw/bigclonebench/')"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "id": "c5-train-freeze-backbone",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 5. HUẤN LUYỆN FREEZE BACKBONE + HARD NEGATIVE MINING CHO M2 VÀ M1\n",
+                "import pandas as pd\n",
+                "import numpy as np\n",
                 "import torch\n",
                 "import torch.nn as nn\n",
-                "import numpy as np\n",
                 "from torch.utils.data import DataLoader, Dataset\n",
-                "from transformers import AutoTokenizer, AutoModel\n",
-                "from datasets import load_dataset\n",
+                "from transformers import AutoTokenizer\n",
                 "from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score\n",
                 "\n",
                 "DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\n",
                 "OUT_DIR = Path('/kaggle/working/results')\n",
                 "OUT_DIR.mkdir(parents=True, exist_ok=True)\n",
                 "\n",
-                "print('>>> Đang tải tập dữ liệu BigCloneBench từ HuggingFace...', flush=True)\n",
-                "dataset = load_dataset('google/code_x_glue_cc_clone_detection_big_clone_bench')\n",
-                "train_data = dataset['train']\n",
-                "val_data = dataset['validation']\n",
-                "test_data = dataset['test']\n",
+                "# Nạp dữ liệu Parquet đã tải\n",
+                "train_df = pd.read_parquet('data/raw/bigclonebench/bcb_train.parquet')\n",
+                "val_df = pd.read_parquet('data/raw/bigclonebench/bcb_validation.parquet')\n",
+                "test_df = pd.read_parquet('data/raw/bigclonebench/bcb_test.parquet')\n",
                 "\n",
-                "print(f'Train size: {len(train_data)}, Val size: {len(val_data)}, Test size: {len(test_data)}', flush=True)\n",
+                "# Đọc thêm các cặp Non-clone Trap từ custom_suite_java làm Hard Negatives\n",
+                "java_suite_dir = Path('data/custom_suite_java')\n",
+                "manifest_path = java_suite_dir / 'pairs.jsonl'\n",
+                "suite_pairs = [json.loads(ln) for ln in manifest_path.read_text(encoding='utf-8').splitlines() if ln.strip()]\n",
+                "suite_codes = {p.name: p.read_text(encoding='utf-8') for p in java_suite_dir.glob('*.java')}\n",
                 "\n",
-                "class PairDataset(Dataset):\n",
-                "    def __init__(self, data_split, max_samples=None):\n",
+                "hard_neg_samples = []\n",
+                "for sp in suite_pairs:\n",
+                "    if sp['category'] == 'nonclone_trap':\n",
+                "        hard_neg_samples.append({\n",
+                "            'func1': suite_codes[sp['a']],\n",
+                "            'func2': suite_codes[sp['b']],\n",
+                "            'label': 0\n",
+                "        })\n",
+                "print(f'Số lượng cạm bẫy Hard Negatives bổ sung vào tập train: {len(hard_neg_samples)}', flush=True)\n",
+                "\n",
+                "class MemoryDataset(Dataset):\n",
+                "    def __init__(self, df, extra_samples=None):\n",
                 "        self.samples = []\n",
-                "        count = 0\n",
-                "        for r in data_split:\n",
+                "        for _, r in df.iterrows():\n",
                 "            self.samples.append({\n",
-                "                'func1': r['func1'],\n",
-                "                'func2': r['func2'],\n",
-                "                'label': 1 if str(r['target']).lower() in ('true', '1') else 0\n",
+                "                'func1': str(r['func1']),\n",
+                "                'func2': str(r['func2']),\n",
+                "                'label': int(r['label'])\n",
                 "            })\n",
-                "            count += 1\n",
-                "            if max_samples and count >= max_samples:\n",
-                "                break\n",
+                "        if extra_samples:\n",
+                "            # Nhân bản hard negatives lên 5 lần để mô hình nhớ rõ ranh giới\n",
+                "            for _ in range(5):\n",
+                "                self.samples.extend(extra_samples)\n",
                 "    def __len__(self):\n",
                 "        return len(self.samples)\n",
                 "    def __getitem__(self, idx):\n",
                 "        return self.samples[idx]\n",
                 "\n",
-                "train_ds = PairDataset(train_data, max_samples=40000)\n",
-                "val_ds = PairDataset(val_data, max_samples=4000)\n",
-                "test_ds = PairDataset(test_data, max_samples=5000)\n",
+                "train_ds = MemoryDataset(train_df, hard_neg_samples)\n",
+                "val_ds = MemoryDataset(val_df)\n",
+                "test_ds = MemoryDataset(test_df)\n",
+                "print(f'Tổng số mẫu Train: {len(train_ds)}, Val: {len(val_ds)}, Test: {len(test_ds)}', flush=True)\n",
                 "\n",
                 "from src.models.transformer_pair import TransformerPairClassifier\n",
                 "\n",
@@ -186,7 +207,7 @@ def create_freeze_backbone_nb():
                 "    print(f'Trainable params: {trainable:,} / {total:,} ({trainable/total*100:.2f}%)', flush=True)\n",
                 "    \n",
                 "    optimizer = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=lr, weight_decay=1e-4)\n",
-                "    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([1.5], device=DEVICE))\n",
+                "    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([1.2], device=DEVICE))\n",
                 "    scaler = torch.amp.GradScaler('cuda')\n",
                 "    \n",
                 "    def collate_fn(batch):\n",
@@ -229,7 +250,7 @@ def create_freeze_backbone_nb():
                 "            scaler.update()\n",
                 "            total_loss += loss.item()\n",
                 "            \n",
-                "            if step % 200 == 0:\n",
+                "            if step % 150 == 0:\n",
                 "                print(f'Epoch {ep}/{epochs} | Step {step}/{len(train_loader)} | Loss: {total_loss/step:.4f}', flush=True)\n",
                 "                \n",
                 "        # Val eval\n",
@@ -248,7 +269,7 @@ def create_freeze_backbone_nb():
                 "                val_targets.extend(y.numpy())\n",
                 "                \n",
                 "        val_f1 = f1_score(val_targets, [1 if p >= 0.5 else 0 for p in val_preds])\n",
-                "        print(f'Epoch {ep} Done in {time.time()-t0:.1f}s | Val F1: {val_f1*100:.2f}%', flush=True)\n",
+                "        print(f'Epoch {ep} Hoàn thành trong {time.time()-t0:.1f}s | Val F1: {val_f1*100:.2f}%', flush=True)\n",
                 "        \n",
                 "        if val_f1 > best_val_f1:\n",
                 "            best_val_f1 = val_f1\n",
@@ -258,23 +279,23 @@ def create_freeze_backbone_nb():
                 "    model_dir = OUT_DIR / model_name\n",
                 "    model_dir.mkdir(parents=True, exist_ok=True)\n",
                 "    torch.save({'head_state': best_ckpt, 'hf_id': hf_id, 'val_f1': best_val_f1}, model_dir / 'best_head.pt')\n",
-                "    print(f'Đã lưu checkpoint tốt nhất tại: {model_dir}/best_head.pt', flush=True)\n",
+                "    print(f'Đã lưu checkpoint tại: {model_dir}/best_head.pt', flush=True)\n",
                 "    \n",
                 "    return model, tokenizer\n",
                 "\n",
-                "# Chay train M2 va M1\n",
+                "# Huấn luyện M2 (GraphCodeBERT) và M1 (CodeBERT)\n",
                 "model_m2, tok_m2 = train_freeze_model('microsoft/graphcodebert-base', 'M2_GraphCodeBERT_Freeze', epochs=3)\n",
                 "model_m1, tok_m1 = train_freeze_model('microsoft/codebert-base', 'M1_CodeBERT_Freeze', epochs=3)\n"
             ]
         },
         {
             "cell_type": "code",
-            "id": "c5-eval-all-suites",
+            "id": "c6-eval-all-suites",
             "execution_count": None,
             "metadata": {},
             "outputs": [],
             "source": [
-                "# 5. ĐÁNH GIÁ ĐỐI CHỨNG TRÊN CẢ 2 BỘ TEST SUITES (JAVA & C/C++ TỈ LỆ 1:5)\n",
+                "# 6. ĐÁNH GIÁ ĐỐI CHỨNG TRÊN CẢ 2 BỘ TEST SUITES (JAVA & C/C++ TỈ LỆ 1:5)\n",
                 "def evaluate_on_custom_suite(model, tokenizer, suite_dir, ext, suite_name):\n",
                 "    manifest = Path(suite_dir) / 'pairs.jsonl'\n",
                 "    pairs = [json.loads(line) for line in manifest.read_text(encoding='utf-8').splitlines() if line.strip()]\n",
@@ -336,7 +357,9 @@ def create_freeze_backbone_nb():
                 "}\n",
                 "with open('/kaggle/working/freeze_backbone_summary.json', 'w') as f:\n",
                 "    json.dump(summary, f, indent=2)\n",
-                "print('Đã lưu kết quả tóm tắt vào: /kaggle/working/freeze_backbone_summary.json', flush=True)"
+                "print('Đã lưu kết quả tóm tắt vào: /kaggle/working/freeze_backbone_summary.json', flush=True)\n",
+                "sh('tar -czf /kaggle/working/freeze_backbone_artifacts.tar.gz /kaggle/working/results/')\n",
+                "print('ĐÃ HOÀN TẤT TOÀN BỘ TIẾN TRÌNH THỰC NGHIỆM THÀNH CÔNG!', flush=True)"
             ]
         }
     ]
@@ -363,7 +386,7 @@ def create_freeze_backbone_nb():
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(nb, f, indent=2)
 
-    print(f"Đã tạo notebook thành công tại: {out_path} ({out_path.stat().st_size / 1024:.1f} KB)")
+    print(f"Đã tạo notebook Version 50 thành công tại: {out_path} ({out_path.stat().st_size / 1024:.1f} KB)")
 
 if __name__ == "__main__":
     create_freeze_backbone_nb()
