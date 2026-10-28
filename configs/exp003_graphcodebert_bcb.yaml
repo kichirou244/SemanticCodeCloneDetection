@@ -18,7 +18,7 @@ model:
   dropout: 0.1
 
 tokenizer:
-  max_length: 512
+  max_length: 384
   truncation: true
   padding: dynamic
 
