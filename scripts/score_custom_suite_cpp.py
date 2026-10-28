@@ -102,47 +102,27 @@ def score_m3_astnn(pairs: list[dict], device: torch.device) -> dict[str, float]:
 
 
 def score_m4_cpg(pairs: list[dict], device: torch.device) -> dict[str, float]:
-    """Chấm điểm bằng mô hình đồ thị M4 (CPG-GNN) trên C/C++."""
+    """Chấm điểm bằng mô hình đồ thị M4 (CPG-GNN) kết hợp FastNativeCPG trên C/C++."""
     from src.models.cpg_gnn.model import CPGGNNPairClassifier
     from torch_geometric.data import Batch, Data
-    from src.representations.ast.extract import extract_tree
+    from scripts.fast_native_cpg import FastNativeCPGExtractor
 
     ckpt_path = ROOT / "results" / "exp005_cpg_gnn_poj104" / "best_checkpoint.pt"
     if not ckpt_path.exists():
         print(f"Cảnh báo: Không tìm thấy checkpoint M4 tại {ckpt_path}")
         return {}
 
-    print(">>> Nạp trọng số M4 (CPG-GNN) C/C++...")
+    print(">>> Nạp trọng số M4 (CPG-GNN) C/C++ + FastNativeCPG Extractor...")
     ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
     model = CPGGNNPairClassifier(hidden=128, num_layers=3, heads=4, dropout=0.2)
     model.load_state_dict(ckpt["model_state"])
     model.to(device)
     model.eval()
 
-    def code_to_graph_data(code: str) -> Data:
-        tree = extract_tree(code, language="cpp")
-        labels = tree["label"]
-        parents = tree["parent"]
-        n = len(labels)
-        src, dst = [], []
-        for i in range(1, n):
-            p = int(parents[i])
-            if 0 <= p < n and p != i:
-                src.extend([p, i])
-                dst.extend([i, p])
-        if src:
-            edge_index = torch.tensor([src, dst], dtype=torch.long)
-            edge_type = torch.zeros(len(src), dtype=torch.long)
-        else:
-            edge_index = torch.zeros((2, 0), dtype=torch.long)
-            edge_type = torch.zeros(0, dtype=torch.long)
-
-        node_type = torch.tensor(labels % 13, dtype=torch.long)
-        x = torch.ones((n, 1), dtype=torch.float32)
-        return Data(node_type=node_type, x=x, edge_index=edge_index, edge_type=edge_type)
-
+    extractor = FastNativeCPGExtractor("cpp")
     graph_cache: dict[str, Data] = {}
     for p in DATA_DIR.glob("*.cpp"):
+        graph_cache[p.name] = extractor.parse_to_cpg(p.read_text(encoding="utf-8"))
         try:
             graph_cache[p.name] = code_to_graph_data(p.read_text(encoding="utf-8"))
         except Exception:

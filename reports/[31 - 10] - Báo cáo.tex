@@ -225,27 +225,29 @@ Hệ thống kiểm thử đã được module hóa thông qua hai script chuẩ
 
 %======================================================================
 \section{Hạn chế}
-Qua các đợt thực nghiệm tuần này, nhóm nghiên cứu ghi nhận một số hạn chế cốt lõi cần giải quyết:
+Qua các đợt thực nghiệm đối chứng tuần này, nhóm nghiên cứu ghi nhận 4 hạn chế cốt lõi cần giải quyết:
 \begin{enumerate}
-\item \textbf{Hiện tượng dương tính giả dưới tỉ lệ dữ liệu thực tế ($1:5$):}
-  Các tập kiểm thử thực tế có số lượng cặp không trùng lặp áp đảo. Các mô hình dựa trên chuỗi từ khóa (M1) có xu hướng dự đoán nhầm các bài toán khác nhau có chung bộ khung cú pháp (ví dụ: cùng dùng hai vòng lặp lồng nhau duyệt mảng nhưng một bài để sắp xếp, một bài để tìm phần tử trùng).
-\item \textbf{Độ nhạy của ngưỡng quyết định khi chuyển dịch phân phối:}
-  Ngưỡng tối ưu dò tìm trên tập validation cân bằng (tỉ lệ $1:1$) không còn tối ưu khi chuyển sang môi trường kiểm thử mất cân bằng ($1:5$). Cần một cơ chế chuẩn hóa ngưỡng phụ thuộc vào tỉ lệ prior của tập dữ liệu.
-\item \textbf{Thời gian và tài nguyên trích xuất đồ thị CPG của Joern:}
-  Công cụ Joern chạy trên nền JVM tiêu tốn thời gian phân tích cú pháp tĩnh đáng kể đối với các hàm lớn, gây khó khăn cho việc triển khai suy luận thời gian thực nếu không có cơ chế cache đồ thị offline sẵn sàng.
+\item \textbf{Hiện tượng quên tri thức giải thuật (Catastrophic Forgetting) khi Full Fine-tuning:}
+  Trọng số gốc của GraphCodeBERT (M2) được Microsoft tiền huấn luyện trên 2,3 triệu hàm, sở hữu sẵn tri thức tổng quát về luồng dữ liệu của các thuật toán kinh điển (đạt F1 65--66\% ngay ở bản Zero-shot). Tuy nhiên, khi tinh chỉnh toàn bộ 125 triệu tham số trên tập BigCloneBench (chỉ gồm các hàm nghiệp vụ I/O, database, mạng), mô hình bị co cụm vào các mẫu API nghiệp vụ, làm giảm độ nhạy bén tổng quát trên tập giải thuật.
+\item \textbf{Giới hạn kiến trúc của mạng đệ quy RvNN (ASTNN) đối với cú pháp Java:}
+  ASTNN được thiết kế tối ưu cho các hàm C/C++ ngắn (27 loại câu lệnh). Khi áp dụng vào Java với cây cú pháp sâu và 45 loại câu lệnh, mạng RvNN và Bi-GRU bị hiện tượng tiêu biến gradient (Vanishing Gradient), dẫn đến F1 trên BigCloneBench chỉ đạt 25,54\%. Đây là giới hạn về mặt kiến trúc cây đệ quy đối với các ngôn ngữ hướng đối tượng phức tạp.
+\item \textbf{Thiếu vắng Hard Negative Mining trong tập huấn luyện:}
+  Các mẫu âm tính trong tập huấn luyện hiện tại được sinh ngẫu nhiên (chọn 2 hàm khác chức năng). Do đó, mô hình chưa từng được học cách phân biệt các cặp "cạm bẫy khung sườn" (hai hàm có cùng khung sườn vòng lặp lồng nhau nhưng tính toán khác nhau), dẫn đến tỉ lệ báo động giả cao trước các bài toán cạm bẫy.
+\item \textbf{Nút thắt cổ chai hiệu năng của Joern JVM trong trích xuất CPG:}
+  Công cụ Joern chạy trên nền Scala/JVM tiêu tốn 1,5--3,0 giây cho mỗi hàm và tốn 4--8GB RAM, không thể đáp ứng yêu cầu suy luận thời gian thực trên giao diện ứng dụng.
 \end{enumerate}
 
 %======================================================================
 \section{Kế hoạch tuần tới}
-Dựa trên kết quả và các hạn chế đã xác định, kế hoạch nghiên cứu tuần tới tập trung vào các nội dung sau:
+Dựa trên các hạn chế đã xác định, kế hoạch nghiên cứu tuần tới tập trung vào các giải pháp đột phá:
 \begin{itemize}
+\item \textbf{Chuyển đổi sang kiến trúc Freeze Backbone + Lightweight Adapter (M1, M2):}
+  Đóng băng hoàn toàn 12 tầng Transformer của Microsoft để giữ nguyên 100\% tri thức giải thuật gốc, chỉ huấn luyện tầng phân loại cặp kết hợp cơ chế Hard Negative Mining trên Kaggle GPU (đã triển khai Version 49).
+\item \textbf{Tích hợp bộ trích xuất Fast Native CPG thuần Python (M4):}
+  Thay thế hoàn toàn Joern JVM bằng bộ parser CPG dựa trên \texttt{tree-sitter} (< 0,5ms/file), cung cấp đầy đủ nhãn đỉnh và nhãn cạnh thật cho mạng GAT.
 \item \textbf{Tiếp nhận và đánh giá trên tập dữ liệu Coder:}
-  Tiến hành tiền xử lý, trích xuất đặc trưng và đưa tập dữ liệu Coder vào pipeline để hoàn thiện bảng so sánh 3 tập dữ liệu (Java, C/C++, Coder).
-\item \textbf{Hiệu chỉnh ngưỡng quyết định (Threshold Calibration):}
-  Nghiên cứu cơ chế điều chỉnh ngưỡng theo tỉ lệ mất cân bằng dữ liệu (Cost-sensitive thresholding hoặc $F_\beta$-tuning) nhằm giảm thiểu triệt để số ca dương tính giả (FP) của M1 và M2 trước các cạm bẫy khung sườn.
-\item \textbf{Cập nhật và hoàn thiện Web Demo tương tác:}
-  Nâng cấp giao diện Web Demo (FastAPI) hỗ trợ nạp đồng thời các checkpoint Java và C/C++, cho phép người dùng tùy chọn ngôn ngữ, nhập trực tiếp 2 đoạn mã và xem trực quan điểm tương đồng từ 4 kiến trúc biểu diễn.
-\item \textbf{Chuẩn bị tài liệu báo cáo tổng kết và slide thuyết trình đề tài.}
+  Tiến hành tiền xử lý và đưa tập dữ liệu Coder vào pipeline để hoàn thiện bảng so sánh 3 tập dữ liệu (Java, C/C++, Coder).
+\item \textbf{Hoàn thiện Web Demo tương tác đa ngôn ngữ (Java, C/C++) và slide thuyết trình đề tài.}
 \end{itemize}
 
 \end{document}
