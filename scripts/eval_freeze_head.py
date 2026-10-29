@@ -112,8 +112,8 @@ def eval_model_suite(ckpt_path, hf_id, suite_dir, ext, suite_name):
         print(f"Nonclone Trap probs: mean={np.mean(trap_probs):.4f}, max={np.max(trap_probs):.4f}")
 
 if __name__ == '__main__':
-    m2_path = Path('kaggle_tmp/v50_output/results/M2_GraphCodeBERT_Freeze/best_head.pt')
-    m1_path = Path('kaggle_tmp/v50_output/results/M1_CodeBERT_Freeze/best_head.pt')
+    m2_path = Path('results/M2_GraphCodeBERT_Freeze/best_head.pt')
+    m1_path = Path('results/M1_CodeBERT_Freeze/best_head.pt')
     
     eval_model_suite(m2_path, 'microsoft/graphcodebert-base', 'data/custom_suite_java', 'java', 'M2 Java')
     eval_model_suite(m2_path, 'microsoft/graphcodebert-base', 'data/custom_suite', 'cpp', 'M2 C/C++')
