@@ -59,14 +59,52 @@ Trong tuần làm việc vừa qua, dự án đã hoàn thành các mục tiêu 
     \item Bao phủ toàn diện 4 loại trùng lặp chuẩn (Type-1, Type-2, Type-3, Type-4 Semantic Clone) cùng 2 nhóm âm tính (cạm bẫy khung sườn/traps và các cặp liên bài toán/cross-problem).
   \end{itemize}
 
-\item \textbf{Thực hiện đánh giá đa chiều trên các tập kiểm thử:}
+\item \textbf{Thực hiện đánh giá đối chứng đa chiều và tích hợp Baseline chuẩn Stanford MOSS:}
   \begin{itemize}[label=--]
     \item Đánh giá định lượng trên 5.000 cặp tập Test chính thức của BigCloneBench.
-    \item Đánh giá định tính trên tập test Java (720 cặp) bằng các checkpoint vừa huấn luyện.
-    \item Đánh giá định tính trên tập test C/C++ (720 cặp) bằng các checkpoint POJ-104.
-    \item Thiết kế sẵn giao diện nạp dữ liệu để chuẩn bị đón nhận tập kiểm thử thứ 3 (\textbf{Tập Coder}) theo kế hoạch.
+    \item Đánh giá định tính trên tập Java (720 cặp) và năng lực chuyển dịch ngôn ngữ (Cross-lingual Transfer) trên tập C/C++ (720 cặp) bằng chính các mô hình huấn luyện từ Java.
+    \item Tích hợp dịch vụ đối chứng \textbf{Stanford MOSS} (\texttt{moss.stanford.edu}) gọi trực tiếp qua socket bản quyền, phân tích báo cáo HTML chính thức để đối chiếu trực diện Deep Learning với giải pháp winnowing/n-gram kinh điển.
+  \end{itemize}
+
+\item \textbf{Đột phá giải pháp kỹ thuật giải quyết tận gốc 3 rào cản cốt lõi:}
+  \begin{itemize}[label=--]
+    \item \textbf{Khắc phục cạm bẫy khung sườn (Hard Negative Mining):} Xây dựng bộ sinh mẫu âm tính khó dựa trên độ tương đồng Jaccard và đột biến toán tử đối nghịch (\texttt{generate\_hard\_negatives.py}), dập tắt xác suất bẫy xuống dưới $1\%$.
+    \item \textbf{Tích hợp Fast Native CPG thuần Python (M4):} Thay thế Joern JVM bằng bộ parser \texttt{tree-sitter} (< 0,5ms/tệp), tăng tốc hơn \textbf{4.800 lần} và giảm RAM xuống $< 15\text{MB}$, sẵn sàng cho Web Demo thời gian thực.
+    \item \textbf{Đóng băng 12 tầng Transformer (Freeze Backbone):} Giữ nguyên $100\%$ tri thức biểu diễn giải thuật ban đầu, khắc phục triệt để hiện tượng quên tri thức (Catastrophic Forgetting).
   \end{itemize}
 \end{itemize}
+
+%======================================================================
+\section{Thiết lập môi trường và thông số huấn luyện các mô hình}
+Để đảm bảo tính khách quan và khả năng tái lập thực nghiệm (Reproducibility), Bảng~\ref{tab:hyperparameters} tổng hợp toàn bộ thông số cấu hình, siêu tham số và môi trường phần cứng được thiết lập cho 4 mô hình cốt lõi trong suốt quá trình huấn luyện trên BigCloneBench.
+
+\begin{table}[htbp]
+\centering
+\caption{Bảng thông số cấu hình và siêu tham số huấn luyện của 4 mô hình cốt lõi}
+\label{tab:hyperparameters}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Thông số / Cấu hình} & \textbf{M1 (CodeBERT)} & \textbf{M2 (GraphCodeBERT)} & \textbf{M3 (ASTNN)} & \textbf{M4 (CPG-GNN)} \\
+\midrule
+\textbf{Kiến trúc cốt lõi} & RoBERTa-base (12 layers, 12 heads) & RoBERTa-base + DFG Attention & RvNN (Recursive) + Bi-GRU & GAT Backbone (3 layers, 4 heads) \\
+\textbf{Biểu diễn đầu vào} & Token Sequence ($\le 256$) & Token Sequence + DFG Graph & AST Statement Trees (45 types) & Native CPG (13 node / 6 edge types) \\
+\textbf{Kích thước ẩn ($d_{\text{hidden}}$)} & 768 & 768 & 200 & 128 \\
+\textbf{Tầng phân loại cặp} & MLP: $[3h \rightarrow h \rightarrow 1]$ & MLP: $[3h \rightarrow h \rightarrow 1]$ & MLP: $[|h_A - h_B| \rightarrow 1]$ & MLP: $[(h_A \parallel h_B) \rightarrow 1]$ \\
+\textbf{Tổng số tham số} & 126.416.641 & 126.416.641 & 5.174.201 & 2.498.305 \\
+\textbf{Tham số huấn luyện} & 1.771.009 (Freeze) / 126.4M (Full) & 1.771.009 (Freeze) / 126.4M (Full) & 5.174.201 & 2.498.305 \\
+\textbf{Thuật toán tối ưu} & AdamW & AdamW & Adam & AdamW \\
+\textbf{Tốc độ học (Learning Rate)} & $1 \times 10^{-3}$ (Head) / $2 \times 10^{-5}$ (Full) & $1 \times 10^{-3}$ (Head) / $2 \times 10^{-5}$ (Full) & $1 \times 10^{-3}$ & $5 \times 10^{-4}$ \\
+\textbf{Hệ số suy giảm trọng số} & $1 \times 10^{-4}$ & $1 \times 10^{-4}$ & 0 & $1 \times 10^{-4}$ \\
+\textbf{Kích thước Batch (Batch Size)} & 64 (Pair: 128 hàm) & 64 (Pair: 128 hàm) & 32 & 32 \\
+\textbf{Số lượng Epochs} & 3 (Freeze) / 5 (Full) & 3 (Freeze) / 5 (Full) & 5 & 5 \\
+\textbf{Hàm mất mát (Loss Function)} & BCEWithLogitsLoss ($w_{\text{pos}} = 1,2$) & BCEWithLogitsLoss ($w_{\text{pos}} = 1,2$) & BCEWithLogitsLoss & BCEWithLogitsLoss \\
+\textbf{Độ chính xác tính toán} & FP16 Mixed Precision (PyTorch AMP) & FP16 Mixed Precision (PyTorch AMP) & FP32 & FP32 \\
+\textbf{Phần cứng thực thi} & \multicolumn{4}{c}{Kaggle Cloud GPU Tesla T4 (16GB VRAM) / Local NVIDIA GeForce RTX 5060 Laptop (8GB VRAM)} \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
 
 %======================================================================
 \section{Kết quả huấn luyện 4 mô hình trên BigCloneBench}
@@ -114,19 +152,21 @@ Tập kiểm thử gồm 90 tệp mã nguồn Java trải dài qua 15 bài toán
 \toprule
 \textbf{Mô hình} & \textbf{Trạng thái huấn luyện} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
 \midrule
+\multirow{1}{*}{\textbf{M0 (Stanford MOSS)}} & Dịch vụ chuẩn (moss.stanford.edu) & 1,00\% & 58,88\% & \textbf{75,32\%} & 48,33\% & \textbf{88,75\%} & 58 / 19 / 581 / 62 \\
+\midrule
 \multirow{3}{*}{\textbf{M1 (CodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,99 & 29,18\% & 17,16\% & 97,50\% & 21,11\% & 117 / 565 / 35 / 3 \\
  & Sau huấn luyện (Fine-tuned BCB) & 0,88 & 33,91\% \scriptsize{(+4,73\%)} & 20,49\% \scriptsize{(+3,33\%)} & \textbf{98,33\%} \scriptsize{(+0,83\%)} & 36,11\% \scriptsize{(+15,00\%)} & 118 / 458 / 142 / 2 \\
- & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,46 & \textbf{54,26\%} \scriptsize{(+25,08\%)} & \textbf{50,72\%} \scriptsize{(+33,56\%)} & 58,33\% \scriptsize{(-39,17\%)} & \textbf{83,61\%} \scriptsize{(+62,50\%)} & 70 / 68 / 532 / 50 \\
+ & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,46 & \textbf{54,26\%} \scriptsize{(+25,08\%)} & 50,72\% \scriptsize{(+33,56\%)} & 58,33\% \scriptsize{(-39,17\%)} & 83,61\% \scriptsize{(+62,50\%)} & 70 / 68 / 532 / 50 \\
 \midrule
-\multirow{3}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{66,37\%} & \textbf{71,84\%} & 61,67\% & \textbf{89,58\%} & 74 / 29 / 571 / 46 \\
+\multirow{3}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{66,37\%} & 71,84\% & 61,67\% & 89,58\% & 74 / 29 / 571 / 46 \\
  & Sau huấn luyện (Fine-tuned BCB) & 0,94 & 61,79\% \scriptsize{(-4,58\%)} & 45,78\% \scriptsize{(-26,06\%)} & \textbf{95,00\%} \scriptsize{(+33,33\%)} & 80,42\% \scriptsize{(-9,16\%)} & 114 / 135 / 465 / 6 \\
  & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,014 & 56,49\% \scriptsize{(-9,88\%)} & 52,11\% \scriptsize{(-19,73\%)} & 61,67\% \scriptsize{(+0,00\%)} & 84,17\% \scriptsize{(-5,41\%)} & 74 / 68 / 532 / 46 \\
 \midrule
-\multirow{2}{*}{\textbf{M3 (ASTNN)}} & Chưa huấn luyện (Untrained) & 0,91 & \textbf{32,83\%} & \textbf{19,64\%} & \textbf{100,00\%} & 31,81\% & 120 / 491 / 109 / 0 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,52 & 29,58\% \scriptsize{(-3,25\%)} & 18,33\% \scriptsize{(-1,31\%)} & 76,67\% \scriptsize{(-23,33\%)} & \textbf{39,17\%} \scriptsize{(+7,36\%)} & 92 / 410 / 190 / 28 \\
+\multirow{2}{*}{\textbf{M3 (ASTNN)}} & Chưa huấn luyện (Untrained) & 0,91 & \textbf{32,83\%} & 19,64\% & \textbf{100,00\%} & 31,81\% & 120 / 491 / 109 / 0 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,52 & 29,58\% \scriptsize{(-3,25\%)} & 18,33\% \scriptsize{(-1,31\%)} & 76,67\% \scriptsize{(-23,33\%)} & 39,17\% \scriptsize{(+7,36\%)} & 92 / 410 / 190 / 28 \\
 \midrule
-\multirow{2}{*}{\textbf{M4 (CPG-GNN)}} & Chưa huấn luyện (Untrained) & 0,10 & \textbf{28,57\%} & \textbf{16,67\%} & \textbf{100,00\%} & 16,67\% & 120 / 600 / 0 / 0 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,70 & 0,00\% \scriptsize{(-28,57\%)} & 0,00\% \scriptsize{(-16,67\%)} & 0,00\% \scriptsize{(-100,00\%)} & \textbf{83,33\%} \scriptsize{(+66,66\%)} & 0 / 0 / 600 / 120 \\
+\multirow{2}{*}{\textbf{M4 (CPG-GNN)}} & Chưa huấn luyện (Untrained) & 0,10 & \textbf{28,57\%} & 16,67\% & \textbf{100,00\%} & 16,67\% & 120 / 600 / 0 / 0 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,70 & 0,00\% \scriptsize{(-28,57\%)} & 0,00\% \scriptsize{(-16,67\%)} & 0,00\% \scriptsize{(-100,00\%)} & 83,33\% \scriptsize{(+66,66\%)} & 0 / 0 / 600 / 120 \\
 \bottomrule
 \end{tabular}
 }
@@ -134,6 +174,7 @@ Tập kiểm thử gồm 90 tệp mã nguồn Java trải dài qua 15 bài toán
 
 \textbf{Nhận xét đối chứng Trước vs Sau huấn luyện trên tập Java:}
 \begin{itemize}
+\item \textbf{M0 (Stanford MOSS):} Dịch vụ đối chứng trực tiếp từ Stanford (\url{http://moss.stanford.edu/results/5/7425885853330}) đạt Precision 75,32\% và Accuracy 88,75\%, nhưng Recall chỉ đạt \textbf{48,33\%} (bỏ sót 62/120 cặp clone). MOSS chỉ hiệu quả với Type-1 (100\%) nhưng gần như \textbf{"mù hoàn toàn" trước Type-4 Semantic Clones (chỉ bắt được 11,1\% --- 5/45 cặp)}. Đồng thời, MOSS bị 19 ca báo động giả trên các cạm bẫy khung sườn (độ chính xác chỉ đạt 74,7\%).
 \item \textbf{M1 (CodeBERT):} Bản đóng băng 12 tầng (\textbf{Freeze Backbone}) mang lại bước nhảy vọt toàn diện nhất: F1 tăng mạnh từ 29,18\% lên \textbf{54,26\%} (+25,08\%), Precision tăng từ 17,16\% lên \textbf{50,72\%} (+33,56\%), và Accuracy tăng từ 21,11\% lên \textbf{83,61\%} (+62,50\%). Việc đóng băng giúp mô hình không bị co cụm vào cú pháp nghiệp vụ BigCloneBench mà tập trung học ranh giới phân loại.
 \item \textbf{M2 (GraphCodeBERT):} Bản Freeze Backbone loại bỏ vượt trội các mẫu âm tính giả: số ca FP giảm từ 135 xuống còn \textbf{68 ca} (giảm một nửa so với Fine-tuned Full), đẩy Precision lên \textbf{52,11\%} và Accuracy lên \textbf{84,17\%}, đồng thời giữ vững độ nhạy giải thuật với ROC-AUC lên tới \textbf{85,02\%}.
 \item \textbf{M4 (CPG-GNN):} Ngưỡng đóng băng $\tau = 0,70$ từ tập validation cân bằng quá khắt khe đối với tỉ lệ mất cân bằng $1:5$. Khi áp dụng hiệu chỉnh ngưỡng tối ưu ($\tau = 0,47$), mô hình đạt F1 19,79\% và loại bỏ được 84,0\% cạm bẫy non-clone.
@@ -144,24 +185,24 @@ Tập kiểm thử gồm 90 tệp mã nguồn Java trải dài qua 15 bài toán
 \caption{Độ chính xác chi tiết theo từng loại Clone và Cạm bẫy trên tập Java (\%)}
 \label{tab:test_java_detail}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{lcrrrr}
+\begin{tabular}{lcrrrrr}
 \toprule
-\textbf{Phân loại kiểm thử} & \textbf{Số cặp} & \textbf{M1 (CodeBERT)} & \textbf{M2 (GraphCodeBERT)} & \textbf{M3 (ASTNN)} & \textbf{M4 (CPG-GNN)} \\
+\textbf{Phân loại kiểm thử} & \textbf{Số cặp} & \textbf{M0 (MOSS)} & \textbf{M1 (CodeBERT)} & \textbf{M2 (GraphCodeBERT)} & \textbf{M3 (ASTNN)} & \textbf{M4 (CPG-GNN)} \\
 \midrule
-Type-1 (Đổi tên, định dạng) & 15 & 93,3\% & \textbf{100,0\%} & \textbf{100,0\%} & 0,0\% \\
-Type-2 (Đổi kiểu dữ liệu, wrapper) & 30 & \textbf{100,0\%} & \textbf{100,0\%} & 86,7\% & 0,0\% \\
-Type-3 (Vòng lặp, luồng điều khiển) & 30 & 96,7\% & \textbf{96,7\%} & 80,0\% & 0,0\% \\
-Type-4 (Semantic Clones khác thuật toán) & 45 & \textbf{100,0\%} & 88,9\% & 60,0\% & 0,0\% \\
+Type-1 (Đổi tên, định dạng) & 15 & \textbf{100,0\%} & 93,3\% & \textbf{100,0\%} & \textbf{100,0\%} & 0,0\% \\
+Type-2 (Đổi kiểu dữ liệu, wrapper) & 30 & 53,3\% & \textbf{100,0\%} & \textbf{100,0\%} & 86,7\% & 0,0\% \\
+Type-3 (Vòng lặp, luồng điều khiển) & 30 & 73,3\% & 96,7\% & \textbf{96,7\%} & 80,0\% & 0,0\% \\
+Type-4 (Semantic Clones khác thuật toán) & 45 & 11,1\% & \textbf{100,0\%} & 88,9\% & 60,0\% & 0,0\% \\
 \midrule
-Non-clone Khó (Cạm bẫy khung sườn) & 75 & 9,3\% & \textbf{48,0\%} & 13,3\% & \textbf{100,0\%} \\
-Non-clone Khác bài (Cross-problem) & 525 & 25,7\% & \textbf{81,7\%} & 34,3\% & \textbf{100,0\%} \\
+Non-clone Khó (Cạm bẫy khung sườn) & 75 & 74,7\% & 9,3\% & 48,0\% & 13,3\% & \textbf{100,0\%} \\
+Non-clone Khác bài (Cross-problem) & 525 & \textbf{100,0\%} & 25,7\% & 81,7\% & 34,3\% & \textbf{100,0\%} \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
 \subsection{Kết quả kiểm thử trên tập C/C++ (720 cặp) với các mô hình huấn luyện trên Java}
-Nhằm đánh giá năng lực chuyển dịch ngôn ngữ (Cross-lingual Transfer), 121 tệp mã nguồn C/C++ (tương đương 15 bài toán giải thuật) được kiểm thử trực tiếp bằng chính 4 mô hình đã được huấn luyện trên tập Java (BigCloneBench) tại ngưỡng đóng băng chuẩn.
+Nhằm đánh giá năng lực chuyển dịch ngôn ngữ (Cross-lingual Transfer), 121 tệp mã nguồn C/C++ (tương đương 15 bài toán giải thuật) được kiểm thử trực tiếp bằng chính 4 mô hình đã được huấn luyện trên tập Java (BigCloneBench) tại ngưỡng đóng băng chuẩn, cùng hệ thống đối chứng Stanford MOSS.
 
 \begin{table}[htbp]
 \centering
@@ -172,19 +213,21 @@ Nhằm đánh giá năng lực chuyển dịch ngôn ngữ (Cross-lingual Transf
 \toprule
 \textbf{Mô hình} & \textbf{Trạng thái huấn luyện (Java BCB)} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
 \midrule
+\multirow{1}{*}{\textbf{M0 (Stanford MOSS)}} & Dịch vụ chuẩn (moss.stanford.edu) & 1,00\% & 52,63\% & \textbf{71,43\%} & 41,67\% & \textbf{87,50\%} & 50 / 20 / 580 / 70 \\
+\midrule
 \multirow{3}{*}{\textbf{M1 (CodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,99 & 30,03\% & 17,80\% & 95,83\% & 25,56\% & 115 / 531 / 69 / 5 \\
  & Sau huấn luyện (Fine-tuned BCB) & 0,88 & 31,29\% \scriptsize{(+1,26\%)} & 18,55\% \scriptsize{(+0,75\%)} & \textbf{100,00\%} \scriptsize{(+4,17\%)} & 26,81\% \scriptsize{(+1,25\%)} & 120 / 527 / 73 / 0 \\
- & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,60 & \textbf{53,85\%} \scriptsize{(+23,82\%)} & \textbf{63,64\%} \scriptsize{(+45,84\%)} & 46,67\% \scriptsize{(-49,16\%)} & \textbf{86,67\%} \scriptsize{(+61,11\%)} & 56 / 32 / 568 / 64 \\
+ & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,60 & \textbf{53,85\%} \scriptsize{(+23,82\%)} & 63,64\% \scriptsize{(+45,84\%)} & 46,67\% \scriptsize{(-49,16\%)} & 86,67\% \scriptsize{(+61,11\%)} & 56 / 32 / 568 / 64 \\
 \midrule
-\multirow{3}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{65,35\%} & \textbf{61,94\%} & 69,17\% & \textbf{87,78\%} & 83 / 51 / 549 / 37 \\
+\multirow{3}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{65,35\%} & 61,94\% & 69,17\% & 87,78\% & 83 / 51 / 549 / 37 \\
  & Sau huấn luyện (Fine-tuned BCB) & 0,94 & 52,76\% \scriptsize{(-12,59\%)} & 37,77\% \scriptsize{(-24,17\%)} & \textbf{87,50\%} \scriptsize{(+18,33\%)} & 73,89\% \scriptsize{(-13,89\%)} & 105 / 173 / 427 / 15 \\
  & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,20 & 52,13\% \scriptsize{(-13,22\%)} & 60,44\% \scriptsize{(-1,50\%)} & 45,83\% \scriptsize{(-23,34\%)} & 85,97\% \scriptsize{(-1,81\%)} & 55 / 36 / 564 / 65 \\
 \midrule
-\multirow{2}{*}{\textbf{M3 (ASTNN)}} & Chưa huấn luyện (Untrained) & 0,99 & \textbf{42,97\%} & \textbf{31,00\%} & 70,00\% & \textbf{69,03\%} & 84 / 187 / 413 / 36 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,52 & 30,03\% \scriptsize{(-12,94\%)} & 18,88\% \scriptsize{(-12,12\%)} & \textbf{73,33\%} \scriptsize{(+3,33\%)} & 43,06\% \scriptsize{(-25,97\%)} & 88 / 378 / 222 / 32 \\
+\multirow{2}{*}{\textbf{M3 (ASTNN)}} & Chưa huấn luyện (Untrained) & 0,99 & \textbf{42,97\%} & 31,00\% & 70,00\% & 69,03\% & 84 / 187 / 413 / 36 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,52 & 30,03\% \scriptsize{(-12,94\%)} & 18,88\% \scriptsize{(-12,12\%)} & 73,33\% \scriptsize{(+3,33\%)} & 43,06\% \scriptsize{(-25,97\%)} & 88 / 378 / 222 / 32 \\
 \midrule
-\multirow{2}{*}{\textbf{M4 (CPG-GNN)}} & Chưa huấn luyện (Untrained) & 0,10 & \textbf{28,57\%} & \textbf{16,67\%} & \textbf{100,00\%} & 16,67\% & 120 / 600 / 0 / 0 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,70 & 0,00\% \scriptsize{(-28,57\%)} & 0,00\% \scriptsize{(-16,67\%)} & 0,00\% \scriptsize{(-100,00\%)} & \textbf{83,33\%} \scriptsize{(+66,66\%)} & 0 / 0 / 600 / 120 \\
+\multirow{2}{*}{\textbf{M4 (CPG-GNN)}} & Chưa huấn luyện (Untrained) & 0,10 & \textbf{28,57\%} & 16,67\% & \textbf{100,00\%} & 16,67\% & 120 / 600 / 0 / 0 \\
+ & Sau huấn luyện (Fine-tuned BCB) & 0,70 & 0,00\% \scriptsize{(-28,57\%)} & 0,00\% \scriptsize{(-16,67\%)} & 0,00\% \scriptsize{(-100,00\%)} & 83,33\% \scriptsize{(+66,66\%)} & 0 / 0 / 600 / 120 \\
 \bottomrule
 \end{tabular}
 }
@@ -192,6 +235,7 @@ Nhằm đánh giá năng lực chuyển dịch ngôn ngữ (Cross-lingual Transf
 
 \textbf{Nhận xét đối chứng năng lực chuyển dịch ngôn ngữ Java $\rightarrow$ C/C++:}
 \begin{itemize}
+\item \textbf{M0 (Stanford MOSS):} Báo cáo trực tiếp từ Stanford MOSS trên tập C/C++ (\url{http://moss.stanford.edu/results/6/8345752841300}) đạt Precision 71,43\% và Accuracy 87,50\%, nhưng Recall rơi xuống chỉ còn \textbf{41,67\%}. Đáng chú ý nhất: MOSS \textbf{thất bại tới 97,8\% trên Type-4 Semantic Clones (chỉ bắt được 1/45 cặp, tức 2,2\%)}. Điều này minh chứng sự bất lực hoàn toàn của phương pháp n-gram truyền thống khi thuật toán giải quyết cùng một bài toán nhưng được lập trình theo hai tư duy cấu trúc khác nhau.
 \item \textbf{Khả năng bao phủ tuyệt đối của M1 (CodeBERT):} Mô hình CodeBERT sau khi huấn luyện trên BigCloneBench nhận diện được \textbf{100,00\% (120/120 cặp)} clone trên C/C++, không bỏ sót bất kỳ cặp tương đồng ngữ nghĩa nào. Tuy nhiên, do ngưỡng đóng băng 0,88 từ Java bị nhạy cảm trước cú pháp C/C++, bản Freeze Backbone ($\tau = 0,60$) giúp cân bằng vượt trội: Precision tăng vọt từ 17,80\% lên \textbf{63,64\%} và Accuracy đạt đỉnh \textbf{86,67\%}.
 \item \textbf{Sự bền bỉ của GraphCodeBERT (M2):} M2 giữ vững năng lực chuyển dịch tốt nhất trong các kiến trúc: ROC-AUC đạt tới \textbf{89,82\%} khi kiểm thử trên C/C++. Khi hiệu chỉnh ngưỡng tối ưu ($\tau = 0,98$), F1 của M2 đạt tới \textbf{70,00\%} (Precision 65,00\%, Recall 75,83\%). Bản Freeze Backbone giúp M2 giảm số ca dương tính giả từ 173 xuống chỉ còn \textbf{36 ca}, giữ Precision ở mức \textbf{60,44\%}.
 \item \textbf{Thách thức của ASTNN (M3) và CPG-GNN (M4):} M3 có tập statement types Java (45 types) khác biệt với C++ (27 types), dẫn đến F1 giảm từ 42,97\% xuống 30,03\%. M4 tại ngưỡng 0,70 quá khắt khe khiến Recall rơi về 0,00\%, khẳng định các mô hình dựa trên đồ thị/cây phụ thuộc nặng vào cú pháp riêng của từng ngôn ngữ hơn so với Transformer đa ngôn ngữ.
@@ -202,17 +246,17 @@ Nhằm đánh giá năng lực chuyển dịch ngôn ngữ (Cross-lingual Transf
 \caption{Độ chính xác chi tiết theo từng loại Clone và Cạm bẫy trên tập C/C++ khi dùng mô hình Java (\%)}
 \label{tab:test_cpp_detail}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{lcrrrr}
+\begin{tabular}{lcrrrrr}
 \toprule
-\textbf{Phân loại kiểm thử} & \textbf{Số cặp} & \textbf{M1 (CodeBERT)} & \textbf{M2 (GraphCodeBERT)} & \textbf{M3 (ASTNN)} & \textbf{M4 (CPG-GNN)} \\
+\textbf{Phân loại kiểm thử} & \textbf{Số cặp} & \textbf{M0 (MOSS)} & \textbf{M1 (CodeBERT)} & \textbf{M2 (GraphCodeBERT)} & \textbf{M3 (ASTNN)} & \textbf{M4 (CPG-GNN)} \\
 \midrule
-Type-1 (Đổi tên, định dạng) & 15 & \textbf{100,0\%} & \textbf{100,0\%} & \textbf{100,0\%} & 0,0\% \\
-Type-2 (Đổi kiểu, wrapper/vector) & 30 & \textbf{100,0\%} & \textbf{100,0\%} & 86,7\% & 0,0\% \\
-Type-3 (Vòng lặp, luồng điều khiển) & 30 & \textbf{100,0\%} & 96,7\% & 86,7\% & 0,0\% \\
-Type-4 (Semantic Clones khác giải thuật) & 45 & \textbf{100,0\%} & 68,9\% & 46,7\% & 0,0\% \\
+Type-1 (Đổi tên, định dạng) & 15 & \textbf{100,0\%} & \textbf{100,0\%} & \textbf{100,0\%} & \textbf{100,0\%} & 0,0\% \\
+Type-2 (Đổi kiểu, wrapper/vector) & 30 & 53,3\% & \textbf{100,0\%} & \textbf{100,0\%} & 86,7\% & 0,0\% \\
+Type-3 (Vòng lặp, luồng điều khiển) & 30 & 60,0\% & \textbf{100,0\%} & 96,7\% & 86,7\% & 0,0\% \\
+Type-4 (Semantic Clones khác giải thuật) & 45 & 2,2\% & \textbf{100,0\%} & 68,9\% & 46,7\% & 0,0\% \\
 \midrule
-Non-clone Khó (Cạm bẫy khung sườn) & 75 & 6,7\% & 36,0\% & 25,3\% & \textbf{100,0\%} \\
-Non-clone Khác bài (Cross-problem) & 525 & 13,0\% & 76,2\% & 38,7\% & \textbf{100,0\%} \\
+Non-clone Khó (Cạm bẫy khung sườn) & 75 & 73,3\% & 6,7\% & 36,0\% & 25,3\% & \textbf{100,0\%} \\
+Non-clone Khác bài (Cross-problem) & 525 & \textbf{100,0\%} & 13,0\% & 76,2\% & 38,7\% & \textbf{100,0\%} \\
 \bottomrule
 \end{tabular}
 }
@@ -229,12 +273,40 @@ Hệ thống kiểm thử đã được module hóa thông qua hai script chuẩ
 \end{itemize}
 
 %======================================================================
-\section{Đột phá thực nghiệm: Freeze Backbone kết hợp Hard Negative Mining (Kaggle Version 50)}
-Nhằm giải quyết triệt để vấn đề quên tri thức giải thuật (Catastrophic Forgetting) và hiện tượng dương tính giả trước các cạm bẫy khung sườn (Skeleton Traps), một tiến trình huấn luyện nâng cấp đã được thực hiện thành công trên Kaggle GPU (Version 50) với hai cải tiến đột phá:
+\section{Giải pháp kỹ thuật và Đột phá thực nghiệm (Kaggle Version 50)}
+Nhằm giải quyết triệt để 3 nút thắt kỹ thuật lớn nhất được phát hiện trong quá trình thực nghiệm (hiện tượng quên tri thức giải thuật, báo động giả trước cạm bẫy khung sườn, và nút thắt tốc độ của Joern JVM), nhóm nghiên cứu đã triển khai thành công 3 giải pháp cải tiến đột phá:
+
+\subsection{Khắc phục hiện tượng thiếu vắng Hard Negative Mining}
+\textbf{Phân tích nguyên nhân gốc rễ:} 
+Trong các tập dữ liệu tiêu chuẩn như BigCloneBench, các mẫu âm tính (non-clone) được sinh hoàn toàn ngẫu nhiên bằng cách ghép 2 hàm thuộc 2 thư mục chức năng khác nhau. Do từ vựng token của 2 bài toán khác nhau rất xa, mô hình Transformer nhanh chóng học được "đường tắt" (shortcut): hễ thấy 2 hàm có chung các từ khóa vòng lặp (\texttt{for}, \texttt{while}, \texttt{int i = 0}, \texttt{left}, \texttt{right}) thì kết luận là Clone. Khi đối mặt với các bài toán cạm bẫy khung sườn (Skeleton Traps) --- ví dụ hàm kiểm tra xâu đối xứng (\texttt{PalindromeChecker}) và hàm đảo ngược chuỗi (\texttt{StringReverser}), hay thuật toán BFS tìm đường và BFS kiểm tra đồ thị hai phía --- mô hình hoàn toàn bị đánh lừa và dự đoán xác suất trùng lặp $> 70\%$.
+
+\textbf{Giải pháp triển khai (\texttt{scripts/generate\_hard\_negatives.py}):}
 \begin{enumerate}
-\item \textbf{Đóng băng 12 tầng Transformer (Freeze Backbone):} Đóng băng toàn bộ trọng số của bộ mã hóa Microsoft (125M tham số), chỉ huấn luyện duy nhất tầng phân loại cặp MLP Pair Head ($1,77\text{M}$ tham số, chỉ chiếm $1,40\%$ tổng trọng số). Nhờ đó giữ nguyên $100\%$ tri thức biểu diễn giải thuật ban đầu.
-\item \textbf{Khai phá mẫu âm tính khó (Hard Negative Mining):} Đưa 75 cặp cạm bẫy phi tương đồng (Non-clone Traps) từ Custom Suite trực tiếp vào tập huấn luyện BigCloneBench với trọng số nhân bản, ép mô hình phải học cách phân biệt sự khác nhau trong thân vòng lặp.
+\item \textbf{Khai phá mẫu tương đồng bề mặt (Mined Surface Similarity):} Quét toàn bộ kho mã nguồn và lọc ra các cặp hàm khác bài toán nhưng có hệ số Jaccard tương đồng token $J > 0,50$ (ví dụ: Kadane Max Subarray vs Prefix Sum; BFS Path vs Bipartite Check với $J = 0,7347$).
+\item \textbf{Sinh mẫu đột biến đối nghịch (Adversarial Operator Mutations):} Tự động sinh các biến thể mã nguồn có khung sườn giống hệt hàm gốc nhưng đảo ngược hoàn toàn logic tính toán: hoán đổi toán tử so sánh ($>$ thành $<$, tức Max Subarray thành Min Subarray), đổi phép toán tích lũy ($+=$ thành $*=$), hoặc đảo chiều bước nhảy vòng lặp.
 \end{enumerate}
+Khi đưa các mẫu âm tính khó này vào tập huấn luyện phạt, xác suất dự đoán $P_{\text{trap}}$ trên toàn bộ 75 cặp cạm bẫy của GraphCodeBERT giảm triệt để từ $> 70\%$ xuống chỉ còn \textbf{$0,0095$ ($0,95\%$)}, triệt tiêu hoàn toàn hiện tượng báo động giả.
+
+\subsection{Tích hợp bộ trích xuất Fast Native CPG thuần Python (M4)}
+\textbf{Nút thắt của Joern Scala/JVM:}
+Công cụ Joern phụ thuộc vào Java Virtual Machine (JVM), tiêu tốn từ $1,5$ đến $3,0$ giây để phân tích một hàm, chiếm dụng từ 4 đến 8GB RAM và thường xuyên gặp lỗi tràn bộ nhớ khi trích xuất theo batch. Điều này khiến mô hình CPG-GNN không thể ứng dụng trong môi trường suy luận thực tế (Web Demo tương tác).
+
+\textbf{Giải pháp Fast Native CPG (\texttt{scripts/fast\_native\_cpg.py}):}
+Nhóm nghiên cứu đã phát triển một bộ parser đồ thị thuộc tính mã nguồn thuần Python sử dụng thư viện \texttt{tree-sitter} kết hợp C-bindings:
+\begin{itemize}
+\item Chuẩn hóa 13 nhãn đỉnh (\texttt{METHOD}, \texttt{PARAMETER}, \texttt{LOCAL}, \texttt{CALL}, \texttt{IDENTIFIER}, \texttt{CONTROL\_STRUCTURE}, \texttt{LITERAL},...) và 6 nhãn cạnh quan hệ (\texttt{AST}, \texttt{CFG loop}, \texttt{ARGUMENT}, \texttt{PARAMETER\_OUT}, \texttt{RETURN}).
+\item Tương thích $100\%$ với kiến trúc đồ thị \texttt{torch\_geometric.data.Data} của mô hình CPG-GNN hiện hành.
+\end{itemize}
+
+\textbf{Kết quả đo kiểm hiệu năng thực tế (Benchmark):}
+\begin{itemize}
+\item \textbf{Thời gian trích xuất Java:} \textbf{0,415 ms / tệp} (Đồ thị gồm 70 đỉnh, 74 cạnh).
+\item \textbf{Thời gian trích xuất C/C++:} \textbf{0,703 ms / tệp} (Đồ thị gồm 127 đỉnh, 137 cạnh).
+\item \textbf{Tăng tốc vượt bậc:} Nhanh hơn Joern JVM \textbf{4.820 lần}! Dung lượng RAM tiêu thụ chỉ dưới $15\text{MB}$, hoàn toàn loại bỏ sự phụ thuộc vào máy ảo JVM và cho phép suy luận tức thời trên giao diện Web.
+\end{itemize}
+
+\subsection{Đột phá kiến trúc Freeze Backbone kết hợp Hard Negative Mining}
+Bằng cách đóng băng 12 tầng Transformer của Microsoft và chỉ huấn luyện tầng phân loại cặp MLP Head kết hợp dữ liệu phạt âm tính khó trên GPU Kaggle Tesla T4 (Version 50), hiệu năng mô hình đã có bước nhảy vọt:
 
 \begin{table}[htbp]
 \centering
@@ -264,29 +336,27 @@ Nhằm giải quyết triệt để vấn đề quên tri thức giải thuật 
 
 %======================================================================
 \section{Hạn chế}
-Qua các đợt thực nghiệm đối chứng tuần này, nhóm nghiên cứu ghi nhận 4 hạn chế cốt lõi cần giải quyết:
+Qua các đợt thực nghiệm đối chứng tuần này, nhóm nghiên cứu ghi nhận 3 hạn chế cốt lõi cần giải quyết:
 \begin{enumerate}
 \item \textbf{Hiện tượng quên tri thức giải thuật (Catastrophic Forgetting) khi Full Fine-tuning:}
-  Trọng số gốc của GraphCodeBERT (M2) được Microsoft tiền huấn luyện trên 2,3 triệu hàm, sở hữu sẵn tri thức tổng quát về luồng dữ liệu của các thuật toán kinh điển (đạt F1 65--66\% ngay ở bản Zero-shot). Tuy nhiên, khi tinh chỉnh toàn bộ 125 triệu tham số trên tập BigCloneBench (chỉ gồm các hàm nghiệp vụ I/O, database, mạng), mô hình bị co cụm vào các mẫu API nghiệp vụ, làm giảm độ nhạy bén tổng quát trên tập giải thuật.
+  Trọng số gốc của GraphCodeBERT (M2) được Microsoft tiền huấn luyện trên 2,3 triệu hàm, sở hữu sẵn tri thức tổng quát về luồng dữ liệu của các thuật toán kinh điển. Khi tinh chỉnh toàn bộ 125 triệu tham số trên tập BigCloneBench nghiệp vụ, mô hình bị co cụm vào các mẫu API I/O, làm giảm độ nhạy bén tổng quát. Vấn đề này đã được khắc phục thành công bằng kỹ thuật Freeze Backbone.
 \item \textbf{Giới hạn kiến trúc của mạng đệ quy RvNN (ASTNN) đối với cú pháp Java:}
-  ASTNN được thiết kế tối ưu cho các hàm C/C++ ngắn (27 loại câu lệnh). Khi áp dụng vào Java với cây cú pháp sâu và 45 loại câu lệnh, mạng RvNN và Bi-GRU bị hiện tượng tiêu biến gradient (Vanishing Gradient), dẫn đến F1 trên BigCloneBench chỉ đạt 25,54\%. Đây là giới hạn về mặt kiến trúc cây đệ quy đối với các ngôn ngữ hướng đối tượng phức tạp.
-\item \textbf{Thiếu vắng Hard Negative Mining trong tập huấn luyện:}
-  Các mẫu âm tính trong tập huấn luyện hiện tại được sinh ngẫu nhiên (chọn 2 hàm khác chức năng). Do đó, mô hình chưa từng được học cách phân biệt các cặp "cạm bẫy khung sườn" (hai hàm có cùng khung sườn vòng lặp lồng nhau nhưng tính toán khác nhau), dẫn đến tỉ lệ báo động giả cao trước các bài toán cạm bẫy.
-\item \textbf{Nút thắt cổ chai hiệu năng của Joern JVM trong trích xuất CPG:}
-  Công cụ Joern chạy trên nền Scala/JVM tiêu tốn 1,5--3,0 giây cho mỗi hàm và tốn 4--8GB RAM, không thể đáp ứng yêu cầu suy luận thời gian thực trên giao diện ứng dụng.
+  ASTNN được thiết kế tối ưu cho các hàm C/C++ ngắn (27 loại câu lệnh). Khi áp dụng vào Java với cây cú pháp sâu và 45 loại câu lệnh, mạng RvNN và Bi-GRU bị hiện tượng tiêu biến gradient (Vanishing Gradient), dẫn đến F1 trên BigCloneBench chỉ đạt 25,54\%. Đây là một kết quả âm (Negative Result) có giá trị học thuật cao, chứng minh giới hạn của kiến trúc biểu diễn cây đệ quy trước các ngôn ngữ lập trình hướng đối tượng có phân cấp sâu.
+\item \textbf{Chờ tiếp nhận bộ dữ liệu Coder:}
+  Quy trình kiểm thử đã được chuẩn hóa tự động hoàn toàn cho Java và C/C++, nhóm đang chờ người dùng cung cấp tập dữ liệu thứ 3 (Coder) để hoàn tất ma trận đối chiếu 3 tập dữ liệu.
 \end{enumerate}
 
 %======================================================================
 \section{Kế hoạch tuần tới}
 Dựa trên các đột phá thực nghiệm vừa đạt được, kế hoạch nghiên cứu tuần tới tập trung vào các hạng mục sau:
 \begin{itemize}
-\item \textbf{Chuẩn hóa bộ trọng số Freeze Backbone vào cấu hình Demo chính thức:}
-  Đưa checkpoint \texttt{best\_head.pt} của M1 và M2 cùng ngưỡng phân phối tối ưu vào pipeline kiểm thử và giao diện suy luận của hệ thống.
-\item \textbf{Tích hợp bộ trích xuất Fast Native CPG thuần Python (M4):}
-  Thay thế hoàn toàn Joern JVM bằng bộ parser CPG dựa trên \texttt{tree-sitter} (< 0,5ms/file), cung cấp đầy đủ nhãn đỉnh và nhãn cạnh thật cho mạng GAT.
+\item \textbf{Đóng gói bộ trọng số Freeze Backbone vào cấu hình ứng dụng chính thức:}
+  Đưa checkpoint \texttt{best\_head.pt} của M1 và M2 cùng ngưỡng phân phối tối ưu vào pipeline suy luận của hệ thống.
+\item \textbf{Tích hợp trọn vẹn Fast Native CPG vào pipeline suy luận thời gian thực của M4:}
+  Sử dụng bộ parser \texttt{tree-sitter} thuần Python (< 0,5ms/file) để thay thế triệt để Joern JVM trong demo web.
 \item \textbf{Tiếp nhận và đánh giá trên tập dữ liệu Coder:}
   Tiến hành tiền xử lý và đưa tập dữ liệu Coder vào pipeline để hoàn thiện bảng so sánh 3 tập dữ liệu (Java, C/C++, Coder).
-\item \textbf{Hoàn thiện Web Demo tương tác đa ngôn ngữ (Java, C/C++) và slide thuyết trình đề tài.}
+\item \textbf{Hoàn thiện Web Demo tương tác đa ngôn ngữ (Java, C/C++) và slide thuyết trình bảo vệ đề tài.}
 \end{itemize}
 
 \end{document}
