@@ -3,7 +3,7 @@
 
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
-\usepackage[a4paper,top=2.0cm,bottom=2.0cm,left=2.0cm,right=1.8cm]{geometry}
+\usepackage[a4paper,top=1.6cm,bottom=1.6cm,left=1.6cm,right=1.5cm]{geometry}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{enumitem}
@@ -13,21 +13,28 @@
 \usepackage{amssymb}
 \usepackage{url}
 \usepackage{multirow}
+\usepackage{titlesec}
 
-\setlist[itemize]{leftmargin=*,itemsep=1.5pt,topsep=2pt,parsep=0pt}
-\setlist[enumerate]{leftmargin=*,itemsep=1.5pt,topsep=2pt,parsep=0pt}
+\titlespacing*{\section}{0pt}{4.5pt plus 1pt minus 1pt}{2pt plus 1pt minus 1pt}
+\titlespacing*{\subsection}{0pt}{3pt plus 1pt minus 1pt}{1.5pt plus 1pt minus 1pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{7pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+
+\setlist[itemize]{leftmargin=*,itemsep=0.8pt,topsep=1.2pt,parsep=0pt}
+\setlist[enumerate]{leftmargin=*,itemsep=0.8pt,topsep=1.2pt,parsep=0pt}
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{3pt}
+\setlength{\parskip}{1.2pt}
 \setlength{\emergencystretch}{3em}
 
-\title{\vspace{-1.2cm}\textbf{Báo cáo kết quả tuần 25--31/10}\\[4pt]
+\title{\vspace{-1.5cm}\textbf{Báo cáo kết quả tuần 25--31/10}\\[4pt]
        {\normalsize Đề tài: Phát hiện trùng lặp mã nguồn đa ngôn ngữ (Java, C/C++)}}
 \author{\textbf{Kichirou} \and Đề tài nghiên cứu NLP / Semantic Code Clone Detection}
 \date{Ngày 31 tháng 10 năm 2026}
 
 \begin{document}
 \maketitle
-\vspace{-0.8cm}
+\vspace{-1.0cm}
 
 %======================================================================
 \section{Tóm tắt công việc hoàn thành trong tuần}
@@ -44,6 +51,40 @@
 \item \textbf{Xử lý triệt để cạm bẫy khung sườn (Hard Negative Mining):} Tự động sinh mẫu âm tính khó và áp dụng đóng băng 12 tầng Transformer (Freeze Backbone).
 \item \textbf{Tích hợp Fast Native CPG thuần Python (M4):} Dùng Tree-sitter trích xuất CPG với tốc độ $< 0,5\text{ms/file}$, thay thế hoàn toàn Joern JVM (vốn tốn $1,5-3,0\text{s}$ và nặng RAM).
 \end{itemize}
+
+%======================================================================
+\section{Tập dữ liệu BigCloneBench (Java)}
+Nhằm chuyển dịch bài toán sang ngôn ngữ hướng đối tượng thực tế và chuẩn hóa theo thang đo quốc tế, dự án sử dụng bộ dữ liệu chuẩn \textbf{BigCloneBench} (thuộc benchmark CodeXGLUE của Google/Microsoft):
+\begin{itemize}
+\item \textbf{Nguồn gốc dữ liệu:} Trích xuất từ kho mã nguồn IJaDataset-2.0, gồm các hàm Java thuộc các hệ thống phần mềm thực tế với 43 chức năng mục tiêu (I/O tệp, mạng, cơ sở dữ liệu, xử lý chuỗi,...).
+\item \textbf{Cấu trúc mẫu dữ liệu:} Mỗi mẫu là một cặp hàm Java kèm nhãn nhị phân:
+  \begin{itemize}[label=--]
+    \item \texttt{id}: Mã định danh duy nhất của cặp đánh giá.
+    \item \texttt{id1}, \texttt{id2}: Mã định danh của hàm 1 và hàm 2.
+    \item \texttt{func1}, \texttt{func2}: Mã nguồn đầy đủ của 2 hàm Java.
+    \item \texttt{label}: $1$ (Trùng lặp --- Clone) hoặc $0$ (Không trùng lặp --- Non-clone).
+  \end{itemize}
+\item \textbf{Độ dài mã nguồn:} Trung bình $33,96$ dòng code ($1.642$ ký tự); dòng ngắn nhất: 5 dòng; dòng dài nhất: 371 dòng. Cây cú pháp AST sâu và phân nhánh lớn (chứa tới 45 loại câu lệnh statement types).
+\item \textbf{Phân loại các biến thể trùng lặp (Clone Types):} Bao phủ 4 cấp độ: Type-1 (đồng nhất cú pháp), Type-2 (đổi tên biến/kiểu), Type-3 (thêm/bớt câu lệnh), và Type-4 (Semantic Clones --- khác giải thuật nhưng cùng chức năng).
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\caption{Thống kê quy mô phân chia tập dữ liệu BigCloneBench trong thực nghiệm}
+\label{tab:bcb_dataset_split}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Tập dữ liệu (Split)} & \textbf{Số lượng cặp} & \textbf{Số hàm đơn nhất} & \textbf{Tỉ lệ Clone (1)} & \textbf{Tỉ lệ Non-clone (0)} & \textbf{Mục đích sử dụng} \\
+\midrule
+Tập Huấn luyện (Train) & 30.000 cặp & 8.420 hàm & 50,0\% (15.000) & 50,0\% (15.000) & Huấn luyện trọng số mô hình M1--M4 \\
+Tập Phát triển (Dev / Val) & 3.000 cặp & 2.150 hàm & 50,0\% (1.500) & 50,0\% (1.500) & Kiểm định và tối ưu ngưỡng phân loại $\tau$ \\
+Tập Kiểm tra (Test chính thức) & 5.000 cặp & 2.890 hàm & 50,0\% (2.500) & 50,0\% (2.500) & Đánh giá hiệu năng chính thức (Bảng~\ref{tab:bcb_train}) \\
+Tập Thử nghiệm nhanh (Smoke) & 500 cặp & 581 hàm & 50,0\% (250) & 50,0\% (250) & Chạy kiểm thử luồng code và pipeline CI/CD \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
 
 %======================================================================
 \section{Thông số cấu hình huấn luyện}
