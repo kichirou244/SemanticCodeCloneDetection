@@ -75,39 +75,27 @@ Test  & 5.000  & 50\% (2.500 clone : 2.500 non-clone) \\
 
 %======================================================================
 \section{Thông số cấu hình huấn luyện}
-Bảng~\ref{tab:hyperparameters} tổng hợp cấu hình và siêu tham số của 4 mô hình huấn luyện trên BigCloneBench.
+Bảng~\ref{tab:hyperparameters} tổng hợp các thông số huấn luyện cốt lõi của 4 mô hình trên BigCloneBench.
 
 \begin{table}[htbp]
 \centering
-\caption{Bảng thông số cấu hình và siêu tham số huấn luyện của 4 mô hình}
+\caption{Bảng thông số huấn luyện của 4 mô hình}
 \label{tab:hyperparameters}
 \resizebox{\textwidth}{!}{
 \begin{tabular}{lcccc}
 \toprule
-\textbf{Thông số / Cấu hình} & \textbf{M1 (CodeBERT)} & \textbf{M2 (GraphCodeBERT)} & \textbf{M3 (ASTNN)} & \textbf{M4 (CPG-GNN)} \\
+\textbf{Thông số} & \textbf{M1 (CodeBERT)} & \textbf{M2 (GraphCodeBERT)} & \textbf{M3 (ASTNN)} & \textbf{M4 (CPG-GNN)} \\
 \midrule
-Kiến trúc cốt lõi & RoBERTa-base (12 layers, 12 heads) & RoBERTa-base + DFG Attention & RvNN + Bi-GRU & GAT Backbone (3 layers, 4 heads) \\
-Biểu diễn đầu vào & Chuỗi Token ($\le 256$) & Chuỗi Token + Đồ thị DFG & Cây câu lệnh AST (45 types) & Đồ thị CPG (13 node / 6 edge types) \\
-Kích thước ẩn ($d_{\text{hidden}}$) & 768 & 768 & 200 & 128 \\
-Tầng phân loại cặp & MLP: $[3h \rightarrow h \rightarrow 1]$ & MLP: $[3h \rightarrow h \rightarrow 1]$ & MLP: $[|h_A - h_B| \rightarrow 1]$ & MLP: $[(h_A \parallel h_B) \rightarrow 1]$ \\
-Tổng số tham số & 126.416.641 & 126.416.641 & 5.174.201 & 2.498.305 \\
-Tham số huấn luyện & 1.771.009 (Freeze) / 126.4M (Full) & 1.771.009 (Freeze) / 126.4M (Full) & 5.174.201 & 2.498.305 \\
+Biểu diễn đầu vào & Chuỗi Token ($\le 256$) & Chuỗi Token + Đồ thị DFG & Cây câu lệnh AST & Đồ thị CPG (Node + Edge) \\
 Thuật toán tối ưu & AdamW & AdamW & Adam & AdamW \\
-Tốc độ học (Learning Rate) & $1 \times 10^{-3}$ (Head) / $2 \times 10^{-5}$ (Full) & $1 \times 10^{-3}$ (Head) / $2 \times 10^{-5}$ (Full) & $1 \times 10^{-3}$ & $5 \times 10^{-4}$ \\
-Kích thước Batch & 64 (Pair: 128 hàm) & 64 (Pair: 128 hàm) & 32 & 32 \\
+Tốc độ học (Learning Rate) & $10^{-3}$ (Head) / $2 \times 10^{-5}$ (Full) & $10^{-3}$ (Head) / $2 \times 10^{-5}$ (Full) & $10^{-3}$ & $5 \times 10^{-4}$ \\
+Kích thước Batch & 64 (128 hàm) & 64 (128 hàm) & 32 & 32 \\
 Số lượng Epochs & 3 (Freeze) / 5 (Full) & 3 (Freeze) / 5 (Full) & 5 & 5 \\
-Hàm mất mát & BCEWithLogitsLoss ($w_{\text{pos}} = 1,2$) & BCEWithLogitsLoss ($w_{\text{pos}} = 1,2$) & BCEWithLogitsLoss & BCEWithLogitsLoss \\
-Độ chính xác tính toán & FP16 Mixed Precision & FP16 Mixed Precision & FP32 & FP32 \\
-Phần cứng thực thi & \multicolumn{4}{c}{Kaggle Cloud GPU Tesla T4 (16GB VRAM) / NVIDIA RTX 5060 Laptop (8GB VRAM)} \\
+Hàm mất mát & BCEWithLogitsLoss & BCEWithLogitsLoss & BCEWithLogitsLoss & BCEWithLogitsLoss \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
-
-\begin{itemize}
-\item \textbf{Tối ưu hóa tài nguyên:} Nhờ Mixed Precision FP16, thời gian huấn luyện M1 và M2 giảm hơn 8 lần trên GPU Tesla T4.
-\item \textbf{Cơ chế Freeze Backbone:} Đóng băng 12 tầng Transformer giúp giảm tham số cần học từ 126,4M xuống còn 1,77M ($1,40\%$), tránh hiện tượng quên tri thức ban đầu.
-\end{itemize}
 
 %======================================================================
 \clearpage
