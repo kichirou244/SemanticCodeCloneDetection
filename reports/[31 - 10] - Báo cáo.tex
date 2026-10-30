@@ -137,25 +137,25 @@ Bảng~\ref{tab:test_java_overall} và Bảng~\ref{tab:test_java_detail} thể h
 \caption{Hiệu năng đối chứng trên tập kiểm thử Java (720 cặp --- Tỉ lệ 1:5)}
 \label{tab:test_java_overall}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{llccccccr}
+\begin{tabular}{lccccccr}
 \toprule
-\textbf{Mô hình} & \textbf{Trạng thái huấn luyện} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
+\textbf{Mô hình} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
 \midrule
-\textbf{M0 (MOSS)} & Dịch vụ chuẩn (moss.stanford.edu) & 1,00\% & 58,88\% & \textbf{75,32\%} & 48,33\% & \textbf{88,75\%} & 58 / 19 / 581 / 62 \\
+M0 (MOSS) & 1,00\% & 58,88\% & \textbf{75,32\%} & 48,33\% & \textbf{88,75\%} & 58 / 19 / 581 / 62 \\
 \midrule
-\multirow{3}{*}{\textbf{M1 (CodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,99 & 29,18\% & 17,16\% & 97,50\% & 21,11\% & 117 / 565 / 35 / 3 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,88 & 33,91\% & 20,49\% & \textbf{98,33\%} & 36,11\% & 118 / 458 / 142 / 2 \\
- & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,46 & \textbf{54,26\%} & 50,72\% & 58,33\% & 83,61\% & 70 / 68 / 532 / 50 \\
+M1 (Zero-shot) & 0,99 & 29,18\% & 17,16\% & 97,50\% & 21,11\% & 117 / 565 / 35 / 3 \\
+M1 (Fine-tuned BCB) & 0,88 & 33,91\% & 20,49\% & \textbf{98,33\%} & 36,11\% & 118 / 458 / 142 / 2 \\
+M1 (Freeze Backbone) & 0,46 & \textbf{54,26\%} & 50,72\% & 58,33\% & 83,61\% & 70 / 68 / 532 / 50 \\
 \midrule
-\multirow{3}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{66,37\%} & 71,84\% & 61,67\% & 89,58\% & 74 / 29 / 571 / 46 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,94 & 61,79\% & 45,78\% & 95,00\% & 80,42\% & 114 / 135 / 465 / 6 \\
- & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,014 & 56,49\% & 52,11\% & 61,67\% & 84,17\% & 74 / 68 / 532 / 46 \\
+M2 (Zero-shot) & 0,97 & \textbf{66,37\%} & 71,84\% & 61,67\% & 89,58\% & 74 / 29 / 571 / 46 \\
+M2 (Fine-tuned BCB) & 0,94 & 61,79\% & 45,78\% & 95,00\% & 80,42\% & 114 / 135 / 465 / 6 \\
+M2 (Freeze Backbone) & 0,014 & 56,49\% & 52,11\% & 61,67\% & 84,17\% & 74 / 68 / 532 / 46 \\
 \midrule
-\multirow{2}{*}{\textbf{M3 (ASTNN)}} & Chưa huấn luyện (Untrained) & 0,91 & 32,83\% & 19,64\% & 100,00\% & 31,81\% & 120 / 491 / 109 / 0 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,52 & 29,58\% & 18,33\% & 76,67\% & 39,17\% & 92 / 410 / 190 / 28 \\
+M3 (Untrained) & 0,91 & 32,83\% & 19,64\% & 100,00\% & 31,81\% & 120 / 491 / 109 / 0 \\
+M3 (Fine-tuned BCB) & 0,52 & 29,58\% & 18,33\% & 76,67\% & 39,17\% & 92 / 410 / 190 / 28 \\
 \midrule
-\multirow{2}{*}{\textbf{M4 (CPG-GNN)}} & Chưa huấn luyện (Untrained) & 0,10 & 28,57\% & 16,67\% & 100,00\% & 16,67\% & 120 / 600 / 0 / 0 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,70 & 0,00\% & 0,00\% & 0,00\% & 83,33\% & 0 / 0 / 600 / 120 \\
+M4 (Untrained) & 0,10 & 28,57\% & 16,67\% & 100,00\% & 16,67\% & 120 / 600 / 0 / 0 \\
+M4 (Fine-tuned BCB) & 0,70 & 0,00\% & 0,00\% & 0,00\% & 83,33\% & 0 / 0 / 600 / 120 \\
 \bottomrule
 \end{tabular}
 }
@@ -196,25 +196,25 @@ Non-clone Khác bài (Cross-problem) & 525 & \textbf{100,0\%} & 25,7\% & 81,7\% 
 \caption{Hiệu năng đối chứng trên tập C/C++ khi dùng mô hình huấn luyện từ Java (720 cặp --- Tỉ lệ 1:5)}
 \label{tab:test_cpp_overall}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{llccccccr}
+\begin{tabular}{lccccccr}
 \toprule
-\textbf{Mô hình} & \textbf{Trạng thái huấn luyện (Java BCB)} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
+\textbf{Mô hình} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{TP / FP / TN / FN} \\
 \midrule
-\textbf{M0 (MOSS)} & Dịch vụ chuẩn (moss.stanford.edu) & 1,00\% & 52,63\% & \textbf{71,43\%} & 41,67\% & \textbf{87,50\%} & 50 / 20 / 580 / 70 \\
+M0 (MOSS) & 1,00\% & 52,63\% & \textbf{71,43\%} & 41,67\% & 87,50\% & 50 / 20 / 580 / 70 \\
 \midrule
-\multirow{3}{*}{\textbf{M1 (CodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,99 & 30,03\% & 17,80\% & 95,83\% & 25,56\% & 115 / 531 / 69 / 5 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,88 & 31,29\% & 18,55\% & \textbf{100,00\%} & 26,81\% & 120 / 527 / 73 / 0 \\
- & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,60 & \textbf{53,85\%} & 63,64\% & 46,67\% & 86,67\% & 56 / 32 / 568 / 64 \\
+M1 (Zero-shot) & 0,99 & 30,03\% & 17,80\% & 95,83\% & 25,56\% & 115 / 531 / 69 / 5 \\
+M1 (Fine-tuned BCB) & 0,88 & 31,29\% & 18,55\% & \textbf{100,00\%} & 26,81\% & 120 / 527 / 73 / 0 \\
+M1 (Freeze Backbone) & 0,60 & \textbf{53,85\%} & 63,64\% & 46,67\% & 86,67\% & 56 / 32 / 568 / 64 \\
 \midrule
-\multirow{3}{*}{\textbf{M2 (GraphCodeBERT)}} & Chưa huấn luyện (Zero-shot) & 0,97 & \textbf{65,35\%} & 61,94\% & 69,17\% & 87,78\% & 83 / 51 / 549 / 37 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,94 & 52,76\% & 37,77\% & 87,50\% & 73,89\% & 105 / 173 / 427 / 15 \\
- & \textbf{Đóng băng 12 tầng (Freeze Backbone)} & 0,20 & 52,13\% & 60,44\% & 45,83\% & 85,97\% & 55 / 36 / 564 / 65 \\
+M2 (Zero-shot) & 0,97 & \textbf{65,35\%} & 61,94\% & 69,17\% & 87,78\% & 83 / 51 / 549 / 37 \\
+M2 (Fine-tuned BCB) & 0,94 & 52,76\% & 37,77\% & 87,50\% & 73,89\% & 105 / 173 / 427 / 15 \\
+M2 (Freeze Backbone) & 0,20 & 52,13\% & 60,44\% & 45,83\% & 85,97\% & 55 / 36 / 564 / 65 \\
 \midrule
-\multirow{2}{*}{\textbf{M3 (ASTNN)}} & Chưa huấn luyện (Untrained) & 0,99 & 42,97\% & 31,00\% & 70,00\% & 69,03\% & 84 / 187 / 413 / 36 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,52 & 30,03\% & 18,88\% & 73,33\% & 43,06\% & 88 / 378 / 222 / 32 \\
+M3 (Untrained) & 0,99 & 42,97\% & 31,00\% & 70,00\% & 69,03\% & 84 / 187 / 413 / 36 \\
+M3 (Fine-tuned BCB) & 0,52 & 30,03\% & 18,88\% & 73,33\% & 43,06\% & 88 / 378 / 222 / 32 \\
 \midrule
-\multirow{2}{*}{\textbf{M4 (CPG-GNN)}} & Chưa huấn luyện (Untrained) & 0,10 & 28,57\% & 16,67\% & 100,00\% & 16,67\% & 120 / 600 / 0 / 0 \\
- & Sau huấn luyện (Fine-tuned BCB) & 0,70 & 0,00\% & 0,00\% & 0,00\% & 83,33\% & 0 / 0 / 600 / 120 \\
+M4 (Untrained) & 0,10 & 28,57\% & 16,67\% & 100,00\% & 16,67\% & 120 / 600 / 0 / 0 \\
+M4 (Fine-tuned BCB) & 0,70 & 0,00\% & 0,00\% & 0,00\% & 83,33\% & 0 / 0 / 600 / 120 \\
 \bottomrule
 \end{tabular}
 }
