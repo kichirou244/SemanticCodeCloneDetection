@@ -82,16 +82,18 @@ Bảng~\ref{tab:hyperparameters} tổng hợp các thông số huấn luyện c�
 \caption{Bảng thông số huấn luyện của 4 mô hình}
 \label{tab:hyperparameters}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{lcccc}
+\begin{tabular}{lcccccc}
 \toprule
-\textbf{Thông số} & \textbf{M1 (CodeBERT)} & \textbf{M2 (GraphCodeBERT)} & \textbf{M3 (ASTNN)} & \textbf{M4 (CPG-GNN)} \\
+\multirow{2}{*}{\textbf{Thông số}} & \multicolumn{2}{c}{\textbf{M1 (CodeBERT)}} & \multicolumn{2}{c}{\textbf{M2 (GraphCodeBERT)}} & \multirow{2}{*}{\textbf{M3 (ASTNN)}} & \multirow{2}{*}{\textbf{M4 (CPG-GNN)}} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+& \textbf{Full} & \textbf{Freeze} & \textbf{Full} & \textbf{Freeze} & & \\
 \midrule
-Biểu diễn đầu vào & Chuỗi Token ($\le 256$) & Chuỗi Token + Đồ thị DFG & Cây câu lệnh AST & Đồ thị CPG (Node + Edge) \\
-Thuật toán tối ưu & AdamW & AdamW & Adam & AdamW \\
-Tốc độ học (Learning Rate) & $10^{-3}$ (Head) / $2 \times 10^{-5}$ (Full) & $10^{-3}$ (Head) / $2 \times 10^{-5}$ (Full) & $10^{-3}$ & $5 \times 10^{-4}$ \\
-Kích thước Batch & 64 (128 hàm) & 64 (128 hàm) & 32 & 32 \\
-Số lượng Epochs & 3 (Freeze) / 5 (Full) & 3 (Freeze) / 5 (Full) & 5 & 5 \\
-Hàm mất mát & BCEWithLogitsLoss & BCEWithLogitsLoss & BCEWithLogitsLoss & BCEWithLogitsLoss \\
+Biểu diễn đầu vào & \multicolumn{2}{c}{Chuỗi Token ($\le 256$)} & \multicolumn{2}{c}{Chuỗi Token + DFG} & Cây câu lệnh AST & Đồ thị CPG (Node + Edge) \\
+Thuật toán tối ưu & \multicolumn{2}{c}{AdamW} & \multicolumn{2}{c}{AdamW} & Adam & AdamW \\
+Tốc độ học (LR) & $2 \times 10^{-5}$ & $10^{-3}$ & $2 \times 10^{-5}$ & $10^{-3}$ & $10^{-3}$ & $5 \times 10^{-4}$ \\
+Kích thước Batch & \multicolumn{2}{c}{64} & \multicolumn{2}{c}{64} & 32 & 32 \\
+Số lượng Epochs & 5 & 3 & 5 & 3 & 5 & 5 \\
+Hàm mất mát & \multicolumn{2}{c}{BCEWithLogitsLoss} & \multicolumn{2}{c}{BCEWithLogitsLoss} & BCEWithLogitsLoss & BCEWithLogitsLoss \\
 \bottomrule
 \end{tabular}
 }
