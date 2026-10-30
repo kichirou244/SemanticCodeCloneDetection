@@ -108,18 +108,16 @@ Kết quả đánh giá trên tập Test chính thức gồm 5.000 cặp Java c�
 \centering
 \caption{Kết quả đánh giá 4 mô hình trên tập Test BigCloneBench Java (5.000 cặp)}
 \label{tab:bcb_train}
-\resizebox{\textwidth}{!}{
-\begin{tabular}{llcccccr}
+\begin{tabular}{lccccr}
 \toprule
-\textbf{Mã} & \textbf{Mô hình} & \textbf{Biểu diễn đầu vào} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{ROC-AUC} \\
+\textbf{Mô hình} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{ROC-AUC} \\
 \midrule
-\textbf{M1} & CodeBERT & Chuỗi mã nguồn (Transformer) & 90,21\% & 87,12\% & \textbf{93,53\%} & 97,24\% & \textbf{0,9822} \\
-\textbf{M2} & GraphCodeBERT & Chuỗi + Luồng dữ liệu (DFG) & \textbf{91,70\%} & \textbf{92,39\%} & 91,03\% & \textbf{97,76\%} & 0,9768 \\
-\textbf{M3} & ASTNN & Cây cú pháp trừu tượng (RvNN) & 25,54\% & 14,88\% & 90,00\% & 28,62\% & 0,5996 \\
-\textbf{M4} & CPG-GNN & Đồ thị thuộc tính mã (Joern CPG) & 42,98\% & 37,45\% & 50,44\% & 81,80\% & 0,7819 \\
+M1 & 90,21\% & 87,12\% & \textbf{93,53\%} & 97,24\% & \textbf{0,9822} \\
+M2 & \textbf{91,70\%} & \textbf{92,39\%} & 91,03\% & \textbf{97,76\%} & 0,9768 \\
+M3 & 25,54\% & 14,88\% & 90,00\% & 28,62\% & 0,5996 \\
+M4 & 42,98\% & 37,45\% & 50,44\% & 81,80\% & 0,7819 \\
 \bottomrule
 \end{tabular}
-}
 \end{table}
 
 \begin{itemize}
