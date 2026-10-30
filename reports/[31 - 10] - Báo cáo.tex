@@ -46,10 +46,6 @@
     \item Bộ kiểm thử C/C++: 121 file, 15 dạng bài giải thuật, sinh 720 cặp (120 clone : 600 non-clone).
     \item Bao phủ 4 loại clone (Type 1--4) và 2 nhóm non-clone (cạm bẫy khung sườn, khác bài toán).
   \end{itemize}
-\item \textbf{Đánh giá chuyển dịch ngôn ngữ (Cross-lingual Transfer):} Sử dụng trực tiếp các mô hình huấn luyện từ Java để kiểm thử trên tập C/C++, đánh giá khả năng tổng quát hóa giải thuật độc lập ngôn ngữ.
-\item \textbf{Tích hợp công cụ đối chứng Stanford MOSS:} Gọi trực tiếp máy chủ \texttt{moss.stanford.edu} qua socket bản quyền để lấy kết quả chuẩn của phương pháp n-gram truyền thống.
-\item \textbf{Xử lý triệt để cạm bẫy khung sườn (Hard Negative Mining):} Tự động sinh mẫu âm tính khó và áp dụng đóng băng 12 tầng Transformer (Freeze Backbone).
-\item \textbf{Tích hợp Fast Native CPG thuần Python (M4):} Dùng Tree-sitter trích xuất CPG với tốc độ $< 0,5\text{ms/file}$, thay thế hoàn toàn Joern JVM (vốn tốn $1,5-3,0\text{s}$ và nặng RAM).
 \end{itemize}
 
 %======================================================================
@@ -207,6 +203,7 @@ Non-clone Khác bài (Cross-problem) & 525 & \textbf{100,0\%} & 25,7\% & 81,7\% 
 \item \textbf{Freeze Backbone cải thiện độ chính xác:} Đối với M1, F1 tăng từ 29,18\% lên \textbf{54,26\%}, Accuracy tăng từ 21,11\% lên \textbf{83,61\%}, giảm mạnh số ca báo động giả từ 565 xuống còn 68 ca.
 \end{itemize}
 
+\clearpage
 \subsection{Kết quả kiểm thử trên tập C/C++ (720 cặp - dùng mô hình train từ Java)}
 Đánh giá khả năng chuyển dịch ngôn ngữ (Cross-lingual Transfer) trên 720 cặp C/C++ khi sử dụng các mô hình đã huấn luyện từ Java (Bảng~\ref{tab:test_cpp_overall} và Bảng~\ref{tab:test_cpp_detail}).
 
