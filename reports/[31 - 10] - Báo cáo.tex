@@ -270,59 +270,6 @@ Non-clone Khác bài (Cross-problem) & 525 & \textbf{100,0\%} & 13,0\% & 76,2\% 
 \end{itemize}
 
 %======================================================================
-\section{Các giải pháp kỹ thuật đã triển khai}
-
-\subsection{Xử lý triệt để cạm bẫy khung sườn (Hard Negative Mining)}
-\begin{itemize}
-\item \textbf{Vấn đề:} Dữ liệu âm tính ngẫu nhiên khiến mô hình chỉ dựa vào từ khóa vòng lặp để phán đoán clone, dẫn đến báo động giả khi gặp 2 hàm cùng khung sườn (ví dụ: Palindrome Checker vs String Reverser).
-\item \textbf{Cách khắc phục (\texttt{scripts/generate\_hard\_negatives.py}):}
-  \begin{itemize}[label=--]
-    \item Lọc các cặp khác bài toán nhưng có độ tương đồng token cao (Jaccard $J > 0,50$).
-    \item Tự động sinh mã đột biến đảo ngược logic (hoán đổi Max $\leftrightarrow$ Min, $+=$ thành $*=$).
-  \end{itemize}
-\item \textbf{Kết quả:} Xác suất đoán nhầm cạm bẫy ($P_{\text{trap}}$) của GraphCodeBERT giảm từ $> 70\%$ xuống còn \textbf{$0,95\%$}, loại bỏ hoàn toàn báo động giả.
-\end{itemize}
-
-\subsection{Tích hợp bộ trích xuất Fast Native CPG thuần Python cho M4}
-\begin{itemize}
-\item \textbf{Vấn đề:} Joern Scala/JVM chạy chậm ($1,5-3,0\text{s/file}$), tốn 4--8GB RAM, không thể đáp ứng chạy demo tương tác.
-\item \textbf{Cách khắc phục (\texttt{scripts/fast\_native\_cpg.py}):} Viết bộ parser thuần Python dùng Tree-sitter, trích xuất chuẩn 13 nhãn đỉnh và 6 nhãn cạnh, tương thích hoàn toàn với schema của CPG-GNN.
-\item \textbf{Kết quả đo kiểm (Benchmark 200 lượt):}
-  \begin{itemize}[label=--]
-    \item Thời gian trích xuất Java: \textbf{0,415 ms / file} (70 đỉnh, 74 cạnh).
-    \item Thời gian trích xuất C/C++: \textbf{0,703 ms / file} (127 đỉnh, 137 cạnh).
-    \item Tốc độ nhanh hơn Joern hơn \textbf{4.800 lần}, bộ nhớ tiêu thụ $< 15\text{MB}$, không cần cài đặt JVM.
-  \end{itemize}
-\end{itemize}
-
-\subsection{Đột phá kiến trúc Freeze Backbone (Kaggle Version 50)}
-Bảng~\ref{tab:freeze_backbone_results} tổng kết hiệu năng của bản Freeze Backbone kết hợp Hard Negative Mining.
-
-\begin{table}[htbp]
-\centering
-\caption{Hiệu năng đột phá của kiến trúc Freeze Backbone + Hard Negative Mining (Kaggle GPU V50)}
-\label{tab:freeze_backbone_results}
-\resizebox{\textwidth}{!}{
-\begin{tabular}{llcccccr}
-\toprule
-\textbf{Mô hình} & \textbf{Tập kiểm thử} & \textbf{ROC-AUC} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} & \textbf{Khắc chế Cạm bẫy ($P_{\text{trap}}$)} \\
-\midrule
-\multirow{2}{*}{\textbf{M2 (GraphCodeBERT Freeze)}} & Java (720 cặp, 1:5) & \textbf{85,02\%} & \textbf{56,49\%} & \textbf{52,11\%} & 61,67\% & \textbf{84,17\%} & \textbf{Bẫy bị triệt tiêu} ($P_{\text{avg}} = 0,95\%$) \\
- & C/C++ (720 cặp, 1:5) & \textbf{79,65\%} & \textbf{52,13\%} & \textbf{60,44\%} & 45,83\% & \textbf{85,97\%} & Nhận diện chuẩn xác ($P_{\text{avg}} = 13,5\%$) \\
-\midrule
-\multirow{2}{*}{\textbf{M1 (CodeBERT Freeze)}} & Java (720 cặp, 1:5) & \textbf{83,60\%} & \textbf{54,26\%} & \textbf{50,72\%} & \textbf{58,33\%} & \textbf{83,61\%} & Khắc chế bẫy tốt ($P_{\text{avg}} = 35,7\%$) \\
- & C/C++ (720 cặp, 1:5) & \textbf{79,42\%} & \textbf{53,85\%} & \textbf{63,64\%} & 46,67\% & \textbf{86,67\%} & Precision tăng vọt 63,64\% \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
-
-\begin{itemize}
-\item \textbf{Bảo toàn tri thức giải thuật:} Giữ nguyên trọng số ban đầu của 12 tầng Transformer giúp mô hình không bị co cụm vào cú pháp riêng lẻ của BigCloneBench.
-\item \textbf{Cân bằng ngưỡng phân phối:} Hiệu chỉnh ngưỡng phân loại theo phân phối logits giúp mô hình đạt F1 tối ưu và giảm thiểu báo động giả trên cả hai ngôn ngữ.
-\end{itemize}
-
-%======================================================================
 \section{Hạn chế hiện tại}
 \begin{itemize}
 \item \textbf{Giới hạn kiến trúc của ASTNN (M3):} Mạng RvNN chỉ tối ưu cho các đoạn mã ngắn. Khi gặp cây cú pháp Java phức tạp, mô hình bị tiêu biến thông tin, dẫn tới F1 dừng ở 25,54\%.
