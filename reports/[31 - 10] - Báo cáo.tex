@@ -3,7 +3,7 @@
 
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
-\usepackage[a4paper,top=1.6cm,bottom=1.6cm,left=1.6cm,right=1.5cm]{geometry}
+\usepackage[a4paper,top=1.3cm,bottom=1.3cm,left=1.4cm,right=1.4cm]{geometry}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{enumitem}
@@ -14,12 +14,14 @@
 \usepackage{url}
 \usepackage{multirow}
 \usepackage{titlesec}
+\usepackage{float}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=blue, urlcolor=blue]{hyperref}
 
 \titlespacing*{\section}{0pt}{4.5pt plus 1pt minus 1pt}{2pt plus 1pt minus 1pt}
 \titlespacing*{\subsection}{0pt}{3pt plus 1pt minus 1pt}{1.5pt plus 1pt minus 1pt}
-\setlength{\intextsep}{6pt plus 2pt minus 2pt}
-\setlength{\textfloatsep}{7pt plus 2pt minus 2pt}
-\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\intextsep}{5pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{6pt plus 2pt minus 2pt}
+\setlength{\floatsep}{5pt plus 2pt minus 2pt}
 
 \setlist[itemize]{leftmargin=*,itemsep=0.8pt,topsep=1.2pt,parsep=0pt}
 \setlist[enumerate]{leftmargin=*,itemsep=0.8pt,topsep=1.2pt,parsep=0pt}
@@ -27,9 +29,9 @@
 \setlength{\parskip}{1.2pt}
 \setlength{\emergencystretch}{3em}
 
-\title{\vspace{-1.5cm}\textbf{Báo cáo kết quả tuần 25--31/10}\\[4pt]
-       {\normalsize Đề tài: Phát hiện trùng lặp mã nguồn đa ngôn ngữ (Java, C/C++)}}
-\author{\textbf{Kichirou} \and Đề tài nghiên cứu NLP / Semantic Code Clone Detection}
+\title{\vspace{-1.5cm}\textbf{Báo cáo tiến độ tuần}\\[4pt]
+       {\normalsize Đề tài: Phát hiện trùng lặp mã nguồn}}
+\author{\textbf{Kichirou}}
 \date{Ngày 31 tháng 10 năm 2026}
 
 \begin{document}
@@ -37,30 +39,25 @@
 \vspace{-1.0cm}
 
 %======================================================================
-\section{Tóm tắt công việc hoàn thành trong tuần}
+\section{Tóm tắt công việc trong tuần}
 \begin{itemize}
-\item Huấn luyện lại các mô hình CodeBERT, GraphCodeBERT, ASTNN, CPG-GNN sử dụng dataset BigCloneBench.
-\item Kiểm thử các mô hình sau khi huấn luyện.
+\item Huấn luyện lại 4 phương pháp (CodeBERT, GraphCodeBERT, ASTNN, CPG-GNN) trên tập dữ liệu BigCloneBench (Java).
+\item Thu thập 703 bài nộp C/C++ từ hệ thống CODER HUSC và xây dựng tập kiểm thử thực tế 400 cặp theo chuẩn phân tầng BigCloneBench.
+\item Kiểm thử và so sánh kết quả của các mô hình trên cả tập dữ liệu Java và C/C++.
 \end{itemize}
 
 %======================================================================
 \section{Tập dữ liệu BigCloneBench (Java)}
-Nhằm chuyển dịch bài toán sang ngôn ngữ hướng đối tượng thực tế và chuẩn hóa theo thang đo quốc tế, dự án sử dụng bộ dữ liệu chuẩn \textbf{BigCloneBench} (thuộc benchmark CodeXGLUE của Google/Microsoft):
+Sử dụng tập dữ liệu \textbf{BigCloneBench} (thuộc bộ benchmark CodeXGLUE):
 \begin{itemize}
-\item \textbf{Nguồn gốc dữ liệu:} Trích xuất từ kho mã nguồn IJaDataset-2.0, gồm các hàm Java thuộc các hệ thống phần mềm thực tế với 43 chức năng mục tiêu (I/O tệp, mạng, cơ sở dữ liệu, xử lý chuỗi,...).
-\item \textbf{Cấu trúc mẫu dữ liệu:} Mỗi mẫu là một cặp hàm Java kèm nhãn nhị phân:
-  \begin{itemize}[label=--]
-    \item \texttt{id}: Mã định danh duy nhất của cặp đánh giá.
-    \item \texttt{id1}, \texttt{id2}: Mã định danh của hàm 1 và hàm 2.
-    \item \texttt{func1}, \texttt{func2}: Mã nguồn đầy đủ của 2 hàm Java.
-    \item \texttt{label}: $1$ (Trùng lặp --- Clone) hoặc $0$ (Không trùng lặp --- Non-clone).
-  \end{itemize}
-\item \textbf{Độ dài mã nguồn:} Trung bình $33,96$ dòng code ($1.642$ ký tự); dòng ngắn nhất: 5 dòng; dòng dài nhất: 371 dòng.
+\item \textbf{Nguồn dữ liệu:} Trích xuất từ kho IJaDataset-2.0, gồm các hàm Java thuộc 43 nhóm chức năng (xử lý file, mạng, database, chuỗi,...).
+\item \textbf{Cấu trúc mẫu:} Mỗi mẫu là một cặp hàm Java (\texttt{func1}, \texttt{func2}) kèm nhãn: $1$ (Trùng lặp) hoặc $0$ (Không trùng lặp).
+\item \textbf{Độ dài mã nguồn:} Trung bình $33,96$ dòng/hàm.
 \end{itemize}
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
-\caption{Thống kê quy mô phân chia tập dữ liệu BigCloneBench}
+\caption{Quy mô phân chia tập dữ liệu BigCloneBench}
 \label{tab:bcb_dataset_split}
 \begin{tabular}{lcc}
 \toprule
@@ -75,11 +72,10 @@ Test  & 5.000  & 50\% (2.500 clone : 2.500 non-clone) \\
 
 %======================================================================
 \section{Thông số cấu hình huấn luyện}
-Bảng~\ref{tab:hyperparameters} tổng hợp các thông số huấn luyện cốt lõi của 4 mô hình trên BigCloneBench.
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
-\caption{Bảng thông số huấn luyện của các mô hình}
+\caption{Thông số huấn luyện các mô hình}
 \label{tab:hyperparameters}
 \resizebox{\textwidth}{!}{
 \begin{tabular}{lcccccc}
@@ -98,51 +94,152 @@ Hàm mất mát & BCEWithLogits & BCEWithLogits & BCEWithLogits & BCEWithLogits 
 \end{table}
 
 \begin{itemize}
-\item \textbf{Chưa huấn luyện:} Sử dụng mô hình ngôn ngữ tiền huấn luyện nguyên bản từ Microsoft, trích xuất vector \texttt{[CLS]} và đo độ tương đồng Cosine, không qua huấn luyện trên tác vụ phát hiện bản sao.
-\item \textbf{Đóng băng 12 tầng:} Đóng băng toàn bộ 12 tầng Transformer của mô hình (giữ nguyên $100\%$ tri thức tiền huấn luyện), chỉ huấn luyện tầng phân loại cặp MLP ($1,77\text{M}$ tham số cần học), tránh hiện tượng quên tri thức ban đầu.
-\item \textbf{Fine-tuning toàn bộ:} Mở khóa và tinh chỉnh toàn bộ $126,4\text{M}$ tham số (cả 12 tầng Transformer và MLP head) trên tập dữ liệu BigCloneBench.
-\item \textbf{Mô hình cây cú pháp và đồ thị (M3, M4):} M3 (ASTNN) mã hóa chuỗi câu lệnh AST bằng RvNN + Bi-GRU; M4 (CPG-GNN) tổng hợp đặc trưng nút và cạnh qua 3 tầng GAT trên đồ thị CPG.
+\item \textbf{Chưa huấn luyện:} Dùng vector \texttt{[CLS]} từ pre-trained model nguyên bản của Microsoft và tính độ tương đồng Cosine, không qua huấn luyện.
+\item \textbf{Đóng băng 12 tầng:} Khóa 12 tầng Transformer của backbone, chỉ huấn luyện lớp phân loại MLP head ($1,77\text{M}$ tham số).
+\item \textbf{Fine-tuning toàn bộ:} Mở khóa và tinh chỉnh toàn bộ $126,4\text{M}$ tham số (cả backbone và head).
+\item \textbf{M3 (ASTNN) và M4 (CPG-GNN):} M3 mã hóa câu lệnh AST bằng RvNN + Bi-GRU; M4 xử lý nút và cạnh đồ thị qua 3 tầng GAT.
 \end{itemize}
 
 %======================================================================
 \clearpage
-\section{Kết quả kiểm thử trên tập dữ liệu Java (720 cặp --- Tỉ lệ 1:5)}
-Bảng~\ref{tab:bcb_train} tổng hợp kết quả đánh giá đối chứng toàn diện các phiên bản mô hình trên tập kiểm thử Java (gồm 120 cặp trùng lặp và 600 cặp không trùng lặp, phản ánh tỷ lệ phân bố thực tế 1:5).
+\section{Kết quả kiểm thử trên tập BigCloneBench (Java)}
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
-\caption{Kết quả kiểm thử đối chứng các phiên bản mô hình trên tập Java (720 cặp --- Tỉ lệ 1:5)}
+\caption{Kết quả kiểm thử các mô hình trên tập BigCloneBench Test (5.000 cặp --- Tỉ lệ 1:1)}
 \label{tab:bcb_train}
 \resizebox{\textwidth}{!}{
 \begin{tabular}{lccccccr}
 \toprule
 \textbf{Mô hình / Phiên bản} & \textbf{Ngưỡng} & \textbf{Đúng Trùng lặp} & \textbf{Đúng Không TL} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} \\
 \midrule
-M1 Chưa huấn luyện & 0,99 & 117 / 120 & 35 / 600 & 29,18\% & 17,16\% & 97,50\% & 21,11\% \\
-M1 Đóng băng 12 tầng & 0,46 & 70 / 120 & 532 / 600 & \textbf{54,26\%} & \textbf{50,72\%} & 58,33\% & \textbf{83,61\%} \\
-M1 Fine-tuning toàn bộ & 0,88 & 118 / 120 & 142 / 600 & 33,91\% & 20,49\% & \textbf{98,33\%} & 36,11\% \\
+M1 Chưa huấn luyện & 0,01 & 2.500 / 2.500 & 0 / 2.500 & 66,67\% & 50,00\% & \textbf{100,00\%} & 50,00\% \\
+M1 Đóng băng 12 tầng & 0,91 & 1.991 / 2.500 & 2.100 / 2.500 & 81,41\% & 83,27\% & 79,64\% & 81,82\% \\
+M1 Fine-tuning toàn bộ & 0,88 & 2.234 / 2.500 & 2.426 / 2.500 & \textbf{92,93\%} & 96,79\% & 89,36\% & \textbf{93,20\%} \\
 \midrule
-M2 Chưa huấn luyện & 0,97 & 74 / 120 & 571 / 600 & \textbf{66,37\%} & \textbf{71,84\%} & 61,67\% & \textbf{89,58\%} \\
-M2 Đóng băng 12 tầng & 0,014 & 74 / 120 & 532 / 600 & 56,49\% & 52,11\% & 61,67\% & 84,17\% \\
-M2 Fine-tuning toàn bộ & 0,94 & 114 / 120 & 465 / 600 & 61,79\% & 45,78\% & \textbf{95,00\%} & 80,42\% \\
+M2 Chưa huấn luyện & 0,93 & 2.089 / 2.500 & 902 / 2.500 & 67,53\% & 56,66\% & 83,56\% & 59,82\% \\
+M2 Đóng băng 12 tầng & 0,10 & 2.189 / 2.500 & 2.171 / 2.500 & 87,25\% & 86,93\% & 87,56\% & 87,20\% \\
+M2 Fine-tuning toàn bộ & 0,94 & 2.197 / 2.500 & 2.458 / 2.500 & 92,72\% & \textbf{98,12\%} & 87,88\% & 93,10\% \\
 \midrule
-M3 Chưa huấn luyện & 0,91 & 120 / 120 & 109 / 600 & \textbf{32,83\%} & \textbf{19,64\%} & \textbf{100,00\%} & 31,81\% \\
-M3 Fine-tuning toàn bộ & 0,52 & 92 / 120 & 190 / 600 & 29,58\% & 18,33\% & 76,67\% & \textbf{39,17\%} \\
+M3 Chưa huấn luyện & 0,87 & 2.500 / 2.500 & 7 / 2.500 & 66,73\% & 50,07\% & \textbf{100,00\%} & 50,14\% \\
+M3 Fine-tuning toàn bộ & 0,52 & 2.222 / 2.500 & 449 / 2.500 & 65,61\% & 52,00\% & 88,88\% & 53,42\% \\
 \midrule
-M4 Chưa huấn luyện & 0,10 & 120 / 120 & 0 / 600 & \textbf{28,57\%} & \textbf{16,67\%} & \textbf{100,00\%} & 16,67\% \\
-M4 Fine-tuning toàn bộ & 0,70 & 0 / 120 & 600 / 600 & 0,00\% & 0,00\% & 0,00\% & \textbf{83,33\%} \\
+M4 Chưa huấn luyện & 0,01 & 2.500 / 2.500 & 0 / 2.500 & 66,67\% & 50,00\% & \textbf{100,00\%} & 50,00\% \\
+M4 Fine-tuning toàn bộ & 0,70 & 2.500 / 2.500 & 0 / 2.500 & 66,67\% & 50,00\% & \textbf{100,00\%} & 50,00\% \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
+\textbf{Nhận xét nhanh:}
+\begin{itemize}
+\item M1 và M2 sau khi Fine-tuning toàn bộ đạt hiệu năng rất cao trên tập Test BigCloneBench, đạt F1 gần $93\%$ và Precision lên tới $96,79\% - 98,12\%$.
+\item Bản Đóng băng 12 tầng của M1 và M2 đạt kết quả rất tốt (F1 $81,41\% - 87,25\%$), giữ vững được ranh giới phân loại nhờ trọng số biểu diễn gốc của Transformer.
+\item M3 (ASTNN) và M4 (CPG-GNN) bị giảm độ chính xác ở cặp Không trùng lặp do kích thước cây cú pháp và đồ thị của các hàm Java trong BigCloneBench rất lớn, gây khó khăn cho quá trình lan truyền gradient.
+\end{itemize}
+
+%======================================================================
+\section{Kiểm thử thực tế trên dữ liệu C/C++ (Dữ liệu từ coder)}
+\begin{itemize}
+\item \textbf{Dữ liệu thu thập:} 703 bài nộp đạt AC từ 8 bài toán khác nhau (\texttt{spit0019}, \texttt{spit0060}, \texttt{spit0062}, \texttt{spit0067}, \texttt{spit0070}, \texttt{spit0090}, \texttt{spit0100}, \texttt{spit0108}).
+\item \textbf{Cách tạo cặp kiểm thử theo chuẩn BigCloneBench (Svajlenko \& Roy)~\cite{svajlenko2014}:}
+  \begin{itemize}[label=--]
+    \item \textit{Tiền xử lý:} Dùng \texttt{CppLexer} xóa comment, khoảng trắng; chuẩn hóa tên biến/hàm thành \texttt{ID}, hằng số thành \texttt{NUM}, chuỗi thành \texttt{STR}.
+    \item \textit{Đo độ tương đồng cú pháp:}
+      $$\text{Sim}(f_1, f_2) = \min\left( \frac{|T_1 \cap T_2|}{|T_1|}, \frac{|T_1 \cap T_2|}{|T_2|} \right)$$
+    \item \textit{Gán nhãn cặp kiểm thử (tổng cộng 400 cặp):}
+      \begin{itemize}
+        \item \textbf{Không trùng lặp (Nhãn 0 --- 200 cặp):} Ghép 2 bài thuộc 2 bài toán khác nhau (khác biệt hoàn toàn về thuật toán và I/O).
+        \item \textbf{Trùng lặp (Nhãn 1 --- 200 cặp):} Ghép 2 bài cùng giải 1 bài toán (cùng AC), chia thành:
+          \begin{itemize}
+            \item \textit{Sao chép cú pháp (Type-1/2/ST3):} $\text{Sim} \ge 70\%$ ($50$ cặp) --- Code giống nhau nhiều, chỉ đổi tên biến hoặc dùng chung template.
+            \item \textit{Tương đồng vừa (MT3):} $50\% \le \text{Sim} < 70\%$ ($30$ cặp).
+            \item \textit{Khác thuật toán (Type-4):} $\text{Sim} < 50\%$ ($120$ cặp) --- Sinh viên giải bằng 2 cách khác nhau (mảng vs đệ quy, sắp xếp vs hai con trỏ), code khác nhau nhưng cùng đạt AC.
+          \end{itemize}
+      \end{itemize}
+  \end{itemize}
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Kết quả kiểm thử các mô hình trên tập C/C++ CODER (400 cặp --- Tỉ lệ 1:1)}
+\label{tab:coder_results}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lccccccr}
+\toprule
+\textbf{Mô hình / Phiên bản} & \textbf{Ngưỡng} & \textbf{Đúng Trùng lặp} & \textbf{Đúng Không TL} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} \\
+\midrule
+M1 Chưa huấn luyện & 0,01 & 200 / 200 & 0 / 200 & 66,67\% & 50,00\% & \textbf{100,00\%} & 50,00\% \\
+M1 Đóng băng 12 tầng & 0,01 & 199 / 200 & 0 / 200 & 66,44\% & 49,87\% & 99,50\% & 49,75\% \\
+M1 Fine-tuning toàn bộ & 0,97 & 191 / 200 & 28 / 200 & 67,85\% & 52,62\% & 95,50\% & 54,75\% \\
+\midrule
+M2 Chưa huấn luyện & 0,01 & 200 / 200 & 0 / 200 & 66,67\% & 50,00\% & \textbf{100,00\%} & 50,00\% \\
+M2 Đóng băng 12 tầng & 0,07 & 176 / 200 & 61 / 200 & 68,35\% & 55,87\% & 88,00\% & 59,25\% \\
+M2 Fine-tuning toàn bộ & 0,78 & 182 / 200 & 50 / 200 & 68,42\% & 54,82\% & 91,00\% & 58,00\% \\
+\midrule
+M3 Chưa huấn luyện & 0,47 & 200 / 200 & 1 / 200 & 66,78\% & 50,13\% & \textbf{100,00\%} & 50,25\% \\
+M3 Fine-tuning toàn bộ & 0,36 & 183 / 200 & 65 / 200 & \textbf{70,66\%} & \textbf{57,55\%} & 91,50\% & \textbf{62,00\%} \\
+\midrule
+M4 Chưa huấn luyện & 0,01 & 200 / 200 & 0 / 200 & 66,67\% & 50,00\% & \textbf{100,00\%} & 50,00\% \\
+M4 Fine-tuning toàn bộ & 0,01 & 200 / 200 & 0 / 200 & 66,67\% & 50,00\% & \textbf{100,00\%} & 50,00\% \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Số lượng mẫu nhận diện đúng trên từng nhóm C/C++}
+\label{tab:coder_breakdown}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Mô hình / Phiên bản} & \textbf{Sao chép (Type-1/2/ST3)} & \textbf{Tương đồng vừa (MT3)} & \textbf{Khác thuật toán (Type-4)} & \textbf{Không trùng lặp (Khác bài)} \\
+\midrule
+M1 Chưa huấn luyện & 50 / 50 & 30 / 30 & 120 / 120 & 0 / 200 \\
+M1 Đóng băng 12 tầng & 50 / 50 & 30 / 30 & 119 / 120 & 0 / 200 \\
+M1 Fine-tuning toàn bộ & 47 / 50 & 29 / 30 & 115 / 120 & 28 / 200 \\
+\midrule
+M2 Chưa huấn luyện & 50 / 50 & 30 / 30 & 120 / 120 & 0 / 200 \\
+M2 Đóng băng 12 tầng & 43 / 50 & 27 / 30 & 106 / 120 & 61 / 200 \\
+M2 Fine-tuning toàn bộ & 46 / 50 & 25 / 30 & 111 / 120 & 50 / 200 \\
+\midrule
+M3 Chưa huấn luyện & 50 / 50 & 30 / 30 & 120 / 120 & 1 / 200 \\
+M3 Fine-tuning toàn bộ & 50 / 50 & 29 / 30 & 104 / 120 & \textbf{65 / 200} \\
+\midrule
+M4 Chưa huấn luyện & 50 / 50 & 30 / 30 & 120 / 120 & 0 / 200 \\
+M4 Fine-tuning toàn bộ & 50 / 50 & 30 / 30 & 120 / 120 & 0 / 200 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\textbf{Nhận xét kết quả kiểm thử C/C++:}
+\begin{itemize}
+\item \textbf{M3 (ASTNN) đạt kết quả tốt nhất:} ASTNN đạt F1 cao nhất ($70,66\%$) và Accuracy ($62,00\%$). Nhờ cơ chế mã hóa chuỗi câu lệnh trừu tượng, ASTNN ít bị ảnh hưởng bởi các từ khóa khai báo chung của C++ so với Transformer.
+\item \textbf{Nhận diện tốt các bài khác thuật toán (Type-4):} Các mô hình sau khi huấn luyện (M1, M2, M3) đều nhận diện chính xác phần lớn các ca khác thuật toán nhưng cùng đạt AC ($104 - 115 / 120$ cặp), chứng minh mô hình học được ngữ nghĩa bài toán chứ không chỉ nhìn mặt chữ.
+\item \textbf{Ảnh hưởng của từ khóa C-style:} Vì mô hình được học trên Java, khi kiểm thử trên C++ các bài khác nhau vẫn có nhiều từ khóa chung (\texttt{\#include}, \texttt{cin}, \texttt{cout}), khiến mô hình dễ đoán nhầm là trùng lặp nếu để ngưỡng thấp. Cần đặt ngưỡng cao để lọc chính xác.
+\end{itemize}
+
 %======================================================================
 \section{Hạn chế hiện tại}
 \begin{itemize}
-\item \textbf{Giới hạn kiến trúc của ASTNN (M3):} Mạng RvNN chỉ tối ưu cho các đoạn mã ngắn. Khi gặp cây cú pháp Java phức tạp, mô hình bị tiêu biến thông tin, dẫn tới F1 dừng ở 29,58\%.
+\item \textbf{Tỉ lệ đoán đúng cặp Không trùng lặp còn thấp:} Các mô hình đoán nhầm nhiều cặp khác bài toán thành trùng lặp (False Positive cao), đúng cao nhất mới đạt $65 / 200$ (M3).
+\item \textbf{Nhiễu khung bài tập (Boilerplate):} Code C/C++ của sinh viên khá ngắn và dùng chung nhiều đoạn khung (\texttt{\#include}, \texttt{ios\_base}, \texttt{cin}, \texttt{cout}), chiếm tỉ lệ token lớn khiến mô hình ngộ nhận là cùng thuật toán.
+\item \textbf{Mô hình đồ thị (M4):} CPG-GNN bị ảnh hưởng bởi macro và tiền xử lý C++ dẫn đến dự đoán thiên lệch toàn bộ về nhãn 1.
 \end{itemize}
 
 %======================================================================
 \section{Kế hoạch tuần tới}
+\begin{itemize}
+\item \textbf{Lọc sạch khung mã nguồn (Boilerplate Stripping):} Loại bỏ khai báo thư viện và I/O cơ bản, chỉ giữ lại thân hàm và logic cốt lõi để triệt tiêu trùng lặp giả.
+\item \textbf{Tối ưu M3 và M4:} Tinh giản các node rác trên cây AST (M3) và chuẩn hóa luồng điều khiển/dữ liệu trên đồ thị CPG (M4).
+\end{itemize}
+
+%======================================================================
+\begin{thebibliography}{1}
+\bibitem{svajlenko2014}
+J.~Svajlenko, J.~F.~Islam, I.~Keivanloo, C.~K.~Roy, and M.~M.~Mia, ``Towards a Big Data Curated Benchmark of Inter-Project Code Clones,'' in \textit{2014 IEEE International Conference on Software Maintenance and Evolution (ICSME)}, 2014, pp.~476--480. DOI: \url{https://doi.org/10.1109/ICSME.2014.77} (\url{https://sci-hub.vn/10.1109/ICSME.2014.77}).
+\end{thebibliography}
 
 \end{document}

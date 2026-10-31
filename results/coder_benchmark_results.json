@@ -1,0 +1,322 @@
+[
+  {
+    "model": "M1 Chưa huấn luyện",
+    "threshold": 0.01,
+    "correct_clone": "200 / 200",
+    "correct_non_clone": "0 / 200",
+    "f1": 66.67,
+    "precision": 50.0,
+    "recall": 100.0,
+    "accuracy": 50.0,
+    "breakdown": {
+      "Type-4": {
+        "correct": 120,
+        "total": 120,
+        "ratio": "120 / 120"
+      },
+      "Non-clone": {
+        "correct": 0,
+        "total": 200,
+        "ratio": "0 / 200"
+      },
+      "MT3": {
+        "correct": 30,
+        "total": 30,
+        "ratio": "30 / 30"
+      },
+      "Type-1/2/ST3": {
+        "correct": 50,
+        "total": 50,
+        "ratio": "50 / 50"
+      }
+    }
+  },
+  {
+    "model": "M1 Đóng băng 12 tầng",
+    "threshold": 0.01,
+    "correct_clone": "199 / 200",
+    "correct_non_clone": "0 / 200",
+    "f1": 66.44,
+    "precision": 49.87,
+    "recall": 99.5,
+    "accuracy": 49.75,
+    "breakdown": {
+      "Type-4": {
+        "correct": 119,
+        "total": 120,
+        "ratio": "119 / 120"
+      },
+      "Non-clone": {
+        "correct": 0,
+        "total": 200,
+        "ratio": "0 / 200"
+      },
+      "MT3": {
+        "correct": 30,
+        "total": 30,
+        "ratio": "30 / 30"
+      },
+      "Type-1/2/ST3": {
+        "correct": 50,
+        "total": 50,
+        "ratio": "50 / 50"
+      }
+    }
+  },
+  {
+    "model": "M1 Fine-tuning toàn bộ",
+    "threshold": 0.97,
+    "correct_clone": "191 / 200",
+    "correct_non_clone": "28 / 200",
+    "f1": 67.85,
+    "precision": 52.62,
+    "recall": 95.5,
+    "accuracy": 54.75,
+    "breakdown": {
+      "Type-4": {
+        "correct": 115,
+        "total": 120,
+        "ratio": "115 / 120"
+      },
+      "Non-clone": {
+        "correct": 28,
+        "total": 200,
+        "ratio": "28 / 200"
+      },
+      "MT3": {
+        "correct": 29,
+        "total": 30,
+        "ratio": "29 / 30"
+      },
+      "Type-1/2/ST3": {
+        "correct": 47,
+        "total": 50,
+        "ratio": "47 / 50"
+      }
+    }
+  },
+  {
+    "model": "M2 Chưa huấn luyện",
+    "threshold": 0.01,
+    "correct_clone": "200 / 200",
+    "correct_non_clone": "0 / 200",
+    "f1": 66.67,
+    "precision": 50.0,
+    "recall": 100.0,
+    "accuracy": 50.0,
+    "breakdown": {
+      "Type-4": {
+        "correct": 120,
+        "total": 120,
+        "ratio": "120 / 120"
+      },
+      "Non-clone": {
+        "correct": 0,
+        "total": 200,
+        "ratio": "0 / 200"
+      },
+      "MT3": {
+        "correct": 30,
+        "total": 30,
+        "ratio": "30 / 30"
+      },
+      "Type-1/2/ST3": {
+        "correct": 50,
+        "total": 50,
+        "ratio": "50 / 50"
+      }
+    }
+  },
+  {
+    "model": "M2 Đóng băng 12 tầng",
+    "threshold": 0.07,
+    "correct_clone": "176 / 200",
+    "correct_non_clone": "61 / 200",
+    "f1": 68.35,
+    "precision": 55.87,
+    "recall": 88.0,
+    "accuracy": 59.25,
+    "breakdown": {
+      "Type-4": {
+        "correct": 106,
+        "total": 120,
+        "ratio": "106 / 120"
+      },
+      "Non-clone": {
+        "correct": 61,
+        "total": 200,
+        "ratio": "61 / 200"
+      },
+      "MT3": {
+        "correct": 27,
+        "total": 30,
+        "ratio": "27 / 30"
+      },
+      "Type-1/2/ST3": {
+        "correct": 43,
+        "total": 50,
+        "ratio": "43 / 50"
+      }
+    }
+  },
+  {
+    "model": "M2 Fine-tuning toàn bộ",
+    "threshold": 0.78,
+    "correct_clone": "182 / 200",
+    "correct_non_clone": "50 / 200",
+    "f1": 68.42,
+    "precision": 54.82,
+    "recall": 91.0,
+    "accuracy": 58.0,
+    "breakdown": {
+      "Type-4": {
+        "correct": 111,
+        "total": 120,
+        "ratio": "111 / 120"
+      },
+      "Non-clone": {
+        "correct": 50,
+        "total": 200,
+        "ratio": "50 / 200"
+      },
+      "MT3": {
+        "correct": 25,
+        "total": 30,
+        "ratio": "25 / 30"
+      },
+      "Type-1/2/ST3": {
+        "correct": 46,
+        "total": 50,
+        "ratio": "46 / 50"
+      }
+    }
+  },
+  {
+    "model": "M3 Chưa huấn luyện",
+    "threshold": 0.47,
+    "correct_clone": "200 / 200",
+    "correct_non_clone": "1 / 200",
+    "f1": 66.78,
+    "precision": 50.13,
+    "recall": 100.0,
+    "accuracy": 50.25,
+    "breakdown": {
+      "Type-4": {
+        "correct": 120,
+        "total": 120,
+        "ratio": "120 / 120"
+      },
+      "Non-clone": {
+        "correct": 1,
+        "total": 200,
+        "ratio": "1 / 200"
+      },
+      "MT3": {
+        "correct": 30,
+        "total": 30,
+        "ratio": "30 / 30"
+      },
+      "Type-1/2/ST3": {
+        "correct": 50,
+        "total": 50,
+        "ratio": "50 / 50"
+      }
+    }
+  },
+  {
+    "model": "M3 Fine-tuning toàn bộ",
+    "threshold": 0.36,
+    "correct_clone": "183 / 200",
+    "correct_non_clone": "65 / 200",
+    "f1": 70.66,
+    "precision": 57.55,
+    "recall": 91.5,
+    "accuracy": 62.0,
+    "breakdown": {
+      "Type-4": {
+        "correct": 104,
+        "total": 120,
+        "ratio": "104 / 120"
+      },
+      "Non-clone": {
+        "correct": 65,
+        "total": 200,
+        "ratio": "65 / 200"
+      },
+      "MT3": {
+        "correct": 29,
+        "total": 30,
+        "ratio": "29 / 30"
+      },
+      "Type-1/2/ST3": {
+        "correct": 50,
+        "total": 50,
+        "ratio": "50 / 50"
+      }
+    }
+  },
+  {
+    "model": "M4 Chưa huấn luyện",
+    "threshold": 0.01,
+    "correct_clone": "200 / 200",
+    "correct_non_clone": "0 / 200",
+    "f1": 66.67,
+    "precision": 50.0,
+    "recall": 100.0,
+    "accuracy": 50.0,
+    "breakdown": {
+      "Type-4": {
+        "correct": 120,
+        "total": 120,
+        "ratio": "120 / 120"
+      },
+      "Non-clone": {
+        "correct": 0,
+        "total": 200,
+        "ratio": "0 / 200"
+      },
+      "MT3": {
+        "correct": 30,
+        "total": 30,
+        "ratio": "30 / 30"
+      },
+      "Type-1/2/ST3": {
+        "correct": 50,
+        "total": 50,
+        "ratio": "50 / 50"
+      }
+    }
+  },
+  {
+    "model": "M4 Fine-tuning toàn bộ",
+    "threshold": 0.01,
+    "correct_clone": "200 / 200",
+    "correct_non_clone": "0 / 200",
+    "f1": 66.67,
+    "precision": 50.0,
+    "recall": 100.0,
+    "accuracy": 50.0,
+    "breakdown": {
+      "Type-4": {
+        "correct": 120,
+        "total": 120,
+        "ratio": "120 / 120"
+      },
+      "Non-clone": {
+        "correct": 0,
+        "total": 200,
+        "ratio": "0 / 200"
+      },
+      "MT3": {
+        "correct": 30,
+        "total": 30,
+        "ratio": "30 / 30"
+      },
+      "Type-1/2/ST3": {
+        "correct": 50,
+        "total": 50,
+        "ratio": "50 / 50"
+      }
+    }
+  }
+]
