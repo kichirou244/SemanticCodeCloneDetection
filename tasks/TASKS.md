@@ -106,38 +106,64 @@
 ## 4. Thứ 6 (30-10-2026): Đánh giá Tổng hợp, Custom Suite Java, Demo & Báo cáo
 
 ### [BCB-09] Xây dựng Pipeline đánh giá F1 tổng hợp & phân tích theo Clone Types (T1-T4)
-- **Trạng thái:** Not started
-- **Mục tiêu:** Đánh giá định lượng toàn diện 6 mô hình trên tập test của BigCloneBench và phân tích chi tiết theo loại clone.
+- **Trạng thái:** Done
+- **Mục tiêu:** Đánh giá định lượng toàn diện các mô hình trên tập test Java BigCloneBench và phân tích chi tiết theo loại clone.
 - **Mô tả chi tiết:**
-  - Tính toán các chỉ số cốt lõi: Precision, Recall, F1 tại ngưỡng tối ưu chốt từ tập Validation.
-  - BigCloneBench chia thành các phân lớp clone nổi tiếng:
-    - **Type-1:** Trùng lặp nguyên văn (chỉ khác khoảng trắng, chú thích).
-    - **Type-2:** Trùng lặp cấu trúc, đổi tên biến/kiểu dữ liệu (syntactic clone).
-    - **Strongly Type-3:** Tương đồng ngữ pháp $\ge 70\%$.
-    - **Moderately Type-3:** Tương đồng ngữ pháp $50\% - 70\%$.
-    - **Weakly Type-3 / Type-4:** Tương đồng ngữ pháp $< 50\%$ nhưng cùng chức năng ngữ nghĩa (semantic clone - đây là nhóm khó nhất).
-  - Xây dựng ma trận phát hiện (detection rate) của từng mô hình qua từng phân lớp để chỉ ra điểm mù của TF-IDF/MOSS so với ASTNN/CodeBERT/CPG-GNN.
-  - Thực hiện kiểm định ý nghĩa thống kê: McNemar test và 1000-sample Bootstrap Confidence Interval 95%.
-- **Tiêu chí hoàn thành (DoD):** Sinh file tổng hợp `results/bcb_leaderboard.json` và bảng so sánh Markdown `reports/bcb_leaderboard.md`.
+  - Tính toán các chỉ số cốt lõi: Precision, Recall, F1, Accuracy tại ngưỡng tối ưu chốt từ tập Validation.
+  - Đánh giá trên bộ dữ liệu kiểm thử thực tế 720 cặp (tỉ lệ 1:5) gồm Type-1, Type-2, Type-3, Type-4 và các cạm bẫy Non-clone khó.
+  - Phân tích chi tiết số lượng đoán đúng của Clone (`TP / 120`) và Non-clone (`TN / 600`).
+- **Tiêu chí hoàn thành (DoD):** Sinh file tổng hợp `workspace/custom_suite_java_scores.json` và bảng so sánh chi tiết.
 
-### [BCB-10] Chuyển đổi Custom Test Suite & cập nhật Web Demo sang Java
-- **Trạng thái:** Not started
-- **Mục tiêu:** Cung cấp bộ test thực tế nhỏ gọn có thể giải thích trực quan và tích hợp vào giao diện demo.
+### [BCB-10] Chuyển đổi Custom Test Suite Java (720 cặp, tỉ lệ 1:5) & Phân tích cạm bẫy
+- **Trạng thái:** Done
+- **Mục tiêu:** Cung cấp bộ test thực tế nhỏ gọn có thể giải thích trực quan và kiểm tra độ vững cáp trước cạm bẫy cú pháp.
 - **Mô tả chi tiết:**
-  - Chuyển đổi các bài toán test trong `data/custom_suite/` (trước đây viết bằng C++) sang mã nguồn **Java chuẩn**:
-    - Bài toán thao tác danh sách liên kết (`class LinkedList` vs hàm tự do).
-    - Các biến thể clone: đổi vòng lặp `for` sang `while`, đổi cấu trúc điều khiển, đổi phương thức thư viện.
-    - Các cặp non-clone khó: cùng khung giải thuật / skeleton nhưng khác ngữ nghĩa xử lý dữ liệu.
-  - Cập nhật Web Demo (FastAPI + Vanilla JS):
-    - Hỗ trợ cú pháp Java trong bộ highlight mã nguồn.
-    - Tích hợp trọng số mô hình đã train trên BigCloneBench vào backend suy luận localhost.
-- **Tiêu chí hoàn thành (DoD):** Chạy `python -m src.demo.app` hiển thị giao diện đối chiếu 2 đoạn mã Java và đưa ra điểm số kèm highlight trực quan.
+  - Xây dựng bộ test 720 cặp Java gồm 120 cặp clone (Type-1 đến Type-4) và 600 cặp non-clone (trong đó có 75 cặp non-clone cạm bẫy khung sườn).
+  - So sánh đối chứng trực tiếp với Stanford MOSS: MOSS chỉ bắt được 11,1% Type-4 trong khi GraphCodeBERT bắt được 88,9%.
+- **Tiêu chí hoàn thành (DoD):** Hoàn thành script chấm tự động `scripts/score_custom_suite_java.py` và lưu trữ tại `data/custom_suite_java/`.
 
-### [BCB-11] Chốt số liệu, cập nhật Decision Log (DEC-035) & xuất Báo cáo tổng hợp
-- **Trạng thái:** Not started
+### [BCB-11] Chốt số liệu & xuất Báo cáo tuần (31-10-2026)
+- **Trạng thái:** Done
 - **Mục tiêu:** Hoàn thiện hồ sơ tài liệu khoa học và đồng bộ tiến độ dự án.
 - **Mô tả chi tiết:**
-  - Viết `DEC-035: Chuyển dịch toàn bộ phạm vi sang BigCloneBench (Java)` trong `docs/decision_log.md`.
-  - Cập nhật lại `README.md`, `project_structure.md`, `docs/dataset_protocol.md`.
-  - Tổng hợp toàn bộ kết quả, phân tích đồ thị, so sánh ưu nhược điểm các phương pháp thành báo cáo tuần/báo cáo tổng hợp biên dịch bằng XeLaTeX (`reports/[31-10] - Báo cáo tổng hợp.tex` $\to$ PDF).
-- **Tiêu chí hoàn thành (DoD):** File PDF báo cáo biên dịch sạch (0 error / 0 Overfull); toàn bộ tài liệu dự án đồng bộ 100% với BigCloneBench.
+  - Tổng hợp toàn bộ thông số huấn luyện (Bảng 2) và kết quả kiểm thử đối chứng các biến thể: Chưa huấn luyện, Đóng băng 12 tầng, Fine-tuning toàn bộ (Bảng 3).
+  - Biên dịch báo cáo chuẩn XeLaTeX 2 trang A4 sạch đẹp tại `reports/[31 - 10] - Báo cáo.pdf`.
+- **Tiêu chí hoàn thành (DoD):** File PDF báo cáo biên dịch sạch (0 error, đúng 2 trang A4, đã đồng bộ lên GitHub `main`).
+
+---
+
+## 5. Kế hoạch tuần tiếp theo (03-11 → 07-11-2026): Tối ưu hóa mô hình & Xử lý mất cân bằng thực tế
+
+### [OPT-01] Áp dụng LoRA / PEFT cho GraphCodeBERT (M2) & CodeBERT (M1)
+- **Trạng thái:** In planning
+- **Mục tiêu:** Giải quyết bài toán đánh đổi giữa Recall và Precision, kết hợp ưu điểm của Đóng băng (không quên tri thức gốc, TN cao) và Fine-tuning (bắt Type-4 nhạy, Recall cao).
+- **Mô tả chi tiết:**
+  - Tích hợp thư viện `peft` (Hugging Face) vào `src/models/transformer_pair.py`.
+  - Giữ cố định 100% trọng số Transformer backbone, chỉ huấn luyện các ma trận thích ứng rank thấp (LoRA với $r=8$ hoặc $r=16$, $\alpha=32$) tại các module Attention (`q_proj`, `v_proj`).
+  - Đánh giá khả năng chặn False Positives trên 75 ca cạm bẫy non-clone mà vẫn duy trì Recall $\ge 90\%$.
+- **Tiêu chí hoàn thành (DoD):** Script huấn luyện LoRA chạy trên Kaggle GPU; checkpoint weights siêu nhẹ (< 20MB); F1 trên tập kiểm thử 1:5 cải thiện vượt ngưỡng 75%.
+
+### [OPT-02] Khai thác Hard Negative Mining & Hàm mất mát Focal Loss / Contrastive Loss
+- **Trạng thái:** In planning
+- **Mục tiêu:** Giảm thiểu triệt để số lượng báo động giả (False Positives) trên các cặp mã có bề mặt code tương tự nhưng khác thuật toán.
+- **Mô tả chi tiết:**
+  - Thu thập và khai thác tập mẫu âm khó (Hard Negatives): các cặp mã khác bài nhưng dùng chung import, khung hàm hoặc cùng giải thuật đệ quy nhưng trả lời bài toán khác nhau.
+  - Cập nhật hàm mất mát trong `src/experiments/bcb_runner.py`: thử nghiệm `FocalLoss(gamma=2.0, alpha=0.25)` và `SupervisedContrastiveLoss` để tăng mức phạt đối với các ca cạm bẫy đoán sai.
+- **Tiêu chí hoàn thành (DoD):** Số ca FP của M1/M2 trên tập non-clone giảm tối thiểu 50%.
+
+### [OPT-03] Tối ưu hóa cấu trúc cho M3 (ASTNN) & M4 (CPG-GNN)
+- **Trạng thái:** In planning
+- **Mục tiêu:** Tháo gỡ nút thắt cổ chai về độ sâu cây cú pháp và kích thước đồ thị CPG.
+- **Mô tả chi tiết:**
+  - **M3 (ASTNN):** Áp dụng AST Pruning (cắt tỉa node rác, loại bỏ khai báo kiểu rườm rà) và AST Canonicalization (chuẩn hóa `while` $\leftrightarrow$ `for`, chuẩn hóa tên biến tạm).
+  - **M4 (CPG-GNN):** Áp dụng Program Slicing để trích xuất lát cắt đồ thị theo biến trọng yếu; thử nghiệm Heterogeneous GNN (RGCN) phân biệt 3 loại cạnh: AST, CFG, DDG.
+- **Tiêu chí hoàn thành (DoD):** F1 của M3 vượt 45%; M4 vượt 60% trên tập dữ liệu kiểm thử.
+
+### [OPT-04] Đánh giá trên tập dữ liệu Coder / Cross-lingual khi tiếp nhận dữ liệu mới
+- **Trạng thái:** In planning
+- **Mục tiêu:** Kiểm chứng khả năng thích ứng miền và chuyển giao tri thức mã nguồn đa ngôn ngữ trên dữ liệu thực tế mới.
+- **Mô tả chi tiết:**
+  - Ngay khi tiếp nhận tập dữ liệu Coder: nạp dữ liệu vào pipeline chuẩn hóa `src/data/loaders/`.
+  - Chạy suy luận tự động qua các checkpoint tốt nhất của M1, M2 (Full, Freeze, LoRA).
+  - Xuất bảng kết quả đối chứng đa chiều so sánh giữa Java, C/C++ và Coder.
+- **Tiêu chí hoàn thành (DoD):** Báo cáo so sánh hiệu năng trên tập dữ liệu mới hoàn thành trong vòng 24h sau khi nhận dữ liệu.
