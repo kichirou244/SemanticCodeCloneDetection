@@ -106,31 +106,31 @@ Hàm mất mát & BCEWithLogits & BCEWithLogits & BCEWithLogits & BCEWithLogits 
 
 %======================================================================
 \clearpage
-\section{Kết quả kiểm thử trên tập dữ liệu BigCloneBench (Java)}
-Bảng~\ref{tab:bcb_train} tổng hợp kết quả đánh giá đối chứng toàn diện các phiên bản mô hình trên tập dữ liệu kiểm thử Java BigCloneBench.
+\section{Kết quả kiểm thử trên tập dữ liệu Java (720 cặp --- Tỉ lệ 1:5)}
+Bảng~\ref{tab:bcb_train} tổng hợp kết quả đánh giá đối chứng toàn diện các phiên bản mô hình trên tập kiểm thử Java (gồm 120 cặp trùng lặp và 600 cặp không trùng lặp, phản ánh tỷ lệ phân bố thực tế 1:5).
 
 \begin{table}[htbp]
 \centering
-\caption{Kết quả kiểm thử đối chứng các phiên bản mô hình trên tập Java BigCloneBench}
+\caption{Kết quả kiểm thử đối chứng các phiên bản mô hình trên tập Java (720 cặp --- Tỉ lệ 1:5)}
 \label{tab:bcb_train}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{lccccr}
+\begin{tabular}{lccccccr}
 \toprule
-\textbf{Mô hình / Phiên bản} & \textbf{Ngưỡng} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} \\
+\textbf{Mô hình / Phiên bản} & \textbf{Ngưỡng} & \textbf{Đúng Trùng lặp} & \textbf{Đúng Không TL} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} \\
 \midrule
-M1 Chưa huấn luyện & 0,99 & 29,18\% & 17,16\% & 97,50\% & 21,11\% \\
-M1 Freeze (Đóng băng 12 tầng) & 0,46 & 54,26\% & 50,72\% & 58,33\% & 83,61\% \\
-M1 Full (Fine-tuning toàn bộ) & 0,88 & \textbf{90,21\%} & 87,12\% & \textbf{93,53\%} & 97,24\% \\
+M1 Chưa huấn luyện & 0,99 & 117 / 120 & 35 / 600 & 29,18\% & 17,16\% & 97,50\% & 21,11\% \\
+M1 Freeze (Đóng băng 12 tầng) & 0,46 & 70 / 120 & 532 / 600 & \textbf{54,26\%} & \textbf{50,72\%} & 58,33\% & \textbf{83,61\%} \\
+M1 Full (Fine-tuning toàn bộ) & 0,88 & 118 / 120 & 142 / 600 & 33,91\% & 20,49\% & \textbf{98,33\%} & 36,11\% \\
 \midrule
-M2 Chưa huấn luyện & 0,97 & 66,37\% & 71,84\% & 61,67\% & 89,58\% \\
-M2 Freeze (Đóng băng 12 tầng) & 0,014 & 56,49\% & 52,11\% & 61,67\% & 84,17\% \\
-M2 Full (Fine-tuning toàn bộ) & 0,94 & \textbf{91,70\%} & \textbf{92,39\%} & 91,03\% & \textbf{97,76\%} \\
+M2 Chưa huấn luyện & 0,97 & 74 / 120 & 571 / 600 & \textbf{66,37\%} & \textbf{71,84\%} & 61,67\% & \textbf{89,58\%} \\
+M2 Freeze (Đóng băng 12 tầng) & 0,014 & 74 / 120 & 532 / 600 & 56,49\% & 52,11\% & 61,67\% & 84,17\% \\
+M2 Full (Fine-tuning toàn bộ) & 0,94 & 114 / 120 & 465 / 600 & 61,79\% & 45,78\% & \textbf{95,00\%} & 80,42\% \\
 \midrule
-M3 Chưa huấn luyện & 0,91 & 32,83\% & 19,64\% & 100,00\% & 31,81\% \\
-M3 Full & 0,52 & 25,54\% & 14,88\% & 90,00\% & 28,62\% \\
+M3 Chưa huấn luyện & 0,91 & 120 / 120 & 109 / 600 & \textbf{32,83\%} & \textbf{19,64\%} & \textbf{100,00\%} & 31,81\% \\
+M3 Full & 0,52 & 92 / 120 & 190 / 600 & 29,58\% & 18,33\% & 76,67\% & \textbf{39,17\%} \\
 \midrule
-M4 Chưa huấn luyện & 0,10 & 28,57\% & 16,67\% & 100,00\% & 16,67\% \\
-M4 Full & 0,70 & 42,98\% & 37,45\% & 50,44\% & 81,80\% \\
+M4 Chưa huấn luyện & 0,10 & 120 / 120 & 0 / 600 & \textbf{28,57\%} & \textbf{16,67\%} & \textbf{100,00\%} & 16,67\% \\
+M4 Full & 0,70 & 0 / 120 & 600 / 600 & 0,00\% & 0,00\% & 0,00\% & \textbf{83,33\%} \\
 \bottomrule
 \end{tabular}
 }
@@ -139,7 +139,7 @@ M4 Full & 0,70 & 42,98\% & 37,45\% & 50,44\% & 81,80\% \\
 %======================================================================
 \section{Hạn chế hiện tại}
 \begin{itemize}
-\item \textbf{Giới hạn kiến trúc của ASTNN (M3):} Mạng RvNN chỉ tối ưu cho các đoạn mã ngắn. Khi gặp cây cú pháp Java phức tạp, mô hình bị tiêu biến thông tin, dẫn tới F1 dừng ở 25,54\%.
+\item \textbf{Giới hạn kiến trúc của ASTNN (M3):} Mạng RvNN chỉ tối ưu cho các đoạn mã ngắn. Khi gặp cây cú pháp Java phức tạp, mô hình bị tiêu biến thông tin, dẫn tới F1 dừng ở 29,58\%.
 \end{itemize}
 
 %======================================================================
