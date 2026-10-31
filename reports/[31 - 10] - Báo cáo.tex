@@ -84,7 +84,7 @@ Bảng~\ref{tab:hyperparameters} tổng hợp các thông số huấn luyện c�
 \resizebox{\textwidth}{!}{
 \begin{tabular}{lcccccc}
 \toprule
-\textbf{Thông số} & \textbf{M1 Freeze} & \textbf{M1 Full} & \textbf{M2 Freeze} & \textbf{M2 Full} & \textbf{M3} & \textbf{M4} \\
+\textbf{Thông số} & \textbf{M1 Đóng băng 12 tầng} & \textbf{M1 Fine-tuning toàn bộ} & \textbf{M2 Đóng băng 12 tầng} & \textbf{M2 Fine-tuning toàn bộ} & \textbf{M3} & \textbf{M4} \\
 \midrule
 Biểu diễn đầu vào & Chuỗi Token ($\le 256$) & Chuỗi Token ($\le 256$) & Chuỗi Token + DFG & Chuỗi Token + DFG & Cây cú pháp AST & Đồ thị CPG \\
 Thuật toán tối ưu & AdamW & AdamW & AdamW & AdamW & Adam & AdamW \\
@@ -98,9 +98,9 @@ Hàm mất mát & BCEWithLogits & BCEWithLogits & BCEWithLogits & BCEWithLogits 
 \end{table}
 
 \begin{itemize}
-\item \textbf{Chưa huấn luyện (Untrained / Zero-shot):} Sử dụng mô hình ngôn ngữ pre-trained nguyên bản từ Microsoft, trích xuất vector \texttt{[CLS]} và đo độ tương đồng Cosine, không qua huấn luyện trên tác vụ phát hiện bản sao.
-\item \textbf{Đóng băng Backbone (Freeze):} Đóng băng toàn bộ 12 tầng Transformer của backbone (giữ nguyên $100\%$ tri thức tiền huấn luyện), chỉ huấn luyện tầng phân loại cặp MLP ($1,77\text{M}$ tham số cần học), tránh hiện tượng quên tri thức ban đầu.
-\item \textbf{Huấn luyện toàn bộ (Full Fine-tuning):} Mở khóa và tinh chỉnh toàn bộ $126,4\text{M}$ tham số (cả 12 tầng Transformer và MLP head) trên tập dữ liệu BigCloneBench.
+\item \textbf{Chưa huấn luyện:} Sử dụng mô hình ngôn ngữ tiền huấn luyện nguyên bản từ Microsoft, trích xuất vector \texttt{[CLS]} và đo độ tương đồng Cosine, không qua huấn luyện trên tác vụ phát hiện bản sao.
+\item \textbf{Đóng băng 12 tầng:} Đóng băng toàn bộ 12 tầng Transformer của mô hình (giữ nguyên $100\%$ tri thức tiền huấn luyện), chỉ huấn luyện tầng phân loại cặp MLP ($1,77\text{M}$ tham số cần học), tránh hiện tượng quên tri thức ban đầu.
+\item \textbf{Fine-tuning toàn bộ:} Mở khóa và tinh chỉnh toàn bộ $126,4\text{M}$ tham số (cả 12 tầng Transformer và MLP head) trên tập dữ liệu BigCloneBench.
 \item \textbf{Mô hình cây cú pháp và đồ thị (M3, M4):} M3 (ASTNN) mã hóa chuỗi câu lệnh AST bằng RvNN + Bi-GRU; M4 (CPG-GNN) tổng hợp đặc trưng nút và cạnh qua 3 tầng GAT trên đồ thị CPG.
 \end{itemize}
 
@@ -119,18 +119,18 @@ Bảng~\ref{tab:bcb_train} tổng hợp kết quả đánh giá đối chứng t
 \textbf{Mô hình / Phiên bản} & \textbf{Ngưỡng} & \textbf{Đúng Trùng lặp} & \textbf{Đúng Không TL} & \textbf{F1-Score} & \textbf{Precision} & \textbf{Recall} & \textbf{Accuracy} \\
 \midrule
 M1 Chưa huấn luyện & 0,99 & 117 / 120 & 35 / 600 & 29,18\% & 17,16\% & 97,50\% & 21,11\% \\
-M1 Freeze (Đóng băng 12 tầng) & 0,46 & 70 / 120 & 532 / 600 & \textbf{54,26\%} & \textbf{50,72\%} & 58,33\% & \textbf{83,61\%} \\
-M1 Full (Fine-tuning toàn bộ) & 0,88 & 118 / 120 & 142 / 600 & 33,91\% & 20,49\% & \textbf{98,33\%} & 36,11\% \\
+M1 Đóng băng 12 tầng & 0,46 & 70 / 120 & 532 / 600 & \textbf{54,26\%} & \textbf{50,72\%} & 58,33\% & \textbf{83,61\%} \\
+M1 Fine-tuning toàn bộ & 0,88 & 118 / 120 & 142 / 600 & 33,91\% & 20,49\% & \textbf{98,33\%} & 36,11\% \\
 \midrule
 M2 Chưa huấn luyện & 0,97 & 74 / 120 & 571 / 600 & \textbf{66,37\%} & \textbf{71,84\%} & 61,67\% & \textbf{89,58\%} \\
-M2 Freeze (Đóng băng 12 tầng) & 0,014 & 74 / 120 & 532 / 600 & 56,49\% & 52,11\% & 61,67\% & 84,17\% \\
-M2 Full (Fine-tuning toàn bộ) & 0,94 & 114 / 120 & 465 / 600 & 61,79\% & 45,78\% & \textbf{95,00\%} & 80,42\% \\
+M2 Đóng băng 12 tầng & 0,014 & 74 / 120 & 532 / 600 & 56,49\% & 52,11\% & 61,67\% & 84,17\% \\
+M2 Fine-tuning toàn bộ & 0,94 & 114 / 120 & 465 / 600 & 61,79\% & 45,78\% & \textbf{95,00\%} & 80,42\% \\
 \midrule
 M3 Chưa huấn luyện & 0,91 & 120 / 120 & 109 / 600 & \textbf{32,83\%} & \textbf{19,64\%} & \textbf{100,00\%} & 31,81\% \\
-M3 Full & 0,52 & 92 / 120 & 190 / 600 & 29,58\% & 18,33\% & 76,67\% & \textbf{39,17\%} \\
+M3 Fine-tuning toàn bộ & 0,52 & 92 / 120 & 190 / 600 & 29,58\% & 18,33\% & 76,67\% & \textbf{39,17\%} \\
 \midrule
 M4 Chưa huấn luyện & 0,10 & 120 / 120 & 0 / 600 & \textbf{28,57\%} & \textbf{16,67\%} & \textbf{100,00\%} & 16,67\% \\
-M4 Full & 0,70 & 0 / 120 & 600 / 600 & 0,00\% & 0,00\% & 0,00\% & \textbf{83,33\%} \\
+M4 Fine-tuning toàn bộ & 0,70 & 0 / 120 & 600 / 600 & 0,00\% & 0,00\% & 0,00\% & \textbf{83,33\%} \\
 \bottomrule
 \end{tabular}
 }
