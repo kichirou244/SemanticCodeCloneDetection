@@ -136,12 +136,6 @@ M4 Full & 0,70 & 42,98\% & 37,45\% & 50,44\% & 81,80\% \\
 }
 \end{table}
 
-\begin{itemize}
-\item \textbf{Hiệu năng bứt phá sau khi huấn luyện Full:} Cả M1 Full (F1 90,21\%) và M2 Full (F1 91,70\%) đều vượt trội hoàn toàn so với trạng thái Chưa huấn luyện ban đầu, chứng minh khả năng thích nghi xuất sắc của kiến trúc Transformer trên miền mã nguồn Java.
-\item \textbf{Cơ chế Đóng băng Backbone (Freeze):} M1 Freeze và M2 Freeze đạt F1 ổn định từ 54--56\% và Accuracy 83--84\% chỉ với 3 epochs và học duy nhất 1,77M tham số ở classifier head, tiết kiệm tới hơn $98\%$ tài nguyên tính toán.
-\item \textbf{Hạn chế của mô hình cây cú pháp và đồ thị (M3, M4):} ASTNN gặp khó khăn khi cây cú pháp quá sâu (F1 dừng ở 25,54\%); CPG-GNN đạt F1 42,98\% do cần lượng dữ liệu đồ thị phong phú hơn để tối ưu các trọng số Attention cạnh.
-\end{itemize}
-
 %======================================================================
 \section{Hạn chế hiện tại}
 \begin{itemize}
