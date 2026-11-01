@@ -1,8 +1,5 @@
 # Dữ liệu
-data/*
-!data/custom_suite/
-!data/custom_suite_java/
-!data/processed/coder_benchmark/
+data/
 
 # Checkpoint mô hình và binary nặng
 results/*/checkpoints/

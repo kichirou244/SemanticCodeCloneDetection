@@ -77,8 +77,6 @@ Mô hình được huấn luyện trên mã nguồn Java và kiểm thử trực
 SemanticCodeCloneDetection/
 ├── configs/                     # Cấu hình huấn luyện mô hình (YAML)
 ├── data/                        # Dữ liệu kiểm thử
-│   ├── custom_suite/            # 20 bài toán C/C++ kiểm thử mẫu
-│   ├── custom_suite_java/       # Tập dữ liệu kiểm thử phân tầng Java
 │   └── processed/
 │       └── coder_benchmark/     # Bộ benchmark 400 cặp C/C++ CODER HUSC
 ├── notebooks/                   # Jupyter notebooks huấn luyện trên Kaggle GPU

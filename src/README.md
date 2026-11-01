@@ -12,7 +12,6 @@ src/
 │   ├── transformer/    # Wrapper mô hình chuỗi (CodeBERT & GraphCodeBERT)
 │   ├── astnn/          # Mô hình cây cú pháp ASTNN (RvNN + Bi-GRU)
 │   ├── cpg_gnn/        # Mô hình đồ thị thuộc tính CPG-GNN (3-layer GAT)
-│   └── hybrid/         # Mô hình tích hợp đa phương thức (GraphCodeBERT + GNN)
 └── representations/    # Trích xuất biểu diễn:
     ├── ast/            # Trích xuất cây cú pháp trừu tượng (Tree-sitter)
     └── cpg/            # Xây dựng và nạp đồ thị chương trình CPG
