@@ -1,127 +1,151 @@
-# Semantic Code Clone Detection (C/C++)
+# Semantic Code Clone Detection (Phát hiện Trùng lặp Mã nguồn Ngữ nghĩa)
 
-Project nghiên cứu phục vụ bài báo khoa học: xây dựng và đánh giá các phương pháp
-AI/Deep Learning phát hiện hai đoạn code tương đương ngữ nghĩa/chức năng.
+Dự án nghiên cứu và đánh giá thực nghiệm các phương pháp Học sâu (Deep Learning) và Học đồ thị (Graph Neural Networks) trong bài toán **Phát hiện Trùng lặp Mã nguồn Ngữ nghĩa (Semantic Code Clone Detection)** trên các ngôn ngữ lập trình **Java** và **C/C++**.
 
-## Phạm vi core (không mở rộng nếu chưa có yêu cầu rõ ràng)
+---
 
-| ID | Phương pháp | Nhóm |
-| :--- | :--- | :--- |
-| B1 | TF-IDF + Cosine | Baseline |
-| M1 | CodeBERT | Transformer |
-| M2 | GraphCodeBERT | Transformer |
-| M3 | ASTNN | AST |
-| M4 | CPG-GNN (backbone `gat`) | Program Graph |
-| M5 | GraphCodeBERT + CPG-GNN (`concat_mlp`) | Hybrid |
+## 1. Giới thiệu Đề tài
 
-- Dataset duy nhất trong phạm vi: **POJ-104 (C/C++)**
-  (`google/code_x_glue_cc_clone_detection_poj104`) → EXP-001…EXP-006
-- **Ngôn ngữ: C/C++.** Khối Python (CodeNet) đã hủy theo DEC-019 vì quota
-  compute; dữ liệu CodeNet vẫn giữ trong repo để mở rộng lại được nếu cần.
-  Xem `docs/research_questions.md` §5.
-- Không Java/C#/JavaScript.
-- **M4 (CPG-GNN):** code đã xong (schema + ingest + store + GAT, 34 test local),
-  còn thiếu **CPG thật** vì cần Joern. Joern **không cài ở máy local** — cài trong
-  `notebooks/exp005_cpg_extract_kaggle.ipynb` rồi chạy **cell smoke trước** (in ra
-  danh sách step CPGQL để xác nhận exporter), sau đó mới đo `ham/giây` thật.
-  Xem DEC-024, DEC-025 và `reports/005_ast_cpg_feasibility.md`.
+Trùng lặp mã nguồn (Code Clone) là hiện tượng các đoạn mã có hành vi tương đồng hoặc giống hệt nhau. Trong đó, **Type-4 (Semantic Clones)** là nhóm trùng lặp phức tạp nhất khi hai đoạn mã có cú pháp, tên biến và cấu trúc giải thuật hoàn toàn khác biệt nhưng cùng thực thi chung một chức năng/mục tiêu.
 
-## Bắt đầu nhanh (người dùng tự chạy — agent không chạy terminal)
+Đề tài tập trung triển khai, đối sánh và kiểm thử 4 họ phương pháp đại diện cho các cấp độ biểu diễn mã nguồn:
+
+| Phương pháp | Cấp độ biểu diễn mã nguồn | Kiến trúc mô hình | Đặc tả |
+| :--- | :--- | :--- | :--- |
+| **M1: CodeBERT** | Dạng chuỗi (Sequence of Tokens) | Pre-trained RoBERTa | BPE Tokenizer, tối đa 256 tokens |
+| **M2: GraphCodeBERT** | Chuỗi Token kết hợp Luồng dữ liệu (Tokens + DFG) | Graph-guided Masked Attention | Tích hợp các mối quan hệ biến (Data Flow Graph) |
+| **M3: ASTNN** | Cây cú pháp trừu tượng (Abstract Syntax Tree) | RvNN + Bi-GRU | Cắt cây AST theo từng câu lệnh (Statement Trees) |
+| **M4: CPG-GNN** | Đồ thị thuộc tính chương trình (Code Property Graph) | Graph Attention Network (GAT) | Tích hợp AST + CFG + CDG + DDG qua 3 tầng GAT |
+
+---
+
+## 2. Dữ liệu Thực nghiệm
+
+Nghiên cứu sử dụng 2 bộ dữ liệu phục vụ huấn luyện và kiểm thử chéo ngôn ngữ:
+
+1. **BigCloneBench (Java - Chuẩn CodeXGLUE):**
+   - Trích xuất từ kho *IJaDataset-2.0*, gồm các hàm Java phân loại theo 43 nhóm chức năng thực tế.
+   - Tập huấn luyện: **30.000** cặp (15.000 clone : 15.000 non-clone).
+   - Tập kiểm định (Validation): **3.000** cặp (1.500 clone : 1.500 non-clone).
+   - Tập kiểm thử độc lập (Test): **5.000** cặp (2.500 clone : 2.500 non-clone).
+
+2. **CODER HUSC (C/C++ - Tập kiểm thử thực tế):**
+   - Bộ dữ liệu gồm **400 cặp bài nộp sinh viên** thu thập từ hệ thống chấm tự động CODER HUSC trên các bài toán thuật toán đa dạng.
+   - Phân tầng nhãn chi tiết theo chuẩn BigCloneBench:
+     - **Trùng lặp cú pháp (Type-1 / Type-2 / ST3):** 50 cặp
+     - **Trùng lặp trung bình (MT3):** 30 cặp
+     - **Trùng lặp ngữ nghĩa hoàn toàn (Type-4):** 120 cặp
+     - **Không trùng lặp (Non-clone - Khác bài + Bẫy giải thuật):** 200 cặp
+
+---
+
+## 3. Kết quả Thực nghiệm
+
+### 3.1. Kết quả trên Tập Test BigCloneBench (Java - 5.000 cặp)
+
+| Mô hình / Phiên bản | Ngưỡng $\tau$ | Đúng Clone | Đúng Non-clone | F1-Score | Precision | Recall | Accuracy |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **M1 Chưa huấn luyện** | 0.01 | 2.500 / 2.500 | 0 / 2.500 | 66.67% | 50.00% | **100.00%** | 50.00% |
+| **M1 Đóng băng 12 tầng** | 0.91 | 1.991 / 2.500 | 2.100 / 2.500 | 81.41% | 83.27% | 79.64% | 81.82% |
+| **M1 Fine-tuning toàn bộ** | 0.88 | 2.234 / 2.500 | 2.426 / 2.500 | **92.93%** | 96.79% | 89.36% | **93.20%** |
+| **M2 Chưa huấn luyện** | 0.93 | 2.089 / 2.500 | 902 / 2.500 | 67.53% | 56.66% | 83.56% | 59.82% |
+| **M2 Đóng băng 12 tầng** | 0.10 | 2.189 / 2.500 | 2.171 / 2.500 | 87.25% | 86.93% | 87.56% | 87.20% |
+| **M2 Fine-tuning toàn bộ** | 0.94 | 2.197 / 2.500 | 2.458 / 2.500 | 92.72% | **98.12%** | 87.88% | 93.10% |
+| **M3 Chưa huấn luyện** | 0.87 | 2.500 / 2.500 | 7 / 2.500 | 66.73% | 50.07% | **100.00%** | 50.14% |
+| **M3 Fine-tuning toàn bộ** | 0.52 | 2.222 / 2.500 | 449 / 2.500 | 65.61% | 52.00% | 88.88% | 53.42% |
+| **M4 Chưa huấn luyện** | 0.01 | 2.500 / 2.500 | 0 / 2.500 | 66.67% | 50.00% | **100.00%** | 50.00% |
+| **M4 Fine-tuning toàn bộ** | 0.70 | 2.500 / 2.500 | 0 / 2.500 | 66.67% | 50.00% | **100.00%** | 50.00% |
+
+### 3.2. Đánh giá Zero-shot Cross-Language trên CODER HUSC (C/C++ - 400 cặp)
+
+Mô hình được huấn luyện trên mã nguồn Java và kiểm thử trực tiếp trên mã nguồn C/C++ mà không qua fine-tuning lại:
+
+| Mô hình / Phiên bản | Ngưỡng $\tau$ | Type-1/2/ST3 (50) | MT3 (30) | Type-4 (120) | Non-clone (200) | F1-Score | Accuracy |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **M1 Đóng băng 12 tầng** | 0.01 | 50 / 50 | 30 / 30 | 119 / 120 | 0 / 200 | 66.44% | 49.75% |
+| **M1 Fine-tuning toàn bộ** | 0.97 | 47 / 50 | 29 / 30 | 115 / 120 | 28 / 200 | 67.85% | 54.75% |
+| **M2 Đóng băng 12 tầng** | 0.07 | 43 / 50 | 27 / 30 | 106 / 120 | 61 / 200 | 68.35% | 59.25% |
+| **M2 Fine-tuning toàn bộ** | 0.78 | 46 / 50 | 25 / 30 | 111 / 120 | 50 / 200 | 68.42% | 58.00% |
+| **M3 Fine-tuning toàn bộ** | 0.36 | 50 / 50 | 29 / 30 | 104 / 120 | 65 / 200 | **70.66%** | **62.00%** |
+| **M4 Fine-tuning toàn bộ** | 0.01 | 50 / 50 | 30 / 30 | 120 / 120 | 0 / 200 | 66.67% | 50.00% |
+
+---
+
+## 4. Cấu trúc Thư mục Dự án
+
+```text
+SemanticCodeCloneDetection/
+├── configs/                     # Cấu hình huấn luyện và tham số thực nghiệm (YAML)
+├── data/                        # Dữ liệu nguồn và các tập benchmark
+│   ├── custom_suite/            # Bộ dữ liệu C/C++ kiểm thử theo nhóm bài
+│   ├── custom_suite_java/       # Bộ dữ liệu Java kiểm thử phân tầng
+│   └── processed/
+│       └── coder_benchmark/     # Bộ benchmark 400 cặp C/C++ CODER HUSC
+├── reports/                     # Báo cáo học thuật (LaTeX source và file PDF xuất bản)
+│   ├── [31 - 10] - Báo cáo.tex  # Báo cáo tiến độ chuẩn A4
+│   └── [31 - 10] - Báo cáo.pdf  # Bản PDF hoàn chỉnh
+├── results/                     # Kết quả thực nghiệm đã ghi nhận (JSON / Metrics)
+│   ├── bcb_test_5k_results.json # Kết quả trên 5.000 cặp BigCloneBench Test
+│   └── coder_benchmark_results.json # Kết quả trên 400 cặp C/C++ CODER HUSC
+├── scripts/                     # Kịch bản thực thi pipeline, thu thập và đánh giá
+│   ├── README.md                # Tài liệu hướng dẫn chi tiết các scripts
+│   ├── evaluate_bcb_5000_test.py    # Đánh giá 10 biến thể trên 5.000 cặp Java
+│   ├── evaluate_coder_benchmark.py  # Đánh giá trên 400 cặp C/C++ thực tế
+│   ├── crawl_coder_husc.py          # Thu thập dữ liệu từ hệ thống CODER HUSC
+│   └── prepare_coder_benchmark.py   # Xây dựng bộ benchmark phân tầng C/C++
+├── src/                         # Mã nguồn cốt lõi (Core Modules)
+│   ├── astnn/                   # Cây cú pháp RvNN + Bi-GRU
+│   ├── cpg/                     # Code Property Graph (Joern + NetworkX)
+│   ├── gnn/                     # Mô hình GAT (Graph Attention Networks)
+│   ├── transformers/            # Wrapper cho CodeBERT & GraphCodeBERT
+│   └── utils/                   # Các hàm tiện ích, trích xuất đặc trưng và metric
+├── tests/                       # Hệ thống Unit Test kiểm thử logic
+├── requirements.txt             # Danh sách thư viện phụ thuộc Python
+└── README.md                    # Tài liệu tổng quan đề tài
+```
+
+---
+
+## 5. Hướng dẫn Cài đặt & Chạy Thực nghiệm
+
+### 5.1. Khởi tạo Môi trường
+
+Khuyến nghị sử dụng Python 3.10 trở lên:
 
 ```bash
+# Tạo môi trường ảo
 python -m venv .venv
+
+# Kích hoạt môi trường (Windows PowerShell)
 .venv\Scripts\activate
+
+# Cài đặt các thư viện phụ thuộc
 pip install -r requirements.txt
-python scripts/env_report.py
-pytest tests/ -q
-python scripts/smoke_baseline.py
-python scripts/audit_dataset.py --dataset poj104 --max-samples 200
-python scripts/check_leakage.py --dataset poj104
-python scripts/check_toolchain.py
 ```
 
-Các lệnh nặng (tải dataset đầy đủ, smoke transformer) xem chi tiết trong
-`docs/implementation_plan.md` và `docs/reproducibility.md`.
+### 5.2. Chạy Tái hiện Kết quả Đánh giá
 
-## Chạy thí nghiệm (EXP-001…EXP-004)
+1. **Đánh giá trên tập kiểm thử BigCloneBench (Java - 5.000 cặp):**
+   ```bash
+   python scripts/evaluate_bcb_5000_test.py
+   ```
+   Kết quả xuất ra tại `results/bcb_test_5k_results.json`.
 
-Mọi mode đều dùng **cùng một CLI**; chỉ đổi `--config` và `--mode`.
+2. **Đánh giá trên tập kiểm thử CODER HUSC (C/C++ - 400 cặp):**
+   ```bash
+   python scripts/evaluate_coder_benchmark.py
+   ```
+   Kết quả chi tiết phân tầng xuất ra tại `results/coder_benchmark_results.json`.
 
-```bash
-# EXP-002 / EXP-003 — cùng code path, chỉ khác pretrained weights
-python -m src.experiments.exp002_codebert      --config configs/exp002_codebert.yaml      --mode preflight --device cuda
-python -m src.experiments.exp003_graphcodebert --config configs/exp003_graphcodebert.yaml --mode diagnostic --device cuda
+3. **Chạy kiểm thử hệ thống (Unit tests):**
+   ```bash
+   pytest tests/ -q
+   ```
 
-# EXP-004 — ASTNN (không cần tokenizer, tự build cache AST)
-python -m src.experiments.exp004_astnn --config configs/exp004_astnn.yaml --mode preflight --device cuda
-python -m src.experiments.exp004_astnn --config configs/exp004_astnn.yaml --mode diagnostic --device cuda
-```
+---
 
-`--mode`: `preflight` → `smoke` → `diagnostic` → `train` → `evaluate`, cộng
-`resume` nếu train bị ngắt. **Local chạy `smoke`/`diagnostic`/`evaluate`**; `train`
-để Kaggle theo DEC-018 (checkpoint nằm trong `/kaggle/working` ⇒ phải archive
-ngay cuối mỗi epoch).
+## 6. Định hướng Nghiên cứu Tiếp theo
 
-Notebook Kaggle (mỗi thí nghiệm một file, tự build dataset, tự đóng gói):
-
-| Notebook | Dùng cho | Thời gian T4 |
-| :--- | :--- | ---: |
-| `notebooks/exp002_codebert_kaggle.ipynb` | EXP-002 (M1) — đã xong | 7,03h (đo) |
-| `notebooks/exp003_graphcodebert_kaggle.ipynb` | EXP-003 (M2) | ~7,8h |
-| `notebooks/exp004_astnn_kaggle.ipynb` | EXP-004 (M3) | ~35 phút |
-
-Chạy **EXP-004 trước EXP-003** (DEC-023): M3 rẻ hơn 13×, nếu phiên M2 chết giữa chừng thì
-vẫn còn M3. Notebook EXP-003 là bản sao EXP-002 chỉ đổi tên — DEC-016; test
-`test_notebooks_mirror_each_other` chặn lệch.
-
-**Mỗi notebook có cell evaluate chạy ngay trên Kaggle** (M2 ~5 phút, M3 ~1 phút), rồi đóng
-gói **chỉ metrics + predictions** (vài MB) — mặc định `KEEP_WEIGHTS = False` nên không
-tải checkpoint (1,44GB) về máy. Muốn giữ `best_weights_only.pt` (0,5GB) để chạy lại ở máy
-khác thì bật cờ đó. Mọi metric đều tính lại được từ `predictions/*_scores.jsonl` mà không
-cần model.
-
-**Chỉ tải checkpoint bản nhẹ về khi thật cần (0,5GB thay vì 1,44GB).** Sau khi train trên
-Kaggle, gọi `export_eval_weights(Path("results/<exp>_poj104"))` để tạo `best_weights_only.pt`
-(chỉ `model_state`, load được với `weights_only=True`); `evaluate_model` tự fallback
-sang file này nếu không có checkpoint đầy đủ. `best_checkpoint.pt`/`last_checkpoint.pt`
-chỉ dùng để resume trên Kaggle (DEC-022 §2b, DEC-023).
-
-Thời gian trên Kaggle T4: **EXP-002 7,03h (đo)** · EXP-003 ~7,8h (đo từ throughput
-EXP-002) · **EXP-004 ~35 phút**. Xem `docs/experiment_registry.md` cho trạng thái từng run.
-
-## Pipeline cuối — đánh giá, chọn phương pháp, suy luận (EXP-FINAL-001)
-
-Giai đoạn huấn luyện đã dừng (DEC-030). Phần còn lại gói trong một CLI hai chế độ,
-dùng chung `configs/final_pipeline.yaml`:
-
-```bash
-# 1) Xếp hạng mọi run đã đóng băng theo val F1 + kiểm định cặp (McNemar + bootstrap)
-#    → results/final_pipeline/{leaderboard.json,leaderboard.md,selection.json}
-#    Không cần torch/GPU/Joern.
-python scripts/final_pipeline.py select
-
-# 2) Suy luận cặp file bằng phương pháp đã chọn (ngưỡng đọc từ threshold.json)
-python scripts/final_pipeline.py detect --a a.cpp --b b.cpp
-python scripts/final_pipeline.py detect --a a.cpp --b b.cpp --model M2_512 --json
-```
-
-Luật chọn là **val F1** (test chỉ để báo cáo). Theo val, M5-512 nhỉnh nhất nhưng chỉ
-hơn M2-512 +0,0043 (McNemar p=0,081; bootstrap CI chạm 0 ⇒ chưa vững), ngưỡng 0,010
-rất mỏng; M2-512 hơn ở test F1/AUC ⇒ **pipeline cuối dùng M2-512 cho `detect`**
-(`inference.default_model`), M5-512 gọi khi cần bằng `--model M5_512`. Chi tiết:
-`reports/014_final_selection.md`.
-
-## Tài liệu
-
-- Tổng quan: `docs/project_overview.md`
-- Câu hỏi nghiên cứu: `docs/research_questions.md`
-- Dataset/split/leakage: `docs/dataset_protocol.md`, `docs/leakage_prevention.md`
-- Experiment/đánh giá: `docs/experiment_protocol.md`, `docs/evaluation_protocol.md`
-- Quyết định: `docs/decision_log.md` · Registry: `docs/experiment_registry.md`
-- Kế hoạch: `docs/implementation_plan.md` · Reports: `reports/`
-
-## Nguyên tắc
-
-Code + Documentation + Research Reports phát triển song song. Mọi thay đổi về
-dataset/model/split/metric/leakage/kết quả/quyết định phải cập nhật docs/report
-tương ứng. Chi tiết: `docs/reproducibility.md`.
+1. **Cân bằng ngữ cảnh Không trùng lặp (Non-clone Discrimination):** Tinh chỉnh ngưỡng quyết định và ứng dụng kỹ thuật Contrastive Learning để hạn chế tỷ lệ báo động giả (False Positive) trên các mẫu khác bài nhưng cùng chủ đề.
+2. **Khai thác đồ thị mã nguồn linh hoạt (Lightweight Program Graph):** Tối ưu hóa kích thước đồ thị CPG/AST bằng cách lọc các nút phụ trợ, tập trung vào luồng điều khiển chính và định nghĩa biến quan trọng.
+3. **Mô hình lai Đa phương thức (Hybrid Multi-modal Fusion):** Kết hợp khả năng hiểu ngữ cảnh phong phú của Transformer (GraphCodeBERT) với tính bất biến cấu trúc của AST/CPG để nâng cao khả năng chuyển dịch ngôn ngữ (Cross-language generalizability).
