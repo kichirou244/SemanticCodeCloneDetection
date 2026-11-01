@@ -1,16 +1,3 @@
-"""Script tải và chuẩn bị các tập dữ liệu BigCloneBench (Smoke, Dev, Full).
-
-Cách dùng:
-    # 1. Tải tập smoke (500 mẫu) và dev (20.000 mẫu) phục vụ thử nghiệm local
-    python scripts/download_bcb_subsets.py --smoke --dev
-
-    # 2. Tải toàn bộ tập dữ liệu (train, validation, test)
-    python scripts/download_bcb_subsets.py --full
-
-    # 3. Chỉ tải split cụ thể
-    python scripts/download_bcb_subsets.py --split validation --max-samples 1000
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -18,7 +5,6 @@ import logging
 from pathlib import Path
 import sys
 
-# Đảm bảo import được src khi chạy script trực tiếp
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -30,80 +16,40 @@ logger = logging.getLogger("download_bcb")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Tải và trích xuất dữ liệu BigCloneBench")
-    parser.add_argument("--out-dir", type=str, default="data/raw/bigclonebench", help="Thư mục lưu dữ liệu")
-    parser.add_argument("--smoke", action="store_true", help="Tạo tập bcb_smoke (500 mẫu, 50:50)")
-    parser.add_argument("--smoke-size", type=int, default=500, help="Số mẫu tập smoke")
-    parser.add_argument("--dev", action="store_true", help="Tạo tập bcb_dev (20.000 mẫu)")
-    parser.add_argument("--dev-size", type=int, default=20000, help="Số mẫu tập dev")
-    parser.add_argument("--full", action="store_true", help="Tải toàn bộ train/validation/test")
-    parser.add_argument("--split", type=str, default=None, help="Split cụ thể (train/validation/test)")
-    parser.add_argument("--max-samples", type=int, default=None, help="Giới hạn số mẫu")
-    parser.add_argument("--splits-custom", action="store_true", help="Tải train, validation, test với số mẫu tùy chỉnh")
-    parser.add_argument("--train-samples", type=int, default=50000)
-    parser.add_argument("--val-samples", type=int, default=5000)
-    parser.add_argument("--test-samples", type=int, default=5000)
-    parser.add_argument("--seed", type=int, default=42, help="Seed ngẫu nhiên")
+    parser = argparse.ArgumentParser(description="Tai va trich xuat du lieu BigCloneBench")
+    parser.add_argument("--out-dir", type=str, default="data/raw/bigclonebench")
+    parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--smoke-size", type=int, default=500)
+    parser.add_argument("--dev", action="store_true")
+    parser.add_argument("--dev-size", type=int, default=20000)
+    parser.add_argument("--full", action="store_true")
+    parser.add_argument("--split", type=str, default=None)
+    parser.add_argument("--max-samples", type=int, default=None)
+    parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     loader = BigCloneBenchLoader(cache_dir=out_dir / "hf_cache")
 
-    logger.info("Khởi động tải dữ liệu BigCloneBench từ Hugging Face: %s", loader.HF_ID)
-
     if args.smoke:
-        logger.info("Đang tạo tập SMOKE (%d mẫu) từ tập validation qua streaming...", args.smoke_size)
-        val_samples = loader.load_from_hf(split="validation", max_samples=args.smoke_size * 4, streaming=True)
-        smoke_subset = loader.sample_subset(val_samples, n_samples=args.smoke_size, seed=args.seed, balance=True)
-        smoke_parquet = out_dir / "bcb_smoke.parquet"
-        smoke_jsonl = out_dir / "bcb_smoke.jsonl"
-        loader.save_parquet(smoke_subset, smoke_parquet)
-        loader.save_jsonl(smoke_subset, smoke_jsonl)
-        logger.info("Đã lưu tập smoke: %s (%d mẫu)", smoke_parquet, len(smoke_subset))
+        val = loader.load_from_hf(split="validation", max_samples=args.smoke_size * 4, streaming=True)
+        sub = loader.sample_subset(val, n_samples=args.smoke_size, seed=args.seed, balance=True)
+        loader.save_parquet(sub, out_dir / "bcb_smoke.parquet")
+        loader.save_jsonl(sub, out_dir / "bcb_smoke.jsonl")
+        logger.info("Da luu smoke: %d mau", len(sub))
 
     if args.dev:
-        logger.info("Đang tạo tập DEV (%d mẫu) từ tập validation qua streaming...", args.dev_size)
-        val_samples = loader.load_from_hf(split="validation", max_samples=args.dev_size * 2, streaming=True)
-        dev_subset = loader.sample_subset(val_samples, n_samples=args.dev_size, seed=args.seed, balance=True)
-        dev_parquet = out_dir / "bcb_dev.parquet"
-        loader.save_parquet(dev_subset, dev_parquet)
-        logger.info("Đã lưu tập dev: %s (%d mẫu)", dev_parquet, len(dev_subset))
+        val = loader.load_from_hf(split="validation", max_samples=args.dev_size * 2, streaming=True)
+        sub = loader.sample_subset(val, n_samples=args.dev_size, seed=args.seed, balance=True)
+        loader.save_parquet(sub, out_dir / "bcb_dev.parquet")
+        logger.info("Da luu dev: %d mau", len(sub))
 
     if args.full:
-        for sp in ("train", "validation", "test"):
-            logger.info("Đang tải toàn bộ split: %s...", sp)
-            samples = loader.load_from_hf(split=sp, max_samples=args.max_samples)
-            target_parquet = out_dir / f"bcb_{sp}.parquet"
-            loader.save_parquet(samples, target_parquet)
-            logger.info("Đã lưu %s: %s (%d mẫu)", sp, target_parquet, len(samples))
-
-    if args.splits_custom:
-        targets = [
-            ("train", args.train_samples),
-            ("validation", args.val_samples),
-            ("test", args.test_samples),
-        ]
-        for sp, max_s in targets:
-            logger.info("Đang tải split: %s (max: %s)...", sp, max_s)
-            samples = loader.load_from_hf(split=sp, max_samples=max_s, streaming=True)
-            target_parquet = out_dir / f"bcb_{sp}.parquet"
-            loader.save_parquet(samples, target_parquet)
-            logger.info("Đã lưu: %s (%d mẫu)", target_parquet, len(samples))
-
-    if args.split:
-        use_streaming = args.max_samples is not None
-        logger.info("Đang tải split: %s (max: %s, streaming=%s)...", args.split, args.max_samples, use_streaming)
-        samples = loader.load_from_hf(split=args.split, max_samples=args.max_samples, streaming=use_streaming)
-        target_parquet = out_dir / f"bcb_{args.split}.parquet"
-        loader.save_parquet(samples, target_parquet)
-        logger.info("Đã lưu: %s (%d mẫu)", target_parquet, len(samples))
-
-    logger.info("Hoàn tất tác vụ chuẩn bị dữ liệu BigCloneBench.")
-    sys.stdout.flush()
-    sys.stderr.flush()
-    import os
-    os._exit(0)
+        for s in ("train", "validation", "test"):
+            data = loader.load_from_hf(split=s, streaming=False)
+            loader.save_parquet(data, out_dir / f"bcb_{s}.parquet")
+            logger.info("Da luu %s: %d mau", s, len(data))
 
 
 if __name__ == "__main__":
