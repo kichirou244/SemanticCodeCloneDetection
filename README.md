@@ -1,14 +1,14 @@
 # Semantic Code Clone Detection (Phát hiện Trùng lặp Mã nguồn Ngữ nghĩa)
 
-Dự án nghiên cứu và đánh giá thực nghiệm các phương pháp Học sâu (Deep Learning) và Học đồ thị (Graph Neural Networks) trong bài toán **Phát hiện Trùng lặp Mã nguồn Ngữ nghĩa (Semantic Code Clone Detection)** trên các ngôn ngữ lập trình **Java** và **C/C++**.
+Dự án nghiên cứu và đánh giá thực nghiệm các phương pháp Học sâu (Deep Learning) và Học đồ thị (Graph Neural Networks) trong bài toán **Phát hiện Trùng lặp Mã nguồn Ngữ nghĩa (Semantic Code Clone Detection)** trên hai ngôn ngữ lập trình **Java** và **C/C++**.
 
 ---
 
 ## 1. Giới thiệu Đề tài
 
-Trùng lặp mã nguồn (Code Clone) là hiện tượng các đoạn mã có hành vi tương đồng hoặc giống hệt nhau. Trong đó, **Type-4 (Semantic Clones)** là nhóm trùng lặp phức tạp nhất khi hai đoạn mã có cú pháp, tên biến và cấu trúc giải thuật hoàn toàn khác biệt nhưng cùng thực thi chung một chức năng/mục tiêu.
+Trùng lặp mã nguồn (Code Clone) là hiện tượng các đoạn mã có hành vi tương đồng hoặc giống hệt nhau. Trong đó, **Type-4 (Semantic Clones)** là nhóm trùng lặp phức tạp nhất khi hai đoạn mã có cú pháp, tên biến và giải thuật hoàn toàn khác biệt nhưng cùng thực thi chung một mục tiêu chức năng.
 
-Đề tài tập trung triển khai, đối sánh và kiểm thử 4 họ phương pháp đại diện cho các cấp độ biểu diễn mã nguồn:
+Đề tài tập trung triển khai, đối sánh và kiểm thử 4 phương pháp đại diện cho các cấp độ biểu diễn mã nguồn:
 
 | Phương pháp | Cấp độ biểu diễn mã nguồn | Kiến trúc mô hình | Đặc tả |
 | :--- | :--- | :--- | :--- |
@@ -30,7 +30,7 @@ Nghiên cứu sử dụng 2 bộ dữ liệu phục vụ huấn luyện và ki�
    - Tập kiểm thử độc lập (Test): **5.000** cặp (2.500 clone : 2.500 non-clone).
 
 2. **CODER HUSC (C/C++ - Tập kiểm thử thực tế):**
-   - Bộ dữ liệu gồm **400 cặp bài nộp sinh viên** thu thập từ hệ thống chấm tự động CODER HUSC trên các bài toán thuật toán đa dạng.
+   - Bộ dữ liệu gồm **400 cặp bài nộp sinh viên** thu thập từ hệ thống chấm tự động CODER HUSC trên các bài toán thuật toán.
    - Phân tầng nhãn chi tiết theo chuẩn BigCloneBench:
      - **Trùng lặp cú pháp (Type-1 / Type-2 / ST3):** 50 cặp
      - **Trùng lặp trung bình (MT3):** 30 cặp
@@ -58,7 +58,7 @@ Nghiên cứu sử dụng 2 bộ dữ liệu phục vụ huấn luyện và ki�
 
 ### 3.2. Đánh giá Zero-shot Cross-Language trên CODER HUSC (C/C++ - 400 cặp)
 
-Mô hình được huấn luyện trên mã nguồn Java và kiểm thử trực tiếp trên mã nguồn C/C++ mà không qua fine-tuning lại:
+Mô hình được huấn luyện trên mã nguồn Java và kiểm thử trực tiếp trên mã nguồn C/C++:
 
 | Mô hình / Phiên bản | Ngưỡng $\tau$ | Type-1/2/ST3 (50) | MT3 (30) | Type-4 (120) | Non-clone (200) | F1-Score | Accuracy |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -71,46 +71,50 @@ Mô hình được huấn luyện trên mã nguồn Java và kiểm thử trực
 
 ---
 
-## 4. Cấu trúc Thư mục Dự án
+## 4. Cấu trúc Dự án
 
 ```text
 SemanticCodeCloneDetection/
-├── configs/                     # Cấu hình huấn luyện và tham số thực nghiệm (YAML)
-├── data/                        # Dữ liệu nguồn và các tập benchmark
-│   ├── custom_suite/            # Bộ dữ liệu C/C++ kiểm thử theo nhóm bài
-│   ├── custom_suite_java/       # Bộ dữ liệu Java kiểm thử phân tầng
+├── configs/                     # Cấu hình huấn luyện mô hình (YAML)
+├── data/                        # Dữ liệu kiểm thử
+│   ├── custom_suite/            # 20 bài toán C/C++ kiểm thử mẫu
+│   ├── custom_suite_java/       # Tập dữ liệu kiểm thử phân tầng Java
 │   └── processed/
 │       └── coder_benchmark/     # Bộ benchmark 400 cặp C/C++ CODER HUSC
-├── reports/                     # Báo cáo học thuật (LaTeX source và file PDF xuất bản)
-│   ├── [31 - 10] - Báo cáo.tex  # Báo cáo tiến độ chuẩn A4
-│   └── [31 - 10] - Báo cáo.pdf  # Bản PDF hoàn chỉnh
-├── results/                     # Kết quả thực nghiệm đã ghi nhận (JSON / Metrics)
+├── notebooks/                   # Jupyter notebooks huấn luyện trên Kaggle GPU
+│   └── README.md                # Mô tả chi tiết từng notebook
+├── reports/                     # Báo cáo học thuật (LaTeX source và file PDF)
+│   ├── [31 - 10] - Báo cáo.tex  # Mã nguồn LaTeX
+│   └── [31 - 10] - Báo cáo.pdf  # Bản PDF xuất bản
+├── results/                     # Kết quả đánh giá đã ghi nhận (JSON)
 │   ├── bcb_test_5k_results.json # Kết quả trên 5.000 cặp BigCloneBench Test
-│   └── coder_benchmark_results.json # Kết quả trên 400 cặp C/C++ CODER HUSC
-├── scripts/                     # Kịch bản thực thi pipeline, thu thập và đánh giá
-│   ├── README.md                # Tài liệu hướng dẫn chi tiết các scripts
+│   └── coder_benchmark_results.json # Kết quả trên 400 cặp CODER HUSC
+├── scripts/                     # Kịch bản dòng lệnh thực thi pipeline
+│   ├── README.md                # Hướng dẫn chi tiết từng script
 │   ├── evaluate_bcb_5000_test.py    # Đánh giá 10 biến thể trên 5.000 cặp Java
 │   ├── evaluate_coder_benchmark.py  # Đánh giá trên 400 cặp C/C++ thực tế
-│   ├── crawl_coder_husc.py          # Thu thập dữ liệu từ hệ thống CODER HUSC
-│   └── prepare_coder_benchmark.py   # Xây dựng bộ benchmark phân tầng C/C++
+│   ├── crawl_coder_husc.py          # Thu thập dữ liệu bài nộp CODER HUSC
+│   └── prepare_coder_benchmark.py   # Xây dựng bộ benchmark C/C++
 ├── src/                         # Mã nguồn cốt lõi (Core Modules)
-│   ├── astnn/                   # Cây cú pháp RvNN + Bi-GRU
-│   ├── cpg/                     # Code Property Graph (Joern + NetworkX)
-│   ├── gnn/                     # Mô hình GAT (Graph Attention Networks)
-│   ├── transformers/            # Wrapper cho CodeBERT & GraphCodeBERT
-│   └── utils/                   # Các hàm tiện ích, trích xuất đặc trưng và metric
-├── tests/                       # Hệ thống Unit Test kiểm thử logic
-├── requirements.txt             # Danh sách thư viện phụ thuộc Python
+│   ├── README.md                # Sơ đồ các module trong src/
+│   ├── common/                  # Quản lý cấu hình và seed ngẫu nhiên
+│   ├── core/                    # Giao diện cơ bản (interfaces)
+│   ├── data/                    # Loader BigCloneBench và trình sinh cặp
+│   ├── experiments/             # Trình điều phối huấn luyện (bcb_runner.py)
+│   ├── models/                  # Định nghĩa 4 kiến trúc (M1, M2, M3, M4)
+│   └── representations/         # Trích xuất biểu diễn AST và CPG
+├── tests/                       # Unit tests kiểm thử tính đúng đắn
+├── requirements.txt             # Danh sách thư viện phụ thuộc
 └── README.md                    # Tài liệu tổng quan đề tài
 ```
 
 ---
 
-## 5. Hướng dẫn Cài đặt & Chạy Thực nghiệm
+## 5. Hướng dẫn Chạy Thực nghiệm
 
 ### 5.1. Khởi tạo Môi trường
 
-Khuyến nghị sử dụng Python 3.10 trở lên:
+Khuyến nghị sử dụng Python 3.10+:
 
 ```bash
 # Tạo môi trường ảo
@@ -119,11 +123,11 @@ python -m venv .venv
 # Kích hoạt môi trường (Windows PowerShell)
 .venv\Scripts\activate
 
-# Cài đặt các thư viện phụ thuộc
+# Cài đặt thư viện
 pip install -r requirements.txt
 ```
 
-### 5.2. Chạy Tái hiện Kết quả Đánh giá
+### 5.2. Chạy Tái hiện Đánh giá
 
 1. **Đánh giá trên tập kiểm thử BigCloneBench (Java - 5.000 cặp):**
    ```bash
@@ -135,17 +139,4 @@ pip install -r requirements.txt
    ```bash
    python scripts/evaluate_coder_benchmark.py
    ```
-   Kết quả chi tiết phân tầng xuất ra tại `results/coder_benchmark_results.json`.
-
-3. **Chạy kiểm thử hệ thống (Unit tests):**
-   ```bash
-   pytest tests/ -q
-   ```
-
----
-
-## 6. Định hướng Nghiên cứu Tiếp theo
-
-1. **Cân bằng ngữ cảnh Không trùng lặp (Non-clone Discrimination):** Tinh chỉnh ngưỡng quyết định và ứng dụng kỹ thuật Contrastive Learning để hạn chế tỷ lệ báo động giả (False Positive) trên các mẫu khác bài nhưng cùng chủ đề.
-2. **Khai thác đồ thị mã nguồn linh hoạt (Lightweight Program Graph):** Tối ưu hóa kích thước đồ thị CPG/AST bằng cách lọc các nút phụ trợ, tập trung vào luồng điều khiển chính và định nghĩa biến quan trọng.
-3. **Mô hình lai Đa phương thức (Hybrid Multi-modal Fusion):** Kết hợp khả năng hiểu ngữ cảnh phong phú của Transformer (GraphCodeBERT) với tính bất biến cấu trúc của AST/CPG để nâng cao khả năng chuyển dịch ngôn ngữ (Cross-language generalizability).
+   Kết quả phân tầng chi tiết xuất ra tại `results/coder_benchmark_results.json`.
