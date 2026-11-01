@@ -4,8 +4,9 @@
 data/*
 !data/custom_suite/
 !data/custom_suite_java/
+!data/processed/coder_benchmark/
 
-# Kết quả chạy (giữ reports/, bỏ checkpoints nặng)
+# Kết quả chạy (giữ reports/ và bảng metrics json, bỏ checkpoints nặng)
 results/*/checkpoints/
 *.pt
 *.bin
@@ -16,18 +17,20 @@ results/*/checkpoints/
 __pycache__/
 *.pyc
 .env
+tasks/.env
 
 # HuggingFace / torch cache
 .cache/
 .pytest_cache/
+.ruff_cache/
 tmp/
 .agents/
 
-# Cache AST sinh lại được (DEC-021: tách tag theo smoke/train, không commit)
+# Cache AST sinh lại được
 artifacts/
 !artifacts/ast_cache/t4_calibration.json
 
-# Text
+# Build LaTeX
 reports/*.aux
 reports/*.log
 reports/*.out
@@ -38,10 +41,9 @@ reports/figures/*.aux
 reports/figures/*.log
 
 *.zip
-
-workspace
-
-
-hs_*.log
+workspace/
+warm_start/
 kaggle_tmp/
 kaggle_output/
+hs_*.log
+*.log
