@@ -35,12 +35,5 @@ artifacts/
 project_preferences.md
 project_structure.md
 
-# Build LaTeX
-reports/*.aux
-reports/*.log
-reports/*.out
-reports/*.lot
-reports/*.lof
-reports/*.gz
-reports/figures/*.aux
-reports/figures/*.log
+# reports
+reports/
