@@ -1,8 +1,5 @@
-"""Nạp cấu hình experiment YAML (không hard-code siêu tham số trong code)."""
-
 from pathlib import Path
 from typing import Any, Dict
-
 import yaml
 
 

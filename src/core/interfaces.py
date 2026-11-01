@@ -1,5 +1,3 @@
-"""Interface thống nhất cho biểu diễn code và bộ phát hiện clone."""
-
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -8,7 +6,7 @@ from dataclasses import dataclass
 class ClonePair:
     code_a: str
     code_b: str
-    label: int  # 1 = clone, 0 = non-clone
+    label: int
     problem_a: str = ""
     problem_b: str = ""
 
@@ -31,5 +29,4 @@ class CloneDetector(ABC):
 class Experiment(ABC):
     @abstractmethod
     def run(self, config: dict) -> dict:
-        """Chạy experiment từ config dict, trả về metrics + đường dẫn artifact."""
         raise NotImplementedError
