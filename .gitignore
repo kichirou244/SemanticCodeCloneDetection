@@ -1,34 +1,39 @@
-# Dữ liệu thô / đã xử lý (không commit dataset lớn).
-# Ngoại lệ: data/custom_suite là bộ test tự viết (nhỏ, ~10 KB) — commit để code
-# test nằm trong repo; `data/*` (không phải `data/`) + `!` mới re-include được.
+# Dữ liệu
 data/*
 !data/custom_suite/
 !data/custom_suite_java/
 !data/processed/coder_benchmark/
 
-# Kết quả chạy (giữ reports/ và bảng metrics json, bỏ checkpoints nặng)
+# Checkpoint mô hình và binary nặng
 results/*/checkpoints/
 *.pt
 *.bin
 *.onnx
+*.zip
 
-# Môi trường
+# Môi trường & Cache
 .venv/
 __pycache__/
 *.pyc
 .env
-tasks/.env
-
-# HuggingFace / torch cache
+*.log
 .cache/
 .pytest_cache/
 .ruff_cache/
 tmp/
 .agents/
+workspace/
+warm_start/
+kaggle_tmp/
+kaggle_output/
 
-# Cache AST sinh lại được
+# Tài liệu quản trị & Thuyết trình (không push lên code repo)
+docs/
+tasks/
+slides/
 artifacts/
-!artifacts/ast_cache/t4_calibration.json
+project_preferences.md
+project_structure.md
 
 # Build LaTeX
 reports/*.aux
@@ -39,11 +44,3 @@ reports/*.lof
 reports/*.gz
 reports/figures/*.aux
 reports/figures/*.log
-
-*.zip
-workspace/
-warm_start/
-kaggle_tmp/
-kaggle_output/
-hs_*.log
-*.log
