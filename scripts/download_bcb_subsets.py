@@ -25,6 +25,10 @@ def main() -> None:
     parser.add_argument("--full", action="store_true")
     parser.add_argument("--split", type=str, default=None)
     parser.add_argument("--max-samples", type=int, default=None)
+    parser.add_argument("--splits-custom", action="store_true", help="Tai train, validation, test voi so mau tuy chinh")
+    parser.add_argument("--train-samples", type=int, default=30000)
+    parser.add_argument("--val-samples", type=int, default=3000)
+    parser.add_argument("--test-samples", type=int, default=5000)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
@@ -50,6 +54,32 @@ def main() -> None:
             data = loader.load_from_hf(split=s, streaming=False)
             loader.save_parquet(data, out_dir / f"bcb_{s}.parquet")
             logger.info("Da luu %s: %d mau", s, len(data))
+
+    if args.splits_custom:
+        targets = [
+            ("train", args.train_samples),
+            ("validation", args.val_samples),
+            ("test", args.test_samples),
+        ]
+        for sp, target_count in targets:
+            logger.info("Dang tai va can bang split %s (%d mau)...", sp, target_count)
+            # Load roughly 2x samples via streaming to guarantee enough positive & negative pairs for 50:50 balance
+            fetch_count = target_count * 2
+            raw_samples = loader.load_from_hf(split=sp, max_samples=fetch_count, streaming=True)
+            balanced_sub = loader.sample_subset(raw_samples, n_samples=target_count, seed=args.seed, balance=True)
+            target_parquet = out_dir / f"bcb_{sp}.parquet"
+            loader.save_parquet(balanced_sub, target_parquet)
+            logger.info("Da luu %s: %s (%d mau, 50:50 balance)", sp, target_parquet, len(balanced_sub))
+
+    if args.split:
+        target_count = args.max_samples or 30000
+        logger.info("Dang tai va can bang split %s (%d mau)...", args.split, target_count)
+        fetch_count = target_count * 2
+        raw_samples = loader.load_from_hf(split=args.split, max_samples=fetch_count, streaming=True)
+        balanced_sub = loader.sample_subset(raw_samples, n_samples=target_count, seed=args.seed, balance=True)
+        target_parquet = out_dir / f"bcb_{args.split}.parquet"
+        loader.save_parquet(balanced_sub, target_parquet)
+        logger.info("Da luu %s: %s (%d mau, 50:50 balance)", args.split, target_parquet, len(balanced_sub))
 
 
 if __name__ == "__main__":

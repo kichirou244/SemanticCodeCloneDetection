@@ -1,0 +1,195 @@
+{
+  "test": {
+    "total_pairs": 415416,
+    "positives_clone": 56820,
+    "negatives_nonclone": 358596,
+    "negatives_same_func_name": 731,
+    "negatives_diff_func_name": 357865,
+    "pct_same_name": 0.2039,
+    "pct_diff_name": 99.7961,
+    "time_seconds": 71.51,
+    "sample_same_name": [
+      {
+        "id": 30,
+        "method1": "parse",
+        "method2": "parse"
+      },
+      {
+        "id": 535,
+        "method1": "main",
+        "method2": "main"
+      },
+      {
+        "id": 563,
+        "method1": "main",
+        "method2": "main"
+      },
+      {
+        "id": 715,
+        "method1": "main",
+        "method2": "main"
+      },
+      {
+        "id": 961,
+        "method1": "loadProperties",
+        "method2": "loadProperties"
+      }
+    ],
+    "sample_diff_name": [
+      {
+        "id": 0,
+        "method1": "malformedGadgetSpecIsCachedAndThrows",
+        "method2": "getInputStream"
+      },
+      {
+        "id": 1,
+        "method1": "getWave",
+        "method2": "sort"
+      },
+      {
+        "id": 2,
+        "method1": "encodePassword",
+        "method2": "create"
+      },
+      {
+        "id": 3,
+        "method1": "openConnection",
+        "method2": "insertSmsInf"
+      },
+      {
+        "id": 4,
+        "method1": "SHA",
+        "method2": "test_validate_geo_getEvents"
+      }
+    ]
+  },
+  "validation": {
+    "total_pairs": 415416,
+    "positives_clone": 53839,
+    "negatives_nonclone": 361577,
+    "negatives_same_func_name": 573,
+    "negatives_diff_func_name": 361004,
+    "pct_same_name": 0.1585,
+    "pct_diff_name": 99.8415,
+    "time_seconds": 63.68,
+    "sample_same_name": [
+      {
+        "id": 2598,
+        "method1": "execute",
+        "method2": "execute"
+      },
+      {
+        "id": 2742,
+        "method1": "main",
+        "method2": "main"
+      },
+      {
+        "id": 2819,
+        "method1": "execute",
+        "method2": "execute"
+      },
+      {
+        "id": 3678,
+        "method1": "parse",
+        "method2": "parse"
+      },
+      {
+        "id": 3868,
+        "method1": "main",
+        "method2": "main"
+      }
+    ],
+    "sample_diff_name": [
+      {
+        "id": 0,
+        "method1": "ViewInitListener",
+        "method2": "run"
+      },
+      {
+        "id": 1,
+        "method1": "urlContentToString",
+        "method2": "sendMessage"
+      },
+      {
+        "id": 2,
+        "method1": "main",
+        "method2": "mdDecode"
+      },
+      {
+        "id": 3,
+        "method1": "open",
+        "method2": "getDocumentAsString"
+      },
+      {
+        "id": 4,
+        "method1": "executeAction",
+        "method2": "test"
+      }
+    ]
+  },
+  "train": {
+    "total_pairs": 901028,
+    "positives_clone": 450862,
+    "negatives_nonclone": 450166,
+    "negatives_same_func_name": 831,
+    "negatives_diff_func_name": 449335,
+    "pct_same_name": 0.1846,
+    "pct_diff_name": 99.8154,
+    "time_seconds": 137.83,
+    "sample_same_name": [
+      {
+        "id": 39,
+        "method1": "download",
+        "method2": "download"
+      },
+      {
+        "id": 52,
+        "method1": "run",
+        "method2": "run"
+      },
+      {
+        "id": 546,
+        "method1": "main",
+        "method2": "main"
+      },
+      {
+        "id": 961,
+        "method1": "run",
+        "method2": "run"
+      },
+      {
+        "id": 1212,
+        "method1": "run",
+        "method2": "run"
+      }
+    ],
+    "sample_diff_name": [
+      {
+        "id": 0,
+        "method1": "setNodekeyInJsonResponse",
+        "method2": "transform"
+      },
+      {
+        "id": 3,
+        "method1": "printResponseHeaders",
+        "method2": "getEncodedPassword"
+      },
+      {
+        "id": 4,
+        "method1": "load",
+        "method2": "copyFile"
+      },
+      {
+        "id": 5,
+        "method1": "readProperties",
+        "method2": "tranportRemoteUnitToLocalTempFile"
+      },
+      {
+        "id": 6,
+        "method1": "doRestoreOrganize",
+        "method2": "encodeEmailAsUserId"
+      }
+    ]
+  },
+  "_total_time_seconds": 273.03
+}
