@@ -1,0 +1,138 @@
+{
+  "experiment_id": "exp_bcb_005",
+  "model_id": "M4",
+  "best_epoch": 8,
+  "best_f1": 0.6532,
+  "best_threshold": 0.62,
+  "total_training_time_s": 999.2,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.698,
+      "val_loss": 0.6514,
+      "val_f1": 0.4825,
+      "optimal_threshold": 0.52,
+      "metrics": {
+        "threshold": 0.52,
+        "precision": 0.3826,
+        "recall": 0.6532,
+        "f1": 0.4825,
+        "accuracy": 0.6297,
+        "roc_auc": 0.6943
+      },
+      "elapsed_s": 125.4
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.6247,
+      "val_loss": 0.5892,
+      "val_f1": 0.553,
+      "optimal_threshold": 0.44,
+      "metrics": {
+        "threshold": 0.44,
+        "precision": 0.4267,
+        "recall": 0.7856,
+        "f1": 0.553,
+        "accuracy": 0.6643,
+        "roc_auc": 0.7775
+      },
+      "elapsed_s": 123.7
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.5851,
+      "val_loss": 0.6778,
+      "val_f1": 0.5748,
+      "optimal_threshold": 0.58,
+      "metrics": {
+        "threshold": 0.58,
+        "precision": 0.4511,
+        "recall": 0.7919,
+        "f1": 0.5748,
+        "accuracy": 0.6903,
+        "roc_auc": 0.8013
+      },
+      "elapsed_s": 124.5
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.5638,
+      "val_loss": 0.5037,
+      "val_f1": 0.6006,
+      "optimal_threshold": 0.54,
+      "metrics": {
+        "threshold": 0.54,
+        "precision": 0.5673,
+        "recall": 0.6381,
+        "f1": 0.6006,
+        "accuracy": 0.7757,
+        "roc_auc": 0.8213
+      },
+      "elapsed_s": 123.3
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.5439,
+      "val_loss": 0.5311,
+      "val_f1": 0.6182,
+      "optimal_threshold": 0.66,
+      "metrics": {
+        "threshold": 0.66,
+        "precision": 0.6088,
+        "recall": 0.628,
+        "f1": 0.6182,
+        "accuracy": 0.795,
+        "roc_auc": 0.834
+      },
+      "elapsed_s": 122.7
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.5339,
+      "val_loss": 0.4586,
+      "val_f1": 0.637,
+      "optimal_threshold": 0.5,
+      "metrics": {
+        "threshold": 0.5,
+        "precision": 0.5819,
+        "recall": 0.7037,
+        "f1": 0.637,
+        "accuracy": 0.788,
+        "roc_auc": 0.8442
+      },
+      "elapsed_s": 124.7
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.5254,
+      "val_loss": 0.45,
+      "val_f1": 0.65,
+      "optimal_threshold": 0.6,
+      "metrics": {
+        "threshold": 0.6,
+        "precision": 0.6986,
+        "recall": 0.6078,
+        "f1": 0.65,
+        "accuracy": 0.827,
+        "roc_auc": 0.8513
+      },
+      "elapsed_s": 126.8
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.5169,
+      "val_loss": 0.4694,
+      "val_f1": 0.6532,
+      "optimal_threshold": 0.62,
+      "metrics": {
+        "threshold": 0.62,
+        "precision": 0.6331,
+        "recall": 0.6747,
+        "f1": 0.6532,
+        "accuracy": 0.8107,
+        "roc_auc": 0.8547
+      },
+      "elapsed_s": 124.8
+    }
+  ]
+}

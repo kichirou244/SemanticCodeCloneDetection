@@ -326,7 +326,19 @@ def train_model(
     val_loader = DataLoader(BCBPairDataset(val_pairs), batch_size=batch_size, shuffle=False, collate_fn=collate)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-    criterion = nn.BCEWithLogitsLoss()
+    
+    # Cosine Annealing Learning Rate Scheduler: giảm dần từ lr -> eta_min theo từng epoch
+    eta_min = float(tr_cfg.get("min_lr", 1e-5))
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=eta_min)
+    logger.info("Khởi tạo CosineAnnealingLR (T_max=%d, lr=%.6f -> eta_min=%.6f)", epochs, lr, eta_min)
+    
+    # Loss function với tùy chọn Label Smoothing (giảm sốc gradient)
+    label_smoothing = float(tr_cfg.get("label_smoothing", 0.0))
+    if label_smoothing > 0.0:
+        logger.info("Kích hoạt Label Smoothing cho BCE: %.3f", label_smoothing)
+        criterion = nn.BCEWithLogitsLoss()
+    else:
+        criterion = nn.BCEWithLogitsLoss()
 
     # Kích hoạt FP16 Mixed Precision trên GPU (tăng tốc 5-8x trên Tensor Cores của Tesla T4)
     use_amp = bool(tr_cfg.get("mixed_precision", True)) and (device.type == "cuda")
@@ -356,7 +368,11 @@ def train_model(
         for b_idx, batch in enumerate(train_loader):
             with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=use_amp):
                 logits, labels = forward_batch(model, batch, model_id)
-                loss = criterion(logits, labels) / grad_accum
+                if label_smoothing > 0.0:
+                    smooth_labels = labels * (1.0 - label_smoothing) + 0.5 * label_smoothing
+                    loss = criterion(logits, smooth_labels) / grad_accum
+                else:
+                    loss = criterion(logits, labels) / grad_accum
 
             if use_amp:
                 scaler.scale(loss).backward()
@@ -364,13 +380,14 @@ def train_model(
                 loss.backward()
 
             if (b_idx + 1) % grad_accum == 0 or (b_idx + 1) == len(train_loader):
+                max_norm = float(tr_cfg.get("max_grad_norm", 5.0))
                 if use_amp:
                     scaler.unscale_(optimizer)
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=max_norm)
                     scaler.step(optimizer)
                     scaler.update()
                 else:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=max_norm)
                     optimizer.step()
                 optimizer.zero_grad()
 
@@ -429,8 +446,15 @@ def train_model(
             opt_t,
         )
 
+        # Cập nhật Learning Rate Scheduler sau mỗi epoch
+        current_lr = optimizer.param_groups[0]["lr"]
+        scheduler.step()
+        next_lr = optimizer.param_groups[0]["lr"]
+        logger.info("Learning Rate Epoch %d: %.6f -> Next Epoch LR: %.6f", epoch, current_lr, next_lr)
+
         ep_record = {
             "epoch": epoch,
+            "lr": round(current_lr, 6),
             "train_loss": round(train_loss, 4),
             "val_loss": round(val_loss, 4),
             "val_f1": round(opt_f1, 4),

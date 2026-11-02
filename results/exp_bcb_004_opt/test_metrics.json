@@ -1,0 +1,8 @@
+{
+  "threshold": 0.58,
+  "precision": 0.5196,
+  "recall": 0.5288,
+  "f1": 0.5241,
+  "accuracy": 0.7396,
+  "roc_auc": 0.741
+}
