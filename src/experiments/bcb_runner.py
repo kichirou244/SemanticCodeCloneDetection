@@ -346,15 +346,49 @@ def train_model(
     logger.info("Chế độ Mixed Precision (AMP FP16): %s (Device: %s)", use_amp, device)
 
     best_f1 = -1.0
+    best_val_loss = float("inf")
     best_threshold = 0.5
     best_epoch = -1
-    patience = int(cfg.get("early_stopping", {}).get("patience", 2))
+
+    es_cfg = cfg.get("early_stopping", {})
+    es_enabled = bool(es_cfg.get("enabled", True))
+    es_monitor = str(es_cfg.get("monitor", "val_loss")).lower()
+    es_mode = str(es_cfg.get("mode", "min" if "loss" in es_monitor else "max")).lower()
+    es_min_delta = float(es_cfg.get("min_delta", 0.0005))
+    patience = int(es_cfg.get("patience", 10))
     patience_counter = 0
 
     history = []
+    start_epoch = 1
 
-    logger.info("Bắt đầu huấn luyện %d epochs...", epochs)
-    for epoch in range(1, epochs + 1):
+    if resume and (out_dir / "last_checkpoint.pt").exists():
+        ckpt_path = out_dir / "last_checkpoint.pt"
+        logger.info("Chế độ RESUME: Đang khôi phục trạng thái từ %s...", ckpt_path)
+        ckpt = torch.load(ckpt_path, map_location=device)
+        model.load_state_dict(ckpt["model_state"])
+        if "optimizer_state" in ckpt:
+            try:
+                optimizer.load_state_dict(ckpt["optimizer_state"])
+            except Exception as e:
+                logger.warning("Không thể khôi phục optimizer state: %s", e)
+        start_epoch = int(ckpt.get("epoch", 0)) + 1
+        best_f1 = float(ckpt.get("best_f1", -1.0))
+        best_val_loss = float(ckpt.get("best_val_loss", float("inf")))
+        best_threshold = float(ckpt.get("best_threshold", 0.5))
+        best_epoch = int(ckpt.get("best_epoch", -1))
+        if (out_dir / "training_summary.json").exists():
+            try:
+                old_summary = json.loads((out_dir / "training_summary.json").read_text(encoding="utf-8"))
+                history = old_summary.get("history", [])
+            except Exception:
+                pass
+        logger.info("Tiếp tục huấn luyện từ epoch %d/%d (Best F1 trước đó: %.4f | Val Loss: %.4f)",
+                    start_epoch, epochs, best_f1, best_val_loss)
+
+    logger.info("Cấu hình Early Stopping: enabled=%s, monitor=%s, mode=%s, min_delta=%.5f, patience=%d",
+                es_enabled, es_monitor, es_mode, es_min_delta, patience)
+    logger.info("Bắt đầu huấn luyện từ epoch %d đến %d...", start_epoch, epochs)
+    for epoch in range(start_epoch, epochs + 1):
         if (time.perf_counter() - t_start) > time_budget_s:
             logger.warning("Đã chạm giới hạn thời gian (time budget %ds). Dừng train an toàn.", time_budget_s)
             break
@@ -470,32 +504,54 @@ def train_model(
             "model_state": model.state_dict(),
             "optimizer_state": optimizer.state_dict(),
             "best_f1": best_f1,
+            "best_val_loss": best_val_loss,
             "best_threshold": best_threshold,
             "cfg": cfg,
         }
         torch.save(last_ckpt, out_dir / "last_checkpoint.pt")
 
+        # Đánh giá tiêu chí cải thiện Early Stopping
+        improved = False
+        if "loss" in es_monitor:
+            if es_mode == "min":
+                if (best_val_loss - val_loss) > es_min_delta:
+                    improved = True
+            else:
+                if (val_loss - best_val_loss) > es_min_delta:
+                    improved = True
+        else:
+            if (opt_f1 - best_f1) > es_min_delta:
+                improved = True
+
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+
         if opt_f1 > best_f1:
             best_f1 = opt_f1
             best_threshold = opt_t
             best_epoch = epoch
-            patience_counter = 0
             torch.save(
                 {
                     "epoch": epoch,
                     "model_state": model.state_dict(),
                     "best_f1": best_f1,
+                    "best_val_loss": best_val_loss,
                     "best_threshold": best_threshold,
                     "metrics": metrics,
                     "cfg": cfg,
                 },
                 out_dir / "best_checkpoint.pt",
             )
-            logger.info(">>> Đã lưu BEST CHECKPOINT tại epoch %d với Val F1: %.4f", epoch, best_f1)
+            logger.info(">>> Đã lưu BEST CHECKPOINT tại epoch %d (Val F1: %.4f | Val Loss: %.4f)", epoch, best_f1, val_loss)
+
+        if improved:
+            patience_counter = 0
+            logger.info("Tiêu chí %s cải thiện (patience reset về 0).", es_monitor)
         else:
             patience_counter += 1
-            if patience_counter >= patience:
-                logger.info("Early stopping kích hoạt sau %d epoch không cải thiện.", patience)
+            logger.info("Tiêu chí %s không cải thiện rõ rệt (%d/%d epochs).", es_monitor, patience_counter, patience)
+            if es_enabled and patience_counter >= patience:
+                logger.info("Early stopping kích hoạt sau %d epoch liên tiếp không cải thiện.", patience)
                 break
 
     # Lưu training summary

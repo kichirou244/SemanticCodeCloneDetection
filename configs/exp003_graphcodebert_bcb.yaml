@@ -24,7 +24,7 @@ tokenizer:
 
 training:
   seed: 42
-  epochs: 3
+  epochs: 30
   batch_size: 16
   learning_rate: 0.00002
   weight_decay: 0.01
@@ -35,9 +35,10 @@ training:
 
 early_stopping:
   enabled: true
-  monitor: val_f1
-  patience: 2
-  mode: max
+  monitor: val_loss
+  patience: 10
+  min_delta: 0.0005
+  mode: min
 
 inference:
   pair_batch_size: 64
