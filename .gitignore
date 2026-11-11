@@ -23,6 +23,7 @@ workspace/
 warm_start/
 kaggle_tmp/
 kaggle_output/
+kaggle_deploy/
 
 # Tài liệu quản trị & Thuyết trình (không push lên code repo)
 docs/

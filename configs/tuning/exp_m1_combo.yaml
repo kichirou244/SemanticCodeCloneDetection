@@ -1,0 +1,49 @@
+experiment:
+  id: EXP-M1-COMBO
+  name: codebert_combo_lr1e5_bs64
+  seed: 42
+
+dataset:
+  name: bigclonebench
+  language: java
+  hf_id: google/code_x_glue_cc_clone_detection_big_clone_bench
+  data_dir: data/raw/bigclonebench
+  smoke_file: data/raw/bigclonebench/bcb_smoke.parquet
+  dev_file: data/raw/bigclonebench/bcb_dev.parquet
+
+model:
+  id: M1
+  hf_id: microsoft/codebert-base
+  pair_architecture: concat_hA_hB_absdiff_mlp
+  dropout: 0.2
+
+tokenizer:
+  max_length: 512
+  truncation: true
+  padding: dynamic
+
+training:
+  seed: 42
+  epochs: 10
+  batch_size: 16
+  learning_rate: 0.00001
+  weight_decay: 0.05
+  label_smoothing: 0.05
+  warmup_ratio: 0.1
+  gradient_accumulation_steps: 4
+  max_grad_norm: 1.0
+  mixed_precision: true
+
+early_stopping:
+  enabled: true
+  monitor: val_loss
+  patience: 4
+  min_delta: 0.0005
+  mode: min
+
+inference:
+  pair_batch_size: 64
+
+threshold:
+  method: validation_f1
+  grid_step: 0.01

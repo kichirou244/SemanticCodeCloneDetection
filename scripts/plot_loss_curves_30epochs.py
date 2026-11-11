@@ -12,7 +12,7 @@ plt.rcParams["font.sans-serif"] = "DejaVu Sans"
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def plot_curves(m1_path: Path, m2_path: Path, out_path: Path):
+def plot_curves(m1_path: Path, m2_path: Path, out_path: Path, tag: str = ""):
     h_m1 = []
     h_m2 = []
     
@@ -39,18 +39,19 @@ def plot_curves(m1_path: Path, m2_path: Path, out_path: Path):
     c_f1 = "#2ca02c"     # Green
     c_acc = "#9467bd"    # Purple
 
+    suffix = f" ({tag})" if tag else ""
+
     # 1. Subplot (a): M1 Train & Val Loss
     ax = axes[0, 0]
     if h_m1:
         eps1 = [h["epoch"] for h in h_m1]
         t_loss1 = [h["train_loss"] for h in h_m1]
         v_loss1 = [h["val_loss"] for h in h_m1]
-        ax.plot(eps1, t_loss1, "o--", color=c_train, label="M1 Train Loss", alpha=0.85, linewidth=1.8)
-        ax.plot(eps1, v_loss1, "s-", color=c_val, label="M1 Val Loss", linewidth=2.2)
-        # Đánh dấu min val loss
+        ax.plot(eps1, t_loss1, "o--", color=c_train, label=f"M1 Train Loss", alpha=0.85, linewidth=1.8)
+        ax.plot(eps1, v_loss1, "s-", color=c_val, label=f"M1 Val Loss", linewidth=2.2)
         min_idx = v_loss1.index(min(v_loss1))
-        ax.scatter([eps1[min_idx]], [v_loss1[min_idx]], color="gold", edgecolor="black", s=130, zorder=5, label=f"Min Val Loss ({v_loss1[min_idx]:.4f})")
-    ax.set_title("(a) M1 - CodeBERT (512 tokens): Train vs Val Loss", fontsize=11, fontweight="bold")
+        ax.scatter([eps1[min_idx]], [v_loss1[min_idx]], color="gold", edgecolor="black", s=130, zorder=5, label=f"Min Val Loss ({v_loss1[min_idx]:.4f} - Ep {eps1[min_idx]})")
+    ax.set_title(f"(a) M1 - CodeBERT 512{suffix}: Train vs Val Loss", fontsize=11, fontweight="bold")
     ax.set_xlabel("Epoch", fontsize=10)
     ax.set_ylabel("Binary Cross-Entropy Loss", fontsize=10)
     ax.grid(True, linestyle=":", alpha=0.6)
@@ -64,7 +65,9 @@ def plot_curves(m1_path: Path, m2_path: Path, out_path: Path):
         acc_1 = [h.get("metrics", {}).get("accuracy", 0.0) * 100 for h in h_m1]
         ax.plot(eps1, f1_1, "^-", color=c_f1, label="Val F1-Score (%)", linewidth=2)
         ax.plot(eps1, acc_1, "d-", color=c_acc, label="Val Accuracy (%)", linewidth=2)
-    ax.set_title("(b) M1 - CodeBERT (512 tokens): Val F1 & Accuracy", fontsize=11, fontweight="bold")
+        best_f1_idx = f1_1.index(max(f1_1))
+        ax.scatter([eps1[best_f1_idx]], [f1_1[best_f1_idx]], color="crimson", edgecolor="black", s=110, zorder=5, label=f"Max Val F1 ({f1_1[best_f1_idx]:.2f}%)")
+    ax.set_title(f"(b) M1 - CodeBERT 512{suffix}: Val F1 & Accuracy", fontsize=11, fontweight="bold")
     ax.set_xlabel("Epoch", fontsize=10)
     ax.set_ylabel("Score (%)", fontsize=10)
     ax.grid(True, linestyle=":", alpha=0.6)
@@ -76,11 +79,11 @@ def plot_curves(m1_path: Path, m2_path: Path, out_path: Path):
         eps2 = [h["epoch"] for h in h_m2]
         t_loss2 = [h["train_loss"] for h in h_m2]
         v_loss2 = [h["val_loss"] for h in h_m2]
-        ax.plot(eps2, t_loss2, "o--", color=c_train, label="M2 Train Loss", alpha=0.85, linewidth=1.8)
-        ax.plot(eps2, v_loss2, "s-", color=c_val, label="M2 Val Loss", linewidth=2.2)
+        ax.plot(eps2, t_loss2, "o--", color=c_train, label=f"M2 Train Loss", alpha=0.85, linewidth=1.8)
+        ax.plot(eps2, v_loss2, "s-", color=c_val, label=f"M2 Val Loss", linewidth=2.2)
         min_idx2 = v_loss2.index(min(v_loss2))
-        ax.scatter([eps2[min_idx2]], [v_loss2[min_idx2]], color="gold", edgecolor="black", s=130, zorder=5, label=f"Min Val Loss ({v_loss2[min_idx2]:.4f})")
-    ax.set_title("(c) M2 - GraphCodeBERT (512 tokens): Train vs Val Loss", fontsize=11, fontweight="bold")
+        ax.scatter([eps2[min_idx2]], [v_loss2[min_idx2]], color="gold", edgecolor="black", s=130, zorder=5, label=f"Min Val Loss ({v_loss2[min_idx2]:.4f} - Ep {eps2[min_idx2]})")
+    ax.set_title(f"(c) M2 - GraphCodeBERT 512{suffix}: Train vs Val Loss", fontsize=11, fontweight="bold")
     ax.set_xlabel("Epoch", fontsize=10)
     ax.set_ylabel("Binary Cross-Entropy Loss", fontsize=10)
     ax.grid(True, linestyle=":", alpha=0.6)
@@ -94,7 +97,9 @@ def plot_curves(m1_path: Path, m2_path: Path, out_path: Path):
         acc_2 = [h.get("metrics", {}).get("accuracy", 0.0) * 100 for h in h_m2]
         ax.plot(eps2, f1_2, "^-", color=c_f1, label="Val F1-Score (%)", linewidth=2)
         ax.plot(eps2, acc_2, "d-", color=c_acc, label="Val Accuracy (%)", linewidth=2)
-    ax.set_title("(d) M2 - GraphCodeBERT (512 tokens): Val F1 & Accuracy", fontsize=11, fontweight="bold")
+        best_f1_idx2 = f1_2.index(max(f1_2))
+        ax.scatter([eps2[best_f1_idx2]], [f1_2[best_f1_idx2]], color="crimson", edgecolor="black", s=110, zorder=5, label=f"Max Val F1 ({f1_2[best_f1_idx2]:.2f}%)")
+    ax.set_title(f"(d) M2 - GraphCodeBERT 512{suffix}: Val F1 & Accuracy", fontsize=11, fontweight="bold")
     ax.set_xlabel("Epoch", fontsize=10)
     ax.set_ylabel("Score (%)", fontsize=10)
     ax.grid(True, linestyle=":", alpha=0.6)
@@ -112,9 +117,10 @@ def main():
     parser.add_argument("--m1-summary", type=Path, default=Path("results/exp_bcb_002_512/training_summary.json"))
     parser.add_argument("--m2-summary", type=Path, default=Path("results/exp_bcb_003_512/training_summary.json"))
     parser.add_argument("--out", type=Path, default=Path("reports/figures/loss_curves_30epochs_m1_m2.png"))
+    parser.add_argument("--tag", type=str, default="")
     args = parser.parse_args()
 
-    plot_curves(args.m1_summary, args.m2_summary, args.out)
+    plot_curves(args.m1_summary, args.m2_summary, args.out, tag=args.tag)
 
 
 if __name__ == "__main__":

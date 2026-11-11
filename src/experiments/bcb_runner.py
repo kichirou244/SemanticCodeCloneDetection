@@ -126,6 +126,8 @@ def load_pairs_data(cfg: dict[str, Any], split: str = "train", max_samples: int 
                 return loader.load_parquet(target, max_samples=max_samples)
 
     if split == "test":
+        if Path("results/bcb_5k_test_pairs.jsonl").exists():
+            return loader.load_jsonl(Path("results/bcb_5k_test_pairs.jsonl"), max_samples=max_samples)
         for target in [data_dir / "bcb_test.parquet", data_dir / "bcb_smoke.parquet"]:
             if target.exists():
                 return loader.load_parquet(target, max_samples=max_samples)
@@ -138,13 +140,17 @@ def load_pairs_data(cfg: dict[str, Any], split: str = "train", max_samples: int 
     return loader.sample_subset(raw_samples, n_samples=fallback_count, balance=True)
 
 
-def compute_metrics(y_true: np.ndarray, y_prob: np.ndarray, threshold: float = 0.5) -> dict[str, float]:
+def compute_metrics(y_true: np.ndarray, y_prob: np.ndarray, threshold: float = 0.5) -> dict[str, Any]:
     """Tính các chỉ số đánh giá phân loại nhị phân tại ngưỡng threshold."""
     y_pred = (y_prob >= threshold).astype(int)
     p = float(precision_score(y_true, y_pred, zero_division=0))
     r = float(recall_score(y_true, y_pred, zero_division=0))
     f1 = float(f1_score(y_true, y_pred, zero_division=0))
     acc = float(accuracy_score(y_true, y_pred))
+    tp = int(np.sum((y_true == 1) & (y_pred == 1)))
+    fp = int(np.sum((y_true == 0) & (y_pred == 1)))
+    tn = int(np.sum((y_true == 0) & (y_pred == 0)))
+    fn = int(np.sum((y_true == 1) & (y_pred == 0)))
     try:
         auc = float(roc_auc_score(y_true, y_prob))
     except Exception:
@@ -152,6 +158,10 @@ def compute_metrics(y_true: np.ndarray, y_prob: np.ndarray, threshold: float = 0
 
     return {
         "threshold": round(threshold, 4),
+        "tp": tp,
+        "tn": tn,
+        "fp": fp,
+        "fn": fn,
         "precision": round(p, 4),
         "recall": round(r, 4),
         "f1": round(f1, 4),
@@ -456,7 +466,11 @@ def train_model(
             for batch in val_loader:
                 with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=use_amp):
                     logits, labels = forward_batch(model, batch, model_id)
-                    v_loss = criterion(logits, labels)
+                    if label_smoothing > 0.0:
+                        smooth_labels = labels * (1.0 - label_smoothing) + 0.5 * label_smoothing
+                        v_loss = criterion(logits, smooth_labels)
+                    else:
+                        v_loss = criterion(logits, labels)
                 val_loss += v_loss.item()
                 probs = torch.sigmoid(logits).cpu().numpy().tolist()
                 val_preds.extend(probs)

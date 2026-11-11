@@ -62,14 +62,26 @@ def main() -> None:
             ("test", args.test_samples),
         ]
         for sp, target_count in targets:
-            logger.info("Dang tai va can bang split %s (%d mau)...", sp, target_count)
-            # Load roughly 2x samples via streaming to guarantee enough positive & negative pairs for 50:50 balance
-            fetch_count = target_count * 2
-            raw_samples = loader.load_from_hf(split=sp, max_samples=fetch_count, streaming=True)
-            balanced_sub = loader.sample_subset(raw_samples, n_samples=target_count, seed=args.seed, balance=True)
+            logger.info("Dang tai va can bang split %s (%d mau, muc tieu 50:50)...", sp, target_count)
+            half = target_count // 2
+            remainder = target_count - half
+            positives, negatives = [], []
+            for sample in loader.stream_pairs(split=sp):
+                if sample.label == 1 and len(positives) < half:
+                    positives.append(sample)
+                elif sample.label == 0 and len(negatives) < remainder:
+                    negatives.append(sample)
+                if len(positives) >= half and len(negatives) >= remainder:
+                    break
+            balanced_sub = positives + negatives
+            import random
+            rng = random.Random(args.seed)
+            rng.shuffle(balanced_sub)
             target_parquet = out_dir / f"bcb_{sp}.parquet"
             loader.save_parquet(balanced_sub, target_parquet)
-            logger.info("Da luu %s: %s (%d mau, 50:50 balance)", sp, target_parquet, len(balanced_sub))
+            pos_cnt = sum(1 for p in balanced_sub if p.label == 1)
+            neg_cnt = sum(1 for p in balanced_sub if p.label == 0)
+            logger.info("Da luu %s: %s (Tong: %d mau | Pos: %d, Neg: %d)", sp, target_parquet, len(balanced_sub), pos_cnt, neg_cnt)
 
     if args.split:
         target_count = args.max_samples or 30000

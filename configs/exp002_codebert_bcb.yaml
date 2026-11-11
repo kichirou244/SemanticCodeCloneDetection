@@ -15,7 +15,7 @@ model:
   id: M1
   hf_id: microsoft/codebert-base
   pair_architecture: concat_hA_hB_absdiff_mlp
-  dropout: 0.1
+  dropout: 0.2
 
 tokenizer:
   max_length: 512
@@ -24,10 +24,11 @@ tokenizer:
 
 training:
   seed: 42
-  epochs: 30
+  epochs: 15
   batch_size: 16
   learning_rate: 0.00002
-  weight_decay: 0.01
+  weight_decay: 0.05
+  label_smoothing: 0.05
   warmup_ratio: 0.1
   gradient_accumulation_steps: 2
   max_grad_norm: 1.0
@@ -36,7 +37,7 @@ training:
 early_stopping:
   enabled: true
   monitor: val_loss
-  patience: 10
+  patience: 5
   min_delta: 0.0005
   mode: min
 
