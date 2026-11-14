@@ -1,0 +1,54 @@
+{
+  "M5_Gated_BCE": {
+    "accuracy": 96.3,
+    "precision": 96.5,
+    "recall": 96.08,
+    "f1": 96.29,
+    "roc_auc": 99.04,
+    "threshold": 0.1,
+    "tp": 2402,
+    "fp": 87,
+    "fn": 98,
+    "tn": 2413,
+    "duration_seconds": 36.07
+  },
+  "M5_Gated_Focal_gamma2": {
+    "accuracy": 96.1,
+    "precision": 95.83,
+    "recall": 96.4,
+    "f1": 96.11,
+    "roc_auc": 99.24,
+    "threshold": 0.2,
+    "tp": 2410,
+    "fp": 105,
+    "fn": 90,
+    "tn": 2395,
+    "duration_seconds": 38.2
+  },
+  "M5_Gated_Focal_gamma3": {
+    "accuracy": 96.18,
+    "precision": 96.53,
+    "recall": 95.8,
+    "f1": 96.17,
+    "roc_auc": 98.91,
+    "threshold": 0.34,
+    "tp": 2395,
+    "fp": 86,
+    "fn": 105,
+    "tn": 2414,
+    "duration_seconds": 38.48
+  },
+  "M5_Gated_Asymmetric_Loss": {
+    "accuracy": 96.24,
+    "precision": 95.95,
+    "recall": 96.56,
+    "f1": 96.25,
+    "roc_auc": 98.75,
+    "threshold": 0.4,
+    "tp": 2414,
+    "fp": 102,
+    "fn": 86,
+    "tn": 2398,
+    "duration_seconds": 39.82
+  }
+}

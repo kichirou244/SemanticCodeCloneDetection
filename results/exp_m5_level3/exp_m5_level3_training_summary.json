@@ -1,0 +1,97 @@
+{
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.2238,
+      "val_loss": 0.2415,
+      "val_acc": 94.5,
+      "val_prec": 96.55,
+      "val_rec": 92.3,
+      "val_f1_05": 94.38,
+      "val_f1_best": 94.52,
+      "best_threshold": 0.7,
+      "val_auc": 96.2,
+      "epoch_time_s": 234.3
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.0561,
+      "val_loss": 0.248,
+      "val_acc": 94.8,
+      "val_prec": 96.57,
+      "val_rec": 92.9,
+      "val_f1_05": 94.7,
+      "val_f1_best": 94.75,
+      "best_threshold": 0.62,
+      "val_auc": 97.12,
+      "epoch_time_s": 238.6
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.0398,
+      "val_loss": 0.299,
+      "val_acc": 93.75,
+      "val_prec": 96.0,
+      "val_rec": 91.3,
+      "val_f1_05": 93.59,
+      "val_f1_best": 93.69,
+      "best_threshold": 0.72,
+      "val_auc": 96.88,
+      "epoch_time_s": 237.4
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.0243,
+      "val_loss": 0.2998,
+      "val_acc": 93.95,
+      "val_prec": 95.45,
+      "val_rec": 92.3,
+      "val_f1_05": 93.85,
+      "val_f1_best": 93.94,
+      "best_threshold": 0.8,
+      "val_auc": 96.69,
+      "epoch_time_s": 237.4
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.0211,
+      "val_loss": 0.2906,
+      "val_acc": 94.15,
+      "val_prec": 96.04,
+      "val_rec": 92.1,
+      "val_f1_05": 94.03,
+      "val_f1_best": 94.14,
+      "best_threshold": 0.22,
+      "val_auc": 96.51,
+      "epoch_time_s": 236.8
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.0178,
+      "val_loss": 0.292,
+      "val_acc": 94.15,
+      "val_prec": 96.04,
+      "val_rec": 92.1,
+      "val_f1_05": 94.03,
+      "val_f1_best": 94.14,
+      "best_threshold": 0.28,
+      "val_auc": 96.54,
+      "epoch_time_s": 237.2
+    }
+  ],
+  "config": {
+    "epochs": 6,
+    "batch_size": 16,
+    "grad_accum": 2,
+    "lr_text": 1.5e-05,
+    "lr_graph": 0.0001,
+    "lr_head": 0.0002,
+    "weight_decay": 0.01,
+    "max_length": 384,
+    "device": "cuda",
+    "output_dir": "results/exp_m5_level3",
+    "m2_ckpt": null,
+    "m4_ckpt": null,
+    "seed": 42
+  }
+}

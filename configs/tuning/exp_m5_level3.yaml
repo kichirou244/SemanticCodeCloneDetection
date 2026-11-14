@@ -1,0 +1,55 @@
+experiment:
+  id: EXP-M5-LEVEL3
+  name: bcb_hybrid_level3_deep_graph_transformer
+  seed: 42
+
+dataset:
+  name: bigclonebench
+  language: java
+  hf_id: google/code_x_glue_cc_clone_detection_big_clone_bench
+  train_samples: 8000
+  val_samples: 2000
+  test_samples: 5000
+
+model:
+  id: M5
+  type: hybrid_level3
+  text_hf_id: microsoft/graphcodebert-base
+  text_max_length: 384
+  graph_hidden_dim: 128
+  graph_num_layers: 3
+  graph_heads: 4
+  graph_edge_dim: 32
+  graph_dropout: 0.2
+  fusion_type: bidirectional_gated
+  head_hidden: 512
+  dropout: 0.2
+  freeze_text: false
+  freeze_graph: false
+
+cpg:
+  tool: joern
+  frontend: javasrc2cpg
+  max_nodes: 1500
+
+training:
+  seed: 42
+  epochs: 6
+  batch_size: 16
+  gradient_accumulation_steps: 2
+  learning_rate_text: 0.000015
+  learning_rate_graph: 0.0001
+  learning_rate_head: 0.0002
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  mixed_precision: true
+
+early_stopping:
+  enabled: true
+  monitor: val_f1
+  patience: 3
+  min_delta: 0.0005
+  mode: max
+
+evaluation:
+  metrics: [precision, recall, f1, roc_auc, accuracy]

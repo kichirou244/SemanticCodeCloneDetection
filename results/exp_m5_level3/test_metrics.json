@@ -1,0 +1,38 @@
+{
+  "model_id": "M5",
+  "model_name": "Deep Graph-Transformer (GraphCodeBERT + CPG-GNN End-to-End)",
+  "level": 3,
+  "best_epoch": 2,
+  "best_threshold": 0.6199999999999999,
+  "train_time_seconds": 1591.5,
+  "train_time_hours": 0.44,
+  "params": {
+    "total": 127444865,
+    "trainable": 127444865,
+    "text": 124645632,
+    "graph": 105088,
+    "fusion_head": 2694145
+  },
+  "metrics_default_threshold": {
+    "accuracy": 96.02,
+    "precision": 96.9,
+    "recall": 95.08,
+    "f1": 95.98,
+    "roc_auc": 97.52,
+    "tp": 2377,
+    "fp": 76,
+    "fn": 123,
+    "tn": 2424
+  },
+  "metrics_optimal_threshold": {
+    "accuracy": 96.04,
+    "precision": 96.94,
+    "recall": 95.08,
+    "f1": 96.0,
+    "roc_auc": 97.52,
+    "tp": 2377,
+    "fp": 75,
+    "fn": 123,
+    "tn": 2425
+  }
+}

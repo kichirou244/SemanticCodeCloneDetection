@@ -1,0 +1,78 @@
+{
+  "m5_concat": {
+    "val_opt_th": 0.265,
+    "val_metrics": {
+      "tp": 964,
+      "fp": 22,
+      "tn": 978,
+      "fn": 36,
+      "accuracy": 97.1,
+      "precision": 97.77,
+      "recall": 96.4,
+      "f1": 97.08,
+      "roc_auc": 98.38
+    },
+    "test_fixed": {
+      "tp": 2354,
+      "fp": 49,
+      "tn": 2451,
+      "fn": 146,
+      "accuracy": 96.1,
+      "precision": 97.96,
+      "recall": 94.16,
+      "f1": 96.02,
+      "roc_auc": 97.49,
+      "threshold": 0.265
+    },
+    "test_optimal": {
+      "tp": 2363,
+      "fp": 51,
+      "tn": 2449,
+      "fn": 137,
+      "accuracy": 96.24,
+      "precision": 97.89,
+      "recall": 94.52,
+      "f1": 96.17,
+      "roc_auc": 97.49,
+      "threshold": 0.16
+    }
+  },
+  "m5_gated": {
+    "val_opt_th": 0.52,
+    "val_metrics": {
+      "tp": 965,
+      "fp": 23,
+      "tn": 977,
+      "fn": 35,
+      "accuracy": 97.1,
+      "precision": 97.67,
+      "recall": 96.5,
+      "f1": 97.08,
+      "roc_auc": 98.71
+    },
+    "test_fixed": {
+      "tp": 2349,
+      "fp": 47,
+      "tn": 2453,
+      "fn": 151,
+      "accuracy": 96.04,
+      "precision": 98.04,
+      "recall": 93.96,
+      "f1": 95.96,
+      "roc_auc": 96.63,
+      "threshold": 0.52
+    },
+    "test_optimal": {
+      "tp": 2376,
+      "fp": 69,
+      "tn": 2431,
+      "fn": 124,
+      "accuracy": 96.14,
+      "precision": 97.18,
+      "recall": 95.04,
+      "f1": 96.1,
+      "roc_auc": 96.63,
+      "threshold": 0.055
+    }
+  }
+}
