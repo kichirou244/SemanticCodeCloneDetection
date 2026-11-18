@@ -1,4 +1,4 @@
-"""Kiến trúc Đồ thị Đa Quan hệ (Heterogeneous Relational CPG-GNN) cho M4 và M5-Pro.
+"""Kiến trúc Đồ thị Đa Quan hệ (Heterogeneous Relational CPG-GNN) cho M4.
 
 Đặc tính nâng cấp so với TypedGATLayer (DEC-033):
 1. Phân tách rõ ràng không gian biểu diễn của 6 loại quan hệ đồ thị CPG:

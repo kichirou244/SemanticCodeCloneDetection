@@ -889,5 +889,33 @@
       "accuracy": 0.958,
       "roc_auc": 0.9923
     }
+  },
+  "M1_Cross": {
+    "optimal": {
+      "threshold": 0.66,
+      "tp": 2322,
+      "tn": 2411,
+      "fp": 89,
+      "fn": 178,
+      "accuracy": 0.9466,
+      "precision": 0.9631,
+      "recall": 0.9288,
+      "f1": 0.9456,
+      "roc_auc": 0.9756
+    }
+  },
+  "M2_Cross": {
+    "optimal": {
+      "threshold": 0.26,
+      "tp": 2331,
+      "tn": 2395,
+      "fp": 105,
+      "fn": 169,
+      "accuracy": 0.9452,
+      "precision": 0.9569,
+      "recall": 0.9324,
+      "f1": 0.9445,
+      "roc_auc": 0.9789
+    }
   }
 }

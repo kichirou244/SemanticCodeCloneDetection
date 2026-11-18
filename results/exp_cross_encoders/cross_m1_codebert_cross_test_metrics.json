@@ -1,0 +1,15 @@
+{
+  "threshold": 0.66,
+  "tp": 2322,
+  "tn": 2411,
+  "fp": 89,
+  "fn": 178,
+  "accuracy": 0.9466,
+  "precision": 0.9631,
+  "recall": 0.9288,
+  "f1": 0.9456,
+  "roc_auc": 0.9756,
+  "train_time_hours": 0.93,
+  "model_name": "M1_CodeBERT_Cross",
+  "hf_id": "microsoft/codebert-base"
+}

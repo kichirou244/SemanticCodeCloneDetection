@@ -1,0 +1,15 @@
+{
+  "threshold": 0.26,
+  "tp": 2331,
+  "tn": 2395,
+  "fp": 105,
+  "fn": 169,
+  "accuracy": 0.9452,
+  "precision": 0.9569,
+  "recall": 0.9324,
+  "f1": 0.9445,
+  "roc_auc": 0.9789,
+  "train_time_hours": 0.94,
+  "model_name": "M2_GraphCodeBERT_Cross",
+  "hf_id": "microsoft/graphcodebert-base"
+}

@@ -88,8 +88,13 @@ def build_model(cfg: dict[str, Any], device: torch.device) -> tuple[nn.Module, A
 
     if model_id in ("M1", "M2") or model_cfg.get("hf_id"):
         hf_id = model_cfg.get("hf_id", "microsoft/codebert-base")
+        pair_architecture = model_cfg.get("pair_architecture", "concat_hA_hB_absdiff_mlp")
         tokenizer = load_tokenizer(hf_id)
-        model = TransformerPairClassifier(hf_id=hf_id, dropout=dropout).to(device)
+        model = TransformerPairClassifier(
+            hf_id=hf_id,
+            dropout=dropout,
+            pair_architecture=pair_architecture,
+        ).to(device)
         return model, tokenizer
 
     if model_id == "M3" or model_cfg.get("type") == "astnn":

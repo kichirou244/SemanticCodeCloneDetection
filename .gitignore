@@ -1,12 +1,32 @@
 # Dữ liệu
 data/
+*.parquet
+*.feather
+*.arrow
 
 # Checkpoint mô hình và binary nặng
 results/*/checkpoints/
 *.pt
+*.pth
+*.ckpt
 *.bin
 *.onnx
+*.safetensors
+*.h5
+
+# File nén & archive bundle
+*.tar.gz
+*.tar
+*.tgz
+*.gz
 *.zip
+*.7z
+*.rar
+*.bz2
+*.xz
+
+# Thư mục giải nén bundle/artifact tạm nếu có
+results/**/project/
 
 # Môi trường & Cache
 .venv/

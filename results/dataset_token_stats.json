@@ -1,0 +1,97 @@
+{
+  "Train (Full 30k)": {
+    "name": "Train (Full 30k)",
+    "total_pairs": 30000,
+    "clone_pairs": 15000,
+    "nonclone_pairs": 15000,
+    "unique_functions": 7274,
+    "codebert_tokens": {
+      "min": 79,
+      "max": 36821,
+      "mean": 789.71,
+      "median": 475.0
+    },
+    "lexical_tokens": {
+      "min": 15,
+      "max": 5270,
+      "mean": 121.59,
+      "median": 83.0
+    }
+  },
+  "Validation (3k)": {
+    "name": "Validation (3k)",
+    "total_pairs": 3000,
+    "clone_pairs": 1500,
+    "nonclone_pairs": 1500,
+    "unique_functions": 903,
+    "codebert_tokens": {
+      "min": 91,
+      "max": 13931,
+      "mean": 818.44,
+      "median": 506.0
+    },
+    "lexical_tokens": {
+      "min": 18,
+      "max": 1871,
+      "mean": 125.59,
+      "median": 85.0
+    }
+  },
+  "Test (5k)": {
+    "name": "Test (5k)",
+    "total_pairs": 5000,
+    "clone_pairs": 2500,
+    "nonclone_pairs": 2500,
+    "unique_functions": 912,
+    "codebert_tokens": {
+      "min": 104,
+      "max": 12528,
+      "mean": 717.29,
+      "median": 454.5
+    },
+    "lexical_tokens": {
+      "min": 19,
+      "max": 2771,
+      "mean": 113.4,
+      "median": 78.0
+    }
+  },
+  "Train (500)": {
+    "name": "Train (500)",
+    "total_pairs": 500,
+    "clone_pairs": 250,
+    "nonclone_pairs": 250,
+    "unique_functions": 927,
+    "codebert_tokens": {
+      "min": 83,
+      "max": 17221,
+      "mean": 763.24,
+      "median": 469.0
+    },
+    "lexical_tokens": {
+      "min": 18,
+      "max": 3301,
+      "mean": 119.41,
+      "median": 78.0
+    }
+  },
+  "Test (500)": {
+    "name": "Test (500)",
+    "total_pairs": 500,
+    "clone_pairs": 250,
+    "nonclone_pairs": 250,
+    "unique_functions": 580,
+    "codebert_tokens": {
+      "min": 104,
+      "max": 12528,
+      "mean": 711.91,
+      "median": 441.5
+    },
+    "lexical_tokens": {
+      "min": 19,
+      "max": 2771,
+      "mean": 112.2,
+      "median": 75.5
+    }
+  }
+}
