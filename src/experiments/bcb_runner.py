@@ -39,7 +39,6 @@ from src.data.loaders.bigclonebench import BigCloneBenchLoader
 from src.data.pairs.bcb_dataset import BCBPairDataset, collate_ast_pairs, collate_cpg_pairs, collate_text_pairs
 from src.models.astnn.model import ASTNNPairClassifier
 from src.models.transformer_pair import TransformerPairClassifier, load_tokenizer
-from src.representations.ast.extract import N_STMT
 from src.representations.ast.store import ASTTreeStore
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -98,6 +97,7 @@ def build_model(cfg: dict[str, Any], device: torch.device) -> tuple[nn.Module, A
         return model, tokenizer
 
     if model_id == "M3" or model_cfg.get("type") == "astnn":
+        from src.representations.ast.extract import N_STMT
         hidden = int(model_cfg.get("hidden_size", 200))
         model = ASTNNPairClassifier(hidden=hidden, dropout=dropout, n_stmt=N_STMT).to(device)
         return model, None
@@ -343,7 +343,7 @@ def train_model(
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     
     # Cosine Annealing Learning Rate Scheduler: giảm dần từ lr -> eta_min theo từng epoch
-    eta_min = float(tr_cfg.get("min_lr", 1e-5))
+    eta_min = float(tr_cfg.get("min_lr", 1e-6))
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=eta_min)
     logger.info("Khởi tạo CosineAnnealingLR (T_max=%d, lr=%.6f -> eta_min=%.6f)", epochs, lr, eta_min)
     

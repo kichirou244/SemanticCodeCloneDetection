@@ -7,7 +7,6 @@ import torch
 from torch.utils.data import Dataset
 
 from src.data.loaders.base import ClonePairSample
-from src.representations.ast.extract import compile_tree, extract_tree, collate_trees
 from src.representations.cpg.graph import CPGraph, collate_pyg
 
 
@@ -51,6 +50,7 @@ def collate_ast_pairs(
     ast_store: Any | None = None,
 ) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor], torch.Tensor]:
     from src.models.astnn.model import to_device as astnn_to_device
+    from src.representations.ast.extract import compile_tree, extract_tree, collate_trees
 
     compiled_a, compiled_b, labels = [], [], []
     for p in batch:

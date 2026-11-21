@@ -15,7 +15,7 @@ model:
   id: M2
   hf_id: microsoft/graphcodebert-base
   pair_architecture: diff_mul
-  dropout: 0.3
+  dropout: 0.4
 
 tokenizer:
   max_length: 512
@@ -24,10 +24,11 @@ tokenizer:
 
 training:
   seed: 42
-  epochs: 10
+  epochs: 8
   batch_size: 16
-  learning_rate: 0.00002
-  weight_decay: 0.05
+  learning_rate: 0.00001
+  min_lr: 0.000001
+  weight_decay: 0.10
   label_smoothing: 0.05
   warmup_ratio: 0.1
   gradient_accumulation_steps: 2
@@ -37,7 +38,7 @@ training:
 early_stopping:
   enabled: true
   monitor: val_loss
-  patience: 4
+  patience: 5
   min_delta: 0.0005
   mode: min
 

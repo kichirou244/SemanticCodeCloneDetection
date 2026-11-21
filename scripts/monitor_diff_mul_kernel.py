@@ -42,9 +42,11 @@ OUT_BASE = Path("results")
 def main():
     api = KaggleApi()
     api.authenticate()
+    user = api.get_config_value("username")
+    kernel_slug = f"{user}/bcb-tuning-m1-m2-diffmul-paired"
 
     print("=" * 80)
-    print(f">>> BẮT ĐẦU THEO DÕI KERNEL TRÊN KAGGLE: {KERNEL_SLUG} <<<")
+    print(f">>> BẮT ĐẦU THEO DÕI KERNEL TRÊN KAGGLE: {kernel_slug} <<<")
     print("=" * 80)
 
     last_status = None
@@ -61,7 +63,7 @@ def main():
         time_str = f"[{mm:02d}:{ss:02d}]"
 
         try:
-            status_obj = api.kernels_status(KERNEL_SLUG)
+            status_obj = api.kernels_status(kernel_slug)
             if hasattr(status_obj, "status"):
                 status = status_obj.status.name if hasattr(status_obj.status, "name") else str(status_obj.status)
             elif isinstance(status_obj, dict):
@@ -91,7 +93,7 @@ def main():
             print(">>> KERNEL ĐÃ HOÀN TẤT THÀNH CÔNG! ĐANG TẢI KẾT QUẢ VỀ... <<<")
             print("=" * 80)
 
-            api.kernels_output(KERNEL_SLUG, path=str(download_dir))
+            api.kernels_output(kernel_slug, path=str(download_dir))
             print(f"Đã tải toàn bộ kết quả vào: {download_dir}")
 
             # Phân bổ file kết quả vào results/exp_m1_diffmul và results/exp_m2_diffmul
@@ -130,7 +132,7 @@ def main():
             # Dù có lỗi, vẫn thử tải kết quả về phòng trường hợp M1 đã xong trước đó
             try:
                 print("Đang thử tải kết quả đã lưu trữ phòng ngừa...")
-                api.kernels_output(KERNEL_SLUG, path=str(download_dir))
+                api.kernels_output(kernel_slug, path=str(download_dir))
                 for f in download_dir.glob("exp_m1_diffmul_*"):
                     m1_dir = OUT_BASE / "exp_m1_diffmul"
                     m1_dir.mkdir(parents=True, exist_ok=True)

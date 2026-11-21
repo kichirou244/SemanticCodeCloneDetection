@@ -83,6 +83,10 @@ def main() -> None:
             neg_cnt = sum(1 for p in balanced_sub if p.label == 0)
             logger.info("Da luu %s: %s (Tong: %d mau | Pos: %d, Neg: %d)", sp, target_parquet, len(balanced_sub), pos_cnt, neg_cnt)
 
+        logger.info("Hoan tat tai toan bo cac split custom. Cuong che thoat tien trinh de tranh socket hang...")
+        import os
+        os._exit(0)
+
     if args.split:
         target_count = args.max_samples or 30000
         logger.info("Dang tai va can bang split %s (%d mau)...", args.split, target_count)
@@ -92,6 +96,9 @@ def main() -> None:
         target_parquet = out_dir / f"bcb_{args.split}.parquet"
         loader.save_parquet(balanced_sub, target_parquet)
         logger.info("Da luu %s: %s (%d mau, 50:50 balance)", args.split, target_parquet, len(balanced_sub))
+
+    import os
+    os._exit(0)
 
 
 if __name__ == "__main__":

@@ -120,7 +120,7 @@ def make_single_tuning_notebook(
                 "else:\n",
                 "    raise SystemError('Kaggle kernel chua bat GPU accelerator! Vui long bat GPU T4 x2 hoac P100.')\n",
                 "\n",
-                "sh('pip install -q -U transformers datasets scikit-learn pyarrow')",
+                "sh('pip install -q -U transformers datasets scikit-learn pyarrow \\\"tree-sitter>=0.23.0\\\" \\\"tree-sitter-java>=0.23.5\\\"')",
             ],
         },
         {
@@ -158,12 +158,15 @@ def make_single_tuning_notebook(
                 "if cached_parquet and cached_parquet.exists():\n",
                 "    print('Phat hien du lieu parquet san co tu dataset, sao chep truc tiep...')\n",
                 "    sh(f'cp {ds_root}/*.parquet data/raw/bigclonebench/')\n",
+                "elif (data_raw / 'bcb_train.parquet').exists() and (data_raw / 'bcb_test.parquet').exists():\n",
+                "    print('Cac file parquet da ton tai day du, bo qua download!')\n",
                 "else:\n",
                 "    print('Tai truc tiep cac split BigCloneBench tu Hugging Face...')\n",
                 "    sh('python scripts/download_bcb_subsets.py --splits-custom --train-samples 30000 --val-samples 3000 --test-samples 5000')\n",
                 "\n",
                 "sh('ls -lh data/raw/bigclonebench/*.parquet')\n",
-                "assert (data_raw / 'bcb_train.parquet').exists(), 'bcb_train.parquet phai ton tai truoc khi train!'",
+                "assert (data_raw / 'bcb_train.parquet').exists(), 'bcb_train.parquet phai ton tai truoc khi train!'\n",
+                "assert (data_raw / 'bcb_test.parquet').exists(), 'bcb_test.parquet phai ton tai truoc khi train!'",
             ],
         },
         {
@@ -354,7 +357,7 @@ def make_paired_tuning_notebook(
                 "else:\n",
                 "    raise SystemError('Kaggle kernel chua bat GPU accelerator!')\n",
                 "\n",
-                "sh('pip install -q -U transformers datasets scikit-learn pyarrow')",
+                "sh('pip install -q -U transformers datasets scikit-learn pyarrow \\\"tree-sitter>=0.23.0\\\" \\\"tree-sitter-java>=0.23.5\\\"')",
             ],
         },
         {
@@ -392,12 +395,15 @@ def make_paired_tuning_notebook(
                 "if cached_parquet and cached_parquet.exists():\n",
                 "    print('Phat hien du lieu parquet san co tu dataset, sao chep truc tiep...')\n",
                 "    sh(f'cp {ds_root}/*.parquet data/raw/bigclonebench/')\n",
+                "elif (data_raw / 'bcb_train.parquet').exists() and (data_raw / 'bcb_test.parquet').exists():\n",
+                "    print('Cac file parquet da ton tai day du, bo qua download!')\n",
                 "else:\n",
                 "    print('Tai truc tiep cac split BigCloneBench tu Hugging Face...')\n",
                 "    sh('python scripts/download_bcb_subsets.py --splits-custom --train-samples 30000 --val-samples 3000 --test-samples 5000')\n",
                 "\n",
                 "sh('ls -lh data/raw/bigclonebench/*.parquet')\n",
-                "assert (data_raw / 'bcb_train.parquet').exists(), 'bcb_train.parquet phai ton tai truoc khi train!'",
+                "assert (data_raw / 'bcb_train.parquet').exists(), 'bcb_train.parquet phai ton tai truoc khi train!'\n",
+                "assert (data_raw / 'bcb_test.parquet').exists(), 'bcb_test.parquet phai ton tai truoc khi train!'",
             ],
         },
         {
@@ -557,16 +563,28 @@ def make_paired_tuning_notebook(
     }
 
 
+def get_kaggle_username() -> str:
+    kaggle_json = Path.home() / ".kaggle" / "kaggle.json"
+    if kaggle_json.exists():
+        try:
+            return json.loads(kaggle_json.read_text(encoding="utf-8")).get("username", "onngctrnchu")
+        except Exception:
+            pass
+    return "onngctrnchu"
+
+
 def main():
     payload = build_repo_payload()
+    uname = get_kaggle_username()
     print(f"Mã nguồn đã đóng gói: {len(payload)/1024:.1f} KB base64")
+    print(f"Kaggle username: {uname}")
 
     # 1. Notebook riêng M1 DiffMul
     nb_m1 = make_single_tuning_notebook(
         model_id="M1",
         model_name="CodeBERT",
         exp_id="EXP-M1-DiffMul",
-        exp_name="Forward tương tác [|hA - hB|, hA ⊙ hB] (LR=1e-5, WD=0.05, Dropout=0.2)",
+        exp_name="Forward tương tác [|hA - hB|, hA ⊙ hB] (LR=1e-5, CosineLR, Epochs=8, WD=0.05, Dropout=0.2)",
         config_path="configs/tuning/exp_m1_diff_mul.yaml",
         bundle_name="m1_diff_mul_clean_bundle.tar.gz",
         payload_b64=payload,
@@ -577,7 +595,7 @@ def main():
     m1_nb_path.write_text(json.dumps(nb_m1, indent=1, ensure_ascii=False), encoding="utf-8")
     Path("notebooks/bcb_tuning_m1_diff_mul.ipynb").write_text(json.dumps(nb_m1, indent=1, ensure_ascii=False), encoding="utf-8")
     (m1_dir / "kernel-metadata.json").write_text(json.dumps({
-        "id": "tranthikhanhlinh1709/bcb-tuning-m1-diff-mul",
+        "id": f"{uname}/bcb-tuning-m1-diffmul",
         "title": "BCB Tuning M1 DiffMul",
         "code_file": "bcb_tuning_m1_diff_mul.ipynb",
         "language": "python",
@@ -586,7 +604,7 @@ def main():
         "enable_gpu": "true",
         "enable_tpu": "false",
         "enable_internet": "true",
-        "dataset_sources": ["kichirou/semanticcodeclonedetection-dataset-m4"],
+        "dataset_sources": [],
         "competition_sources": [],
         "kernel_sources": [],
         "model_sources": [],
@@ -598,7 +616,7 @@ def main():
         model_id="M2",
         model_name="GraphCodeBERT",
         exp_id="EXP-M2-DiffMul",
-        exp_name="Forward tương tác [|hA - hB|, hA ⊙ hB] (LR=2e-5, WD=0.05, Dropout=0.3)",
+        exp_name="Forward tương tác [|hA - hB|, hA ⊙ hB] (LR=1e-5, WD=0.10, Dropout=0.4, LabelSmoothing=0.05, Epochs=8)",
         config_path="configs/tuning/exp_m2_diff_mul.yaml",
         bundle_name="m2_diff_mul_clean_bundle.tar.gz",
         payload_b64=payload,
@@ -609,7 +627,7 @@ def main():
     m2_nb_path.write_text(json.dumps(nb_m2, indent=1, ensure_ascii=False), encoding="utf-8")
     Path("notebooks/bcb_tuning_m2_diff_mul.ipynb").write_text(json.dumps(nb_m2, indent=1, ensure_ascii=False), encoding="utf-8")
     (m2_dir / "kernel-metadata.json").write_text(json.dumps({
-        "id": "tranthikhanhlinh1709/bcb-tuning-m2-diff-mul",
+        "id": f"{uname}/bcb-tuning-m2-diffmul",
         "title": "BCB Tuning M2 DiffMul",
         "code_file": "bcb_tuning_m2_diff_mul.ipynb",
         "language": "python",
@@ -618,7 +636,7 @@ def main():
         "enable_gpu": "true",
         "enable_tpu": "false",
         "enable_internet": "true",
-        "dataset_sources": ["kichirou/semanticcodeclonedetection-dataset-m4"],
+        "dataset_sources": [],
         "competition_sources": [],
         "kernel_sources": [],
         "model_sources": [],
@@ -633,7 +651,7 @@ def main():
     paired_nb_path.write_text(json.dumps(nb_paired, indent=1, ensure_ascii=False), encoding="utf-8")
     Path("notebooks/bcb_tuning_m1_m2_diff_mul.ipynb").write_text(json.dumps(nb_paired, indent=1, ensure_ascii=False), encoding="utf-8")
     (paired_dir / "kernel-metadata.json").write_text(json.dumps({
-        "id": "tranthikhanhlinh1709/bcb-tuning-m1-m2-diff-mul",
+        "id": f"{uname}/bcb-tuning-m1-m2-diffmul-paired",
         "title": "BCB Tuning M1 M2 DiffMul Paired",
         "code_file": "bcb_tuning_m1_m2_diff_mul.ipynb",
         "language": "python",
@@ -642,7 +660,7 @@ def main():
         "enable_gpu": "true",
         "enable_tpu": "false",
         "enable_internet": "true",
-        "dataset_sources": ["kichirou/semanticcodeclonedetection-dataset-m4"],
+        "dataset_sources": [],
         "competition_sources": [],
         "kernel_sources": [],
         "model_sources": [],

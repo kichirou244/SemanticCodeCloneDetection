@@ -1,0 +1,19 @@
+{
+  "id": "tranthikhanhlinh1709/bcb-tuning-m1-m2-diffmul-paired",
+  "id_no": 145799013,
+  "title": "BCB Tuning M1 M2 DiffMul Paired",
+  "code_file": "bcb-tuning-m1-m2-diffmul-paired.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [],
+  "dataset_sources": [
+    "kichirou/semanticcodeclonedetection-dataset-m4"
+  ],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": []
+}
