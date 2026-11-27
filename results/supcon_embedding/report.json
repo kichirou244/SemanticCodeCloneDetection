@@ -1,0 +1,19 @@
+{
+  "n_pairs": 5000,
+  "models": {
+    "no_supcon": {
+      "cos_clone_mean": 0.9026,
+      "cos_nonclone_mean": 0.1542,
+      "cos_gap": 0.7484,
+      "auc_cosine_only": 0.9683,
+      "tsne_silhouette": 0.1051
+    },
+    "with_supcon": {
+      "cos_clone_mean": 0.9768,
+      "cos_nonclone_mean": 0.5269,
+      "cos_gap": 0.45,
+      "auc_cosine_only": 0.976,
+      "tsne_silhouette": 0.1124
+    }
+  }
+}

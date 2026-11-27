@@ -343,6 +343,26 @@ def write_markdown(results: list[dict[str, Any]], out_dir: Path) -> Path:
         "Cosine được tính giữa hai vector CLS `hA`, `hB` (trước tầng tương tác DiffMul): "
         "`cos(hA, hB)`. Giá trị càng gần 1 nghĩa là hai hàm càng gần nhau trong không gian biểu diễn.\n"
     )
+    lines.append(
+        "Cột `prob` là xác suất dự đoán cặp là clone, **khác với cosine**. Cách tính:\n\n"
+        "```python\n"
+        "# src/models/transformer_pair.py :: TransformerPairClassifier.forward()\n"
+        "ha = encoder(inputs_a).last_hidden_state[:, 0, :]   # vector CLS của hàm A\n"
+        "hb = encoder(inputs_b).last_hidden_state[:, 0, :]   # vector CLS của hàm B\n"
+        "diff = torch.abs(ha - hb)\n"
+        "prod = ha * hb                                      # Hadamard product\n"
+        "pair = torch.cat([diff, prod], dim=-1)              # 1536 chiều (2 x 768)\n"
+        "logits = head(pair).squeeze(-1)                     # Linear->Tanh->Dropout->Linear\n"
+        "\n"
+        "# src/experiments/bcb_runner.py / scripts/analyze_diffmul_errors.py\n"
+        "prob = torch.sigmoid(logits)                        # giá trị nằm trong [0, 1]\n"
+        "pred = (prob >= threshold).astype(int)              # M1: 0.12 | M2: 0.14\n"
+        "```\n\n"
+        "Lúc huấn luyện dùng `nn.BCEWithLogitsLoss()` nên sigmoid nằm bên trong loss; "
+        "lúc inference mới lấy `sigmoid(logits)` thành cột `prob`. Ngưỡng được chọn từ F1 trên "
+        "tập validation. `prob` là score chưa hiệu chỉnh (not calibrated) — không hiểu là xác suất "
+        "thống kê, chỉ dùng để so ngưỡng. **Cosine không tham gia quyết định phân loại.**\n"
+    )
 
     for res in results:
         m = res["metrics"]

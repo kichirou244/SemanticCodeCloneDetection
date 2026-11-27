@@ -2,6 +2,24 @@
 
 Cosine được tính giữa hai vector CLS `hA`, `hB` (trước tầng tương tác DiffMul): `cos(hA, hB)`. Giá trị càng gần 1 nghĩa là hai hàm càng gần nhau trong không gian biểu diễn.
 
+Cột `prob` là xác suất dự đoán cặp là clone, **khác với cosine**. Cách tính:
+
+```python
+# src/models/transformer_pair.py :: TransformerPairClassifier.forward()
+ha = encoder(inputs_a).last_hidden_state[:, 0, :]   # vector CLS của hàm A
+hb = encoder(inputs_b).last_hidden_state[:, 0, :]   # vector CLS của hàm B
+diff = torch.abs(ha - hb)
+prod = ha * hb                                      # Hadamard product
+pair = torch.cat([diff, prod], dim=-1)              # 1536 chiều (2 x 768)
+logits = head(pair).squeeze(-1)                     # Linear->Tanh->Dropout->Linear
+
+# src/experiments/bcb_runner.py / scripts/analyze_diffmul_errors.py
+prob = torch.sigmoid(logits)                        # giá trị nằm trong [0, 1]
+pred = (prob >= threshold).astype(int)              # M1: 0.12 | M2: 0.14
+```
+
+Lúc huấn luyện dùng `nn.BCEWithLogitsLoss()` nên sigmoid nằm bên trong loss; lúc inference mới lấy `sigmoid(logits)` thành cột `prob`. Ngưỡng được chọn từ F1 trên tập validation. `prob` là score chưa hiệu chỉnh (not calibrated) — không hiểu là xác suất thống kê, chỉ dùng để so ngưỡng. **Cosine không tham gia quyết định phân loại.**
+
 ## M1 CodeBERT DiffMul
 
 - Checkpoint: `D:\Edu\NLP\SemanticCodeCloneDetection\results\exp_m1_diffmul\best_checkpoint.pt`

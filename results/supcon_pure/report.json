@@ -1,0 +1,25 @@
+{
+  "n_pairs": 5000,
+  "models": {
+    "M1 DiffMul (no SupCon)": {
+      "cos_clone_mean": 0.9108,
+      "cos_nonclone_mean": 0.0545,
+      "auc_cosine_only": 0.9515
+    },
+    "M1 DiffMul + SupCon": {
+      "cos_clone_mean": 0.965,
+      "cos_nonclone_mean": 0.4674,
+      "auc_cosine_only": 0.9652
+    },
+    "M2 DiffMul (no SupCon)": {
+      "cos_clone_mean": 0.9026,
+      "cos_nonclone_mean": 0.1542,
+      "auc_cosine_only": 0.9683
+    },
+    "M2 DiffMul + SupCon": {
+      "cos_clone_mean": 0.9703,
+      "cos_nonclone_mean": 0.5504,
+      "auc_cosine_only": 0.9761
+    }
+  }
+}

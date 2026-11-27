@@ -55,18 +55,27 @@ class TransformerPairClassifier(nn.Module):
     def encode_side(self, inputs: dict) -> torch.Tensor:
         return self.encoder(**inputs).last_hidden_state[:, 0, :]
 
-    def forward(self, inputs_a: dict, inputs_b: dict) -> torch.Tensor:
-        ha = self.encode_side(inputs_a)
-        hb = self.encode_side(inputs_b)
+    def pair_representation(self, ha: torch.Tensor, hb: torch.Tensor) -> torch.Tensor:
         diff = torch.abs(ha - hb)
         if self.pair_architecture in ("diff_mul", "absdiff_mul", "diff_prod", "hadamard_diff", "diff_hadamard"):
             # Phiên bản tương tác: [|hA - hB|, hA ⊙ hB]
             prod = ha * hb
-            pair = torch.cat([diff, prod], dim=-1)
-        else:
-            # Phiên bản gốc: [hA, hB, |hA - hB|]
-            pair = torch.cat([ha, hb, diff], dim=-1)
-        return self.head(pair).squeeze(-1)
+            return torch.cat([diff, prod], dim=-1)
+        # Phiên bản gốc: [hA, hB, |hA - hB|]
+        return torch.cat([ha, hb, diff], dim=-1)
+
+    def forward_with_embeddings(
+        self, inputs_a: dict, inputs_b: dict
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Trả về (logits, ha, hb) để huấn luyện SupCon mà không encode lại 2 lần."""
+        ha = self.encode_side(inputs_a)
+        hb = self.encode_side(inputs_b)
+        logits = self.head(self.pair_representation(ha, hb)).squeeze(-1)
+        return logits, ha, hb
+
+    def forward(self, inputs_a: dict, inputs_b: dict) -> torch.Tensor:
+        logits, _, _ = self.forward_with_embeddings(inputs_a, inputs_b)
+        return logits
 
     def param_count(self) -> int:
         return sum(p.numel() for p in self.parameters())

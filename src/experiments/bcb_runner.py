@@ -32,12 +32,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.augmentation.code_augment import make_augmented_dataset
 from src.common.config import load_config
 from src.common.seed import set_global_seed
 from src.data.loaders.base import ClonePairSample
 from src.data.loaders.bigclonebench import BigCloneBenchLoader
 from src.data.pairs.bcb_dataset import BCBPairDataset, collate_ast_pairs, collate_cpg_pairs, collate_text_pairs
 from src.models.astnn.model import ASTNNPairClassifier
+from src.models.losses import focal_bce_with_logits, supcon_loss
 from src.models.transformer_pair import TransformerPairClassifier, load_tokenizer
 from src.representations.ast.store import ASTTreeStore
 
@@ -230,6 +232,16 @@ def forward_batch(model: nn.Module, batch: Any, model_id: str) -> tuple[torch.Te
     raise ValueError(f"Không hỗ trợ forward_batch cho model_id: {model_id}")
 
 
+def forward_batch_with_embeddings(model: nn.Module, batch: Any, model_id: str):
+    """Biến thể forward trả thêm (ha, hb) khi cần SupCon (chỉ M1/M2)."""
+    if model_id in ("M1", "M2") and hasattr(model, "forward_with_embeddings"):
+        inputs_a, inputs_b, labels = batch
+        logits, ha, hb = model.forward_with_embeddings(inputs_a, inputs_b)
+        return logits, labels, ha, hb
+    logits, labels = forward_batch(model, batch, model_id)
+    return logits, labels, None, None
+
+
 def preflight(cfg: dict[str, Any], device: torch.device) -> dict[str, Any]:
     """Kiểm tra môi trường phần cứng, GPU, VRAM và tham số mô hình."""
     model, _ = build_model(cfg, device)
@@ -321,6 +333,24 @@ def train_model(
     model, tokenizer = build_model(cfg, device)
     model_id = str(cfg.get("model", {}).get("id", "M1")).upper()
 
+    # B5: focal loss (giảm áp lực easy negatives). B6: augmentation + SupCon.
+    loss_cfg = tr_cfg.get("loss", {})
+    use_focal = str(loss_cfg.get("type", "bce")).lower() == "focal"
+    focal_gamma = float(loss_cfg.get("gamma", 2.0))
+    focal_alpha = float(loss_cfg.get("alpha", 0.5))
+
+    supcon_cfg = cfg.get("supcon", {})
+    use_supcon = bool(supcon_cfg.get("enabled", False)) and model_id in ("M1", "M2")
+    supcon_weight = float(supcon_cfg.get("weight", 0.1))
+    supcon_temperature = float(supcon_cfg.get("temperature", 0.07))
+
+    aug_cfg = cfg.get("augmentation", {})
+    use_aug = bool(aug_cfg.get("enabled", False)) and model_id in ("M1", "M2")
+    logger.info(
+        "Loss config: focal=%s(gamma=%.2f, alpha=%.2f) | supcon=%s(w=%.3f, T=%.3f) | augmentation=%s",
+        use_focal, focal_gamma, focal_alpha, use_supcon, supcon_weight, supcon_temperature, use_aug,
+    )
+
     logger.info("Đang nạp dữ liệu train & validation...")
     train_pairs = load_pairs_data(cfg, split="train", max_samples=limit_train)
     val_pairs = load_pairs_data(cfg, split="val", max_samples=limit_val)
@@ -337,7 +367,15 @@ def train_model(
     cpg_dir = setup_cpg_export_dir() if model_id == "M4" else None
 
     collate = get_collate_fn(cfg, model_id, tokenizer, device, ast_store=ast_store, cpg_dir=cpg_dir)
-    train_loader = DataLoader(BCBPairDataset(train_pairs), batch_size=batch_size, shuffle=True, collate_fn=collate)
+    train_dataset = BCBPairDataset(train_pairs)
+    if use_aug:
+        train_dataset = make_augmented_dataset(
+            train_dataset,
+            rename_prob=float(aug_cfg.get("rename_prob", 0.5)),
+            strip_comments_prob=float(aug_cfg.get("strip_comments_prob", 0.5)),
+            seed=int(aug_cfg.get("seed", 42)),
+        )
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate)
     val_loader = DataLoader(BCBPairDataset(val_pairs), batch_size=batch_size, shuffle=False, collate_fn=collate)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
@@ -351,9 +389,12 @@ def train_model(
     label_smoothing = float(tr_cfg.get("label_smoothing", 0.0))
     if label_smoothing > 0.0:
         logger.info("Kích hoạt Label Smoothing cho BCE: %.3f", label_smoothing)
-        criterion = nn.BCEWithLogitsLoss()
-    else:
-        criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.BCEWithLogitsLoss()
+
+    def classification_loss(logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        if use_focal:
+            return focal_bce_with_logits(logits, targets, gamma=focal_gamma, alpha=focal_alpha)
+        return criterion(logits, targets)
 
     # Kích hoạt FP16 Mixed Precision trên GPU (tăng tốc 5-8x trên Tensor Cores của Tesla T4)
     use_amp = bool(tr_cfg.get("mixed_precision", True)) and (device.type == "cuda")
@@ -416,12 +457,24 @@ def train_model(
         optimizer.zero_grad()
         for b_idx, batch in enumerate(train_loader):
             with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=use_amp):
-                logits, labels = forward_batch(model, batch, model_id)
-                if label_smoothing > 0.0:
-                    smooth_labels = labels * (1.0 - label_smoothing) + 0.5 * label_smoothing
-                    loss = criterion(logits, smooth_labels) / grad_accum
+                if use_supcon:
+                    logits, labels, ha, hb = forward_batch_with_embeddings(model, batch, model_id)
+                    targets = (
+                        labels * (1.0 - label_smoothing) + 0.5 * label_smoothing
+                        if label_smoothing > 0.0
+                        else labels
+                    )
+                    cls_loss = classification_loss(logits, targets)
+                    s_loss = supcon_loss(ha, hb, labels, temperature=supcon_temperature)
+                    loss = (cls_loss + supcon_weight * s_loss) / grad_accum
                 else:
-                    loss = criterion(logits, labels) / grad_accum
+                    logits, labels = forward_batch(model, batch, model_id)
+                    targets = (
+                        labels * (1.0 - label_smoothing) + 0.5 * label_smoothing
+                        if label_smoothing > 0.0
+                        else labels
+                    )
+                    loss = classification_loss(logits, targets) / grad_accum
 
             if use_amp:
                 scaler.scale(loss).backward()
@@ -528,6 +581,17 @@ def train_model(
             "cfg": cfg,
         }
         torch.save(last_ckpt, out_dir / "last_checkpoint.pt")
+
+        # SWA snapshots (opt-in): lưu model_state mỗi epoch để averaging ở hậu xử lý.
+        # Mặc định tắt nên không làm thay đổi hành vi các experiment hiện có.
+        swa_cfg = cfg.get("swa", {})
+        if bool(swa_cfg.get("enabled", False)) and epoch >= int(swa_cfg.get("start_epoch", 1)):
+            swa_dir = out_dir / str(swa_cfg.get("dir", "swa"))
+            swa_dir.mkdir(parents=True, exist_ok=True)
+            torch.save(
+                {"epoch": epoch, "model_state": model.state_dict()},
+                swa_dir / f"epoch_{epoch:03d}.pt",
+            )
 
         # Đánh giá tiêu chí cải thiện Early Stopping
         improved = False

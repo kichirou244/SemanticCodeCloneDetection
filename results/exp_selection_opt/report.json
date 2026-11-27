@@ -1,0 +1,134 @@
+{
+  "protocol": {
+    "val_source": "validation_shard_0.parquet (first 5k pos + 5k neg, shuffle seed 42)",
+    "n_val": 10000,
+    "n_test": 5000,
+    "oof_folds": 10,
+    "seed": 42,
+    "test_use": "chi danh gia cuoi; khong tune ngưỡng/trong so tren test"
+  },
+  "systems": {
+    "m2_single": {
+      "name": "M2 B5B6 + isotonic",
+      "threshold": 0.4,
+      "oof_f1": 0.9597,
+      "test": {
+        "threshold": 0.4,
+        "tp": 2381,
+        "tn": 2446,
+        "fp": 54,
+        "fn": 119,
+        "precision": 0.9778,
+        "recall": 0.9524,
+        "f1": 0.9649,
+        "accuracy": 0.9654,
+        "roc_auc": 0.975
+      },
+      "test_f1_bootstrap": {
+        "mean": 0.9649,
+        "sd": 0.0027,
+        "ci95": [
+          0.9593,
+          0.97
+        ],
+        "n_boot": 2000
+      }
+    },
+    "m1_single": {
+      "name": "M1 goc + isotonic",
+      "threshold": 0.41,
+      "oof_f1": 0.9756,
+      "test": {
+        "threshold": 0.41,
+        "tp": 2369,
+        "tn": 2430,
+        "fp": 70,
+        "fn": 131,
+        "precision": 0.9713,
+        "recall": 0.9476,
+        "f1": 0.9593,
+        "accuracy": 0.9598,
+        "roc_auc": 0.9748
+      },
+      "test_f1_bootstrap": {
+        "mean": 0.9593,
+        "sd": 0.0029,
+        "ci95": [
+          0.9532,
+          0.965
+        ],
+        "n_boot": 2000
+      }
+    },
+    "ensemble_avg": {
+      "name": "Ensemble avg (w=0.70)",
+      "threshold": 0.3,
+      "oof_f1": 0.9757,
+      "test": {
+        "threshold": 0.3,
+        "tp": 2375,
+        "tn": 2429,
+        "fp": 71,
+        "fn": 125,
+        "precision": 0.971,
+        "recall": 0.95,
+        "f1": 0.9604,
+        "accuracy": 0.9608,
+        "roc_auc": 0.9781
+      },
+      "test_f1_bootstrap": {
+        "mean": 0.9604,
+        "sd": 0.0029,
+        "ci95": [
+          0.9544,
+          0.9658
+        ],
+        "n_boot": 2000
+      }
+    },
+    "stacking": {
+      "name": "Stacking logistic",
+      "threshold": 0.49,
+      "oof_f1": 0.9727,
+      "test": {
+        "threshold": 0.49,
+        "tp": 2351,
+        "tn": 2460,
+        "fp": 40,
+        "fn": 149,
+        "precision": 0.9833,
+        "recall": 0.9404,
+        "f1": 0.9614,
+        "accuracy": 0.9622,
+        "roc_auc": 0.9791
+      },
+      "test_f1_bootstrap": {
+        "mean": 0.9613,
+        "sd": 0.0028,
+        "ci95": [
+          0.9557,
+          0.9667
+        ],
+        "n_boot": 2000
+      }
+    }
+  },
+  "significance": {
+    "stacking_vs_m2": {
+      "a_correct_b_wrong": 45,
+      "a_wrong_b_correct": 29,
+      "discordant": 74,
+      "p_value": 0.08050685743008208,
+      "significant": false,
+      "note": "p < 0.05 => hai hệ thống sai khác nhau có ý nghĩa (A = baseline, B = candidate)."
+    },
+    "ensemble_vs_m2": {
+      "a_correct_b_wrong": 44,
+      "a_wrong_b_correct": 21,
+      "discordant": 65,
+      "p_value": 0.005918433252619306,
+      "significant": true,
+      "note": "p < 0.05 => hai hệ thống sai khác nhau có ý nghĩa (A = baseline, B = candidate)."
+    }
+  }
+}
